@@ -7,6 +7,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Region } from './region.entity';
+import { Equipment } from './equipment.entity';
 
 @Entity({ name: 'detective_post' })
 export class DetectivePost {
@@ -59,17 +61,17 @@ export class DetectivePost {
   //   @JoinColumn({ name: 'license_id' })
   //   license: License;
 
-  //   @ManyToOne(() => Equipment, equipment => equipment.detectivePost)
-  //   @JoinColumn({ name: 'equipment_id' })
-  //   equipment: Equipment;
+  @ManyToOne(() => Equipment, (equipment) => equipment.detectivePost)
+  @JoinColumn({ name: 'equipment_id' })
+  equipment: Equipment;
 
   //   @ManyToOne(() => Career, career => career.detectivePost)
   //   @JoinColumn({ name: 'career_id' })
   //   career: Career;
 
-  //   @ManyToOne(() => Region, region => region.detectivePost)
-  //   @JoinColumn({ name: 'region_id' })
-  //   region: Region;
+  @ManyToOne(() => Region, (region) => region.detectivePost)
+  @JoinColumn({ name: 'region_id' })
+  region: Region;
 
   //   @ManyToOne(() => Review, review => review.detectivePost)
   //   @JoinColumn({ name: 'review_id' })
