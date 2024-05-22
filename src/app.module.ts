@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { PostModule } from './post/post.module';
+import { DetectivePost } from './post/entities/post.entity';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -14,7 +16,7 @@ const typeOrmModuleOptions = {
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('POSTGRES_DB'),
-    entities: [],
+    entities: [DetectivePost],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: true, // row query 출력
   }),
@@ -26,6 +28,7 @@ const typeOrmModuleOptions = {
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    PostModule,
   ],
   controllers: [AppController],
   providers: [AppService],
