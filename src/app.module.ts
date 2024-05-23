@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { GlobalExceptionsFilter } from './global-exception.filter';
+import { APP_FILTER } from '@nestjs/core';
+import { FileModule } from './file/file.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -16,7 +19,7 @@ const typeOrmModuleOptions = {
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('POSTGRES_DB'),
-    entities: [],
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: true, // row query 출력
   }),
@@ -30,8 +33,15 @@ const typeOrmModuleOptions = {
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
     AuthModule,
     UserModule,
+    FileModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}

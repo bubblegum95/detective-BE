@@ -9,7 +9,6 @@ import {
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
-import { Consultation } from './consultation.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -19,6 +18,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: false })
   name: string;
 
+  @Index('user_email_index')
   @Column({ type: 'varchar', length: 255, nullable: false })
   email: string;
 
@@ -37,22 +37,21 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Index('user_email_index')
   @OneToMany(() => Detective, (detective) => detective.user)
   detective: Detective[];
 
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
 
-  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.sender)
-  sentChatRoom: ChatRoom[];
+  // @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.sender)
+  // sentChatRoom: ChatRoom[];
 
-  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.receiver)
-  receivedChatRoom: ChatRoom[];
+  // @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.receiver)
+  // receivedChatRoom: ChatRoom[];
 
-  @OneToMany(() => Review, (review) => review.consumer)
-  review: Review[];
+  // @OneToMany(() => Review, (review) => review.consumer)
+  // review: Review[];
 
-  @OneToMany(() => Consultation, (consultation) => consultation.consumer)
-  consultation: Consultation[];
+  // @OneToMany(() => Consultation, (consultation) => consultation.consumer)
+  // consultation: Consultation[];
 }
