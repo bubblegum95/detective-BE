@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -11,10 +11,10 @@ export class PostController {
   create(@Body() createPostDto: CreatePostDto) {
     return this.postService.create(createPostDto);
   }
-
-  @Get()
-  findAll() {
-    return this.postService.findAll();
+  // region별 조회
+  @Get('/region')
+  async findRegion(@Query('r') r: string) {
+    await this.postService.findRegion(r);
   }
 
   @Get(':id')

@@ -5,6 +5,9 @@ import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PostModule } from './post/post.module';
+import { DetectivePost } from './post/entities/detective-post.entity';
+import { Region } from './post/entities/region.entity';
+import { Equipment } from './post/entities/equipment.entity';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 
@@ -17,7 +20,7 @@ const typeOrmModuleOptions = {
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('POSTGRES_DB'),
-    entities: [],
+    entities: [DetectivePost, Region, Equipment],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: true, // row query 출력
   }),
