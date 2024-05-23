@@ -16,7 +16,7 @@ export class PostService {
   }
 
   async findRegion(r: string) {
-    await this.detectivePostRepo.find();
+    await this.detectivePostRepo.find({where:});
   }
 
   findOne(id: number) {
