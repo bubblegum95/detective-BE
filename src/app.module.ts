@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -26,6 +28,8 @@ const typeOrmModuleOptions = {
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
