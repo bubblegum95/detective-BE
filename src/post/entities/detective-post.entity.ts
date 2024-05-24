@@ -5,6 +5,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -31,10 +32,10 @@ export class DetectivePost {
   @Column({ type: 'bigint', name: 'detective_id', nullable: false })
   detectiveId: number;
 
-  @Column({ type: 'bigint', name: 'career_id', nullable: false })
+  @Column({ type: 'bigint', name: 'career_id', nullable: true })
   careerId: number;
 
-  @Column({ type: 'bigint', name: 'license_id', nullable: false })
+  @Column({ type: 'bigint', name: 'license_id', nullable: true })
   licenseId: number;
 
   @Column({ type: 'bigint', name: 'region_id', nullable: false })
@@ -45,9 +46,6 @@ export class DetectivePost {
 
   @Column({ type: 'bigint', name: 'equipment_id', nullable: false })
   equipmentId: number;
-
-  @Column({ type: 'bigint', name: 'review_id', nullable: false })
-  reviewId: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -80,9 +78,8 @@ export class DetectivePost {
   @JoinColumn({ name: 'region_id' })
   region: Region;
 
-  @ManyToOne(() => Review, (review) => review.detectivePost)
-  @JoinColumn({ name: 'review_id' })
-  review: Review;
+  @OneToMany(() => Review, (review) => review.detectivePost)
+  review: Review[];
 
   @ManyToOne(() => File, (file) => file.detectivePost)
   @JoinColumn({ name: 'profile_file_id' })

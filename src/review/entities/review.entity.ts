@@ -19,6 +19,9 @@ export class Review {
   @Column({ type: 'bigint', name: 'consumer_id', unsigned: true, nullable: false })
   consumerId: number;
 
+  @Column({ type: 'bigint', name: 'detective_post_id', unsigned: true, nullable: false })
+  detectivePostId: number;
+
   @Column({ type: 'text', nullable: false })
   comment: string;
 
@@ -56,6 +59,7 @@ export class Review {
   @JoinColumn({ name: 'consumer_id' })
   consumer: User;
 
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.review)
-  detectivePost: DetectivePost[];
+  @ManyToOne(() => DetectivePost, (detectivePost) => detectivePost.review)
+  @JoinColumn({ name: 'detective_post_id' })
+  detectivePost: DetectivePost;
 }
