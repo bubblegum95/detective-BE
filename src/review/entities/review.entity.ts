@@ -25,16 +25,16 @@ export class Review {
   @Column({ type: 'text', nullable: false })
   reply: string;
 
-  @Column({ type: 'tinyint', nullable: false, default: 5 })
+  @Column({ type: 'int', nullable: false, default: 5 })
   reliability: number;
 
-  @Column({ type: 'tinyint', nullable: false, default: 5 })
+  @Column({ type: 'int', nullable: false, default: 5 })
   speed: number;
 
-  @Column({ type: 'tinyint', nullable: false, default: 5 })
+  @Column({ type: 'int', nullable: false, default: 5 })
   accuracy: number;
 
-  @Column({ type: 'tinyint', nullable: false, default: 5 })
+  @Column({ type: 'int', nullable: false, default: 5 })
   completion: number;
 
   @Column({
