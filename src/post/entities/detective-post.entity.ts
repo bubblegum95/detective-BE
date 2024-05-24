@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -12,6 +13,7 @@ import { Equipment } from './equipment.entity';
 import { License } from './license.entity';
 import { Category } from './category.entity';
 import { Career } from './career.entity';
+import { Detective } from 'src/user/entities/detective.entity';
 
 @Entity({ name: 'detective_post' })
 export class DetectivePost {
@@ -51,10 +53,10 @@ export class DetectivePost {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  //   @Index('detective_post_detective_id_index')
-  //   @ManyToOne(() => Detective, detective => detective.detectivePost)
-  //   @JoinColumn({ name: 'detective_id' })
-  //   detective: Detective;
+  @Index('detective_post_detective_id_index')
+  @ManyToOne(() => Detective, (detective) => detective.detectivePost)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 
   @ManyToOne(() => Category, (category) => category.detectivePost)
   @JoinColumn({ name: 'category_id' })

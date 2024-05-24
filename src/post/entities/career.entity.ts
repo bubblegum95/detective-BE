@@ -9,6 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { DetectivePost } from './detective-post.entity';
+import { Detective } from 'src/user/entities/detective.entity';
 
 @Entity({ name: 'career' })
 export class Career {
@@ -39,9 +40,9 @@ export class Career {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  //   @ManyToOne(() => Detective, (detective) => detective.career)
-  //   @JoinColumn({ name: 'detective_id' })
-  //   detective: Detective;
+  @ManyToOne(() => Detective, (detective) => detective.career)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 
   @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.career)
   detectivePost: DetectivePost[];
