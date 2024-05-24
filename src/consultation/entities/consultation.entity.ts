@@ -1,15 +1,13 @@
 import {
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Entity,
-  JoinColumn,
   ManyToOne,
-  PrimaryGeneratedColumn,
+  JoinColumn,
 } from 'typeorm';
-import { Status } from '../type/consultation-status.type';
-import { User } from './user.entity';
-import { Detective } from './detective.entity';
-import { Category } from 'src/post/entities/category.entity';
+import { Detective } from '../../user/entities/detective.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity({ name: 'consultation' })
 export class Consultation {
@@ -25,14 +23,19 @@ export class Consultation {
   @Column({ type: 'varchar', name: 'title', nullable: false })
   title: string;
 
-  @Column({ type: 'enum', name: 'category', nullable: false })
-  category: Category;
+  @Column({ type: 'bigint', name: 'category_id', nullable: false })
+  categoryId: number;
 
   @Column({ type: 'text', name: 'content', nullable: false })
   content: string;
 
-  @Column({ type: 'enum', name: 'content', nullable: false, default: 'pending' })
-  status: Status;
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'rejection', 'undergoing', 'completed'],
+    nullable: false,
+    default: 'pending',
+  })
+  status: 'pending' | 'rejection' | 'undergoing' | 'completed';
 
   @CreateDateColumn()
   createdAt: Date;

@@ -9,8 +9,13 @@ import {
   OneToMany,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Consultation } from './consultation.entity';
 import { WishList } from './wish-list.entity';
+import { Gender } from '../../auth/type/gender-enum.type';
+import { Position } from '../../auth/type/position-enum.type';
+import { File } from '../../s3/entities/file.entity';
+import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
+import { Owner } from '../../detectiveoffice/entities/owner.entity';
+import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Career } from 'src/post/entities/career.entity';
 import { DetectivePost } from 'src/post/entities/detective-post.entity';
 
@@ -25,14 +30,14 @@ export class Detective {
   @Column({ type: 'bigint', name: 'office_id', nullable: true })
   officeId: number;
 
-  @Column({ type: 'enum', enum: ['male', 'female'], default: 'male', nullable: false })
-  gender: 'male' | 'female';
+  @Column({ type: 'enum', enum: Gender, default: 'male', nullable: false })
+  gender: Gender;
 
-  @Column({ type: 'enum', enum: ['employer', 'employee'], default: 'employee', nullable: false })
-  position: 'employer' | 'employee';
+  @Column({ type: 'enum', enum: Position, default: 'employee', nullable: false })
+  position: Position;
 
-  @Column({ type: 'varchar', name: 'business_registration_file_id', length: 255, nullable: true })
-  businessRegistrationFileId: string;
+  @Column({ type: 'bigint', name: 'business_registration_file_id', nullable: true })
+  businessRegistrationFileId: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -44,13 +49,13 @@ export class Detective {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  // @ManyToOne(() => DetectiveOffice, (office) => office.detective)
-  // @JoinColumn({ name: 'office_id' })
-  // detectiveOffice: DetectiveOffice;
+  @ManyToOne(() => DetectiveOffice, (office) => office.detective)
+  @JoinColumn({ name: 'office_id' })
+  detectiveOffice: DetectiveOffice;
 
-  // @ManyToOne(() => File, (file) => file.detective)
-  // @JoinColumn({ name: 'business_registration_file_id' })
-  // businessRegistrationFile: File;
+  @ManyToOne(() => File, (file) => file.detective)
+  @JoinColumn({ name: 'business_registration_file_id' })
+  businessRegistrationFile: File;
 
   @OneToMany(() => Career, (career) => career.detective)
   career: Career[];
@@ -58,12 +63,12 @@ export class Detective {
   @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detective)
   detectivePost: DetectivePost[];
 
-  // @OneToMany(() => Owner, (owner) => owner.detective)
-  // owner: Owner[];
-
-  @OneToMany(() => WishList, (wishList) => wishList.detective)
-  wishList: WishList[];
+  @OneToMany(() => Owner, (owner) => owner.detective)
+  owner: Owner[];
 
   @OneToMany(() => Consultation, (consultation) => consultation.detective)
   consultation: Consultation[];
+
+  @OneToMany(() => WishList, (wishList) => wishList.detective)
+  wishList: WishList[];
 }

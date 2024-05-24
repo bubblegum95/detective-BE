@@ -4,17 +4,16 @@ import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
-import { DetectivePost } from './post/entities/detective-post.entity';
-import { Region } from './post/entities/region.entity';
-import { Equipment } from './post/entities/equipment.entity';
-import { Category } from './post/entities/category.entity';
-import { License } from './post/entities/license.entity';
-import { Career } from './post/entities/career.entity';
-import { Consultation } from './user/entities/consultation.entity';
-import { User } from './user/entities/user.entity';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { GlobalExceptionsFilter } from './global-exception.filter';
+import { APP_FILTER } from '@nestjs/core';
+import { S3Module } from './s3/s3.module';
+import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
+import { ConsultationModule } from './consultation/consultation.module';
+import { ReviewModule } from './review/review.module';
+import { ChatModule } from './chat/chat.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -25,17 +24,7 @@ const typeOrmModuleOptions = {
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('POSTGRES_DB'),
-    entities: [
-      DetectivePost,
-      Region,
-      Equipment,
-      Category,
-      License,
-      Career,
-      DetectivePost,
-      Consultation,
-      User,
-    ],
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: true, // row query 출력
   }),
@@ -47,11 +36,24 @@ const typeOrmModuleOptions = {
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    AuthModule,
+    UserModule,
+    S3Module,
+    DetectiveofficeModule,
     PostModule,
     UserModule,
     AuthModule,
+    ConsultationModule,
+    ReviewModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionsFilter,
+    },
+  ],
 })
 export class AppModule {}
