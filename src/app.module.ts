@@ -4,6 +4,15 @@ import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { PostModule } from './post/post.module';
+import { DetectivePost } from './post/entities/detective-post.entity';
+import { Region } from './post/entities/region.entity';
+import { Equipment } from './post/entities/equipment.entity';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { Category } from './post/entities/category.entity';
+import { License } from './post/entities/license.entity';
+import { Career } from './post/entities/career.entity';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { GlobalExceptionsFilter } from './global-exception.filter';
@@ -38,6 +47,9 @@ const typeOrmModuleOptions = {
     FileModule,
     S3Module,
     DetectiveofficeModule,
+    PostModule,
+    UserModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
