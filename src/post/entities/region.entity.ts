@@ -1,6 +1,7 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { DetectivePost } from './detective-post.entity';
 import { RegionEnum } from '../type/region.type';
+import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
 
 @Entity({ name: 'region' })
 export class Region {
@@ -13,6 +14,6 @@ export class Region {
   @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.region)
   detectivePost: DetectivePost[];
 
-  //   @OneToMany(() => DetectiveOffice, (detectiveOffice) => detectiveOffice.region)
-  //   detectiveOffice: DetectiveOffice[];
+  @OneToMany(() => DetectiveOffice, (detectiveOffice) => detectiveOffice.region)
+  detectiveOffice: DetectiveOffice[];
 }

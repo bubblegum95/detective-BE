@@ -9,6 +9,9 @@ import {
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
+import { Consultation } from '../../consultation/entities/consultation.entity';
+import { Review } from '../../review/entities/review.entity';
+import { ChatRoom } from '../../chat/entities/chat-room.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -43,15 +46,15 @@ export class User {
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
 
-  // @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.sender)
-  // sentChatRoom: ChatRoom[];
+  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.sender)
+  sentChatRoom: ChatRoom[];
 
-  // @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.receiver)
-  // receivedChatRoom: ChatRoom[];
+  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.receiver)
+  receivedChatRoom: ChatRoom[];
 
-  // @OneToMany(() => Review, (review) => review.consumer)
-  // review: Review[];
+  @OneToMany(() => Review, (review) => review.consumer)
+  review: Review[];
 
-  // @OneToMany(() => Consultation, (consultation) => consultation.consumer)
-  // consultation: Consultation[];
+  @OneToMany(() => Consultation, (consultation) => consultation.consumer)
+  consultation: Consultation[];
 }

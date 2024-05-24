@@ -15,6 +15,9 @@ import { Position } from '../../auth/type/position-enum.type';
 import { File } from '../../s3/entities/file.entity';
 import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
 import { Owner } from '../../detectiveoffice/entities/owner.entity';
+import { Consultation } from '../../consultation/entities/consultation.entity';
+import { DetectivePost } from '../../post/entities/detective-post.entity';
+import { Career } from '../../post/entities/career.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
@@ -54,17 +57,17 @@ export class Detective {
   @JoinColumn({ name: 'business_registration_file_id' })
   businessRegistrationFile: File;
 
-  // @OneToMany(() => Career, (career) => career.detective)
-  // career: Career[];
+  @OneToMany(() => Career, (career) => career.detective)
+  career: Career[];
 
-  // @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detective)
-  // detectivePost: DetectivePost[];
+  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detective)
+  detectivePost: DetectivePost[];
 
   @OneToMany(() => Owner, (owner) => owner.detective)
   owner: Owner[];
 
-  // @OneToMany(() => Consultation, (consultation) => consultation.detective)
-  // consultation: Consultation[];
+  @OneToMany(() => Consultation, (consultation) => consultation.detective)
+  consultation: Consultation[];
 
   @OneToMany(() => WishList, (wishList) => wishList.detective)
   wishList: WishList[];

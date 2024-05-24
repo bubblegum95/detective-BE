@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
-import { Region } from './region.entity';
+import { Region } from '../../post/entities/region.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {
@@ -21,13 +21,16 @@ export class DetectiveOffice {
   @Column({ type: 'bigint', name: 'owner_id', nullable: false })
   ownerId: number;
 
-  @Column({ type: 'bigint', name: 'region_id', nullable: false })
+  @Column({ type: 'bigint', name: 'region_id', nullable: true })
   regionId: number;
 
-  @Column({ type: 'text', nullable: false })
+  @Column({ type: 'bigint', name: 'location_id', nullable: false })
+  locationId: number;
+
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   name: string;
 
   @Column({ type: 'bigint', nullable: false })
@@ -35,9 +38,6 @@ export class DetectiveOffice {
 
   @Column({ type: 'date', nullable: false })
   founded: Date;
-
-  @Column({ type: 'bigint', name: 'location_id', nullable: false })
-  locationId: number;
 
   @CreateDateColumn()
   createdAt: Date;

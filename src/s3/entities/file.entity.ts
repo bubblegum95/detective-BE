@@ -7,6 +7,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
+import { DetectivePost } from '../../post/entities/detective-post.entity';
 
 @Entity({ name: 'file' })
 export class File {
@@ -22,8 +23,8 @@ export class File {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.profileFile)
-  // detectivePost: DetectivePost[];
+  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.profileFile)
+  detectivePost: DetectivePost[];
 
   @OneToMany(() => Detective, (detective) => detective.businessRegistrationFile)
   detective: Detective[];
