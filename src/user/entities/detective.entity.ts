@@ -16,8 +16,8 @@ import { File } from '../../s3/entities/file.entity';
 import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
 import { Owner } from '../../detectiveoffice/entities/owner.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
-import { DetectivePost } from '../../post/entities/detective-post.entity';
-import { Career } from '../../post/entities/career.entity';
+import { Career } from 'src/post/entities/career.entity';
+import { DetectivePost } from 'src/post/entities/detective-post.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {

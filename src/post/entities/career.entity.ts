@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { DetectivePost } from './detective-post.entity';
-import { Detective } from '../../user/entities/detective.entity';
+import { Detective } from 'src/user/entities/detective.entity';
 
 @Entity({ name: 'career' })
 export class Career {
