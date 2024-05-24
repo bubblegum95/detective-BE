@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -12,6 +13,9 @@ import { Equipment } from './equipment.entity';
 import { License } from './license.entity';
 import { Category } from './category.entity';
 import { Career } from './career.entity';
+import { Detective } from '../../user/entities/detective.entity';
+import { Review } from '../../review/entities/review.entity';
+import { File } from '../../s3/entities/file.entity';
 
 @Entity({ name: 'detective_post' })
 export class DetectivePost {
@@ -51,10 +55,10 @@ export class DetectivePost {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  //   @Index('detective_post_detective_id_index')
-  //   @ManyToOne(() => Detective, detective => detective.detectivePost)
-  //   @JoinColumn({ name: 'detective_id' })
-  //   detective: Detective;
+  @Index('detective_post_detective_id_index')
+  @ManyToOne(() => Detective, (detective) => detective.detectivePost)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 
   @ManyToOne(() => Category, (category) => category.detectivePost)
   @JoinColumn({ name: 'category_id' })
@@ -76,11 +80,11 @@ export class DetectivePost {
   @JoinColumn({ name: 'region_id' })
   region: Region;
 
-  //   @ManyToOne(() => Review, review => review.detectivePost)
-  //   @JoinColumn({ name: 'review_id' })
-  //   review: Review;
+  @ManyToOne(() => Review, (review) => review.detectivePost)
+  @JoinColumn({ name: 'review_id' })
+  review: Review;
 
-  //   @ManyToOne(() => File, file => file.detectivePost)
-  //   @JoinColumn({ name: 'profile_file_id' })
-  //   profileFile: File;
+  @ManyToOne(() => File, (file) => file.detectivePost)
+  @JoinColumn({ name: 'profile_file_id' })
+  profileFile: File;
 }

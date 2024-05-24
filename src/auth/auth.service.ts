@@ -1,26 +1,120 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { UserService } from '../user/user.service';
+import { DataSource } from 'typeorm';
+import { hash } from 'bcrypt';
+import { User } from '../user/entities/user.entity';
+import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
+import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
+import { Detective } from '../user/entities/detective.entity';
+import { Position } from './type/position-enum.type';
+import { Location } from '../detectiveoffice/entities/location.entity';
+import { DetectiveOffice } from '../detectiveoffice/entities/detective-office.entity';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    private readonly userService: UserService,
+    private readonly dataSource: DataSource,
+  ) {}
+  async createConsumer(createConsumerAuthDto: CreateConsumerAuthDto) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const userExistence = await this.userService.findByEmail(createConsumerAuthDto.email);
+
+    if (userExistence) {
+      await queryRunner.release();
+      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
+    }
+
+    if (createConsumerAuthDto.password !== createConsumerAuthDto.passwordConfirm) {
+      await queryRunner.release();
+      throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
+    }
+
+    try {
+      const hashedPassword = await hash(createConsumerAuthDto.password, 10);
+
+      const user = await queryRunner.manager.getRepository(User).save({
+        email: createConsumerAuthDto.email,
+        name: createConsumerAuthDto.name,
+        password: hashedPassword,
+        nickname: createConsumerAuthDto.nickname,
+        phoneNumber: createConsumerAuthDto.phoneNumber,
+      });
+
+      await queryRunner.commitTransaction();
+
+      return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  // async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, fileId) {
+  //   const queryRunner = this.dataSource.createQueryRunner();
+  //   await queryRunner.connect();
+  //   await queryRunner.startTransaction();
+  //   const userExistence = await this.userService.findByEmail(createDetectiveAuthDto.email);
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+  //   if (userExistence) {
+  //     await queryRunner.release();
+  //     throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
+  //   }
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+  //   if (createDetectiveAuthDto.password !== createDetectiveAuthDto.passwordConfirm) {
+  //     await queryRunner.release();
+  //     throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
+  //   }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
-  }
+  //   try {
+  //     const hashedPassword = await hash(createDetectiveAuthDto.password, 10);
+
+  //     const user = await queryRunner.manager.getRepository(User).save({
+  //       email: createDetectiveAuthDto.email,
+  //       name: createDetectiveAuthDto.name,
+  //       password: hashedPassword,
+  //       nickname: createDetectiveAuthDto.nickname,
+  //       phoneNumber: createDetectiveAuthDto.phoneNumber,
+  //     });
+
+  //     if ((createDetectiveAuthDto.position = Position.Employer)) {
+
+  //       const location = await queryRunner.manager.getRepository(Location).save({
+  //         address: createDetectiveAuthDto.address,
+  //       });
+
+  //       const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
+  //         ownerId: user.id,
+  //         businessRegistrationNum:
+  //         founded:
+  //         locationId: location.id,
+  //       })
+
+  //       const detective = await queryRunner.manager.getRepository(Detective).save({
+  //         userId: user.id,
+  //         officeId: office.id,
+  //         gender: createDetectiveAuthDto.gender,
+  //         position: createDetectiveAuthDto.position,
+  //         business_registration_file_id: fileId,
+  //       });
+  //     }
+
+  //     await queryRunner.commitTransaction();
+
+  //     return user;
+  //   } catch (error) {
+  //     await queryRunner.rollbackTransaction();
+  //     throw error;
+  //   } finally {
+  //     await queryRunner.release();
+  //   }
+  // }
+
+  // async registrationValidation(){
+
+  // }
 }
