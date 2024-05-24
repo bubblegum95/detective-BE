@@ -20,20 +20,36 @@ export class PostService {
   }
 
   // 지역별 조회
-  async findRegion(regionName: RegionEnum): Promise<DetectivePost[]> {
-    const posts = await this.detectivePostRepo.find({
-      where: { region: { name: regionName } },
-      relations: ['region'],
+  filterPostsByRegion(id: number): Promise<DetectivePost[]> {
+    const posts = this.detectivePostRepo.find({
+      where: { regionId: id },
     });
     return posts;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
+  filterPostsByCategory(id: number): Promise<DetectivePost[]> {
+    const posts = this.detectivePostRepo.find({
+      where: { categoryId: id },
+    });
+    return posts;
   }
 
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
+  async findPostsByKeyword(key: string): Promise<any> {
+    const detectives = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .where('user.name ILIKE :key', { key: `%${key}%` })
+      .getMany();
+
+    const offices = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.detectiveOffice', 'detectiveOffice')
+      .where('detectiveOffice.name ILIKE :key', { key: `%${key}%` })
+      .getMany();
+
+    return { detectives, offices };
   }
 
   remove(id: number) {

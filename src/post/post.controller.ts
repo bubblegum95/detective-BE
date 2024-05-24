@@ -1,8 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { RegionEnum } from './type/region.type';
 
 @Controller('posts')
 export class PostController {
@@ -13,20 +11,21 @@ export class PostController {
     return this.postService.create(createPostDto);
   }
   // region별 조회
-  @Get('/region')
-  async findRegion(@Query('r') regionName: RegionEnum) {
-    const post = await this.postService.findRegion(regionName);
-    return { post };
+  @Get('/region/:regionId')
+  async filterPostsByRegion(@Param('regionId') id: number) {
+    const posts = await this.postService.filterPostsByRegion(id);
+    return { data: posts };
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postService.findOne(+id);
+  @Get('/category/:categoryId')
+  filterPostsByCategory(@Param('categoryId') id: string) {
+    return this.postService.filterPostsByCategory(+id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postService.update(+id, updatePostDto);
+  @Get('/keyword')
+  async findPostsByKeyword(@Query('key') key: string) {
+    const data = await this.postService.findPostsByKeyword(key);
+    return { data };
   }
 
   @Delete(':id')
