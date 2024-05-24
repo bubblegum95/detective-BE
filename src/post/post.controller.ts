@@ -2,8 +2,9 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { RegionEnum } from './type/region.type';
 
-@Controller('post')
+@Controller('posts')
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
@@ -13,8 +14,9 @@ export class PostController {
   }
   // region별 조회
   @Get('/region')
-  async findRegion(@Query('r') r: string) {
-    await this.postService.findRegion(r);
+  async findRegion(@Query('r') regionName: RegionEnum) {
+    const post = await this.postService.findRegion(regionName);
+    return { post };
   }
 
   @Get(':id')
