@@ -9,6 +9,8 @@ import { UserModule } from './user/user.module';
 import { GlobalExceptionsFilter } from './global-exception.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { FileModule } from './file/file.module';
+import { S3Module } from './s3/s3.module';
+import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -34,6 +36,8 @@ const typeOrmModuleOptions = {
     AuthModule,
     UserModule,
     FileModule,
+    S3Module,
+    DetectiveofficeModule,
   ],
   controllers: [AppController],
   providers: [

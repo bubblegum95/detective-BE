@@ -5,6 +5,8 @@ import { hash } from 'bcrypt';
 import { User } from '../user/entities/user.entity';
 import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
 import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
+import { Detective } from '../user/entities/detective.entity';
+import { Position } from './type/position-enum.type';
 
 @Injectable()
 export class AuthService {
@@ -50,5 +52,45 @@ export class AuthService {
     }
   }
 
-  async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, file) {}
+  async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, fileId) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    const userExistence = await this.userService.findByEmail(createDetectiveAuthDto.email);
+
+    if (userExistence) {
+      await queryRunner.release();
+      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
+    }
+
+    if (createDetectiveAuthDto.password !== createDetectiveAuthDto.passwordConfirm) {
+      await queryRunner.release();
+      throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
+    }
+
+    try {
+      const hashedPassword = await hash(createDetectiveAuthDto.password, 10);
+
+      const user = await queryRunner.manager.getRepository(User).save({
+        email: createDetectiveAuthDto.email,
+        name: createDetectiveAuthDto.name,
+        password: hashedPassword,
+        nickname: createDetectiveAuthDto.nickname,
+        phoneNumber: createDetectiveAuthDto.phoneNumber,
+      });
+
+      if ((createDetectiveAuthDto.position = Position.Employer)) {
+        const detective = await queryRunner.manager.getRepository(Detective).save({});
+      }
+
+      await queryRunner.commitTransaction();
+
+      return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
 }

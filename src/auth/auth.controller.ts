@@ -14,11 +14,15 @@ import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { S3Service } from '../s3/s3.service';
 
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   // consumer 회원가입
   @Post('signup/consumer')
@@ -53,8 +57,13 @@ export class AuthController {
     if (createDetectiveAuthDto.position === Position.Employee && file) {
       throw new BadRequestException('파일 업로드는 업주만 가능합니다');
     }
+    let fileId: number;
 
-    this.authService.createDetective(createDetectiveAuthDto, file);
+    if (file) {
+      fileId = await this.s3Service.uploadRegistrationFile(file);
+    }
+
+    this.authService.createDetective(createDetectiveAuthDto, fileId);
 
     return {
       success: true,

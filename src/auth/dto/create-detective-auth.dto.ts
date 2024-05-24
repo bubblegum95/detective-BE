@@ -67,15 +67,12 @@ export class CreateDetectiveAuthDto {
     description: '직책',
   })
   position: Position;
+
+  @IsString()
+  @IsNotEmpty({ message: '회사 주소를 입력해주세요' })
+  @ApiProperty({
+    example: '서울특별시 중구난방 뉘집이여 하온이네',
+    description: '직책',
+  })
+  address: string;
 }
-// {
-//   name : string,
-//   email : string,
-//   nickname : string,
-//   phoneNumber : int,
-//   password : string,
-//   passwordConfirm : string,
-//   gender : enum,
-//   position : enum,
-//   businessRegistration : string,
-//   }
