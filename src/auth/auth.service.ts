@@ -80,7 +80,9 @@ export class AuthService {
       });
 
       if ((createDetectiveAuthDto.position = Position.Employer)) {
-        const detective = await queryRunner.manager.getRepository(Detective).save({});
+        const detective = await queryRunner.manager.getRepository(Detective).save({
+          userId: user.id,
+        });
       }
 
       await queryRunner.commitTransaction();
