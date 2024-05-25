@@ -15,8 +15,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
-import { Gender } from './type/gender-enum.type';
-
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
