@@ -7,7 +7,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { GlobalExceptionsFilter } from './global-exception.filter';
+// import { GlobalExceptionsFilter } from './global-exception.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { S3Module } from './s3/s3.module';
 import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
@@ -50,10 +50,10 @@ const typeOrmModuleOptions = {
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionsFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: GlobalExceptionsFilter,
+    // },
   ],
 })
 export class AppModule {}

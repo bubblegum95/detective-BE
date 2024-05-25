@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class CreateConsumerAuthDto {
   @IsString()
@@ -26,13 +26,14 @@ export class CreateConsumerAuthDto {
   })
   nickname: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty({ message: '휴대폰 번호를 입력해주세요' })
+  @Matches(/^\d{10,11}$/, { message: '휴대폰 번호는 10자리 또는 11자리의 숫자여야 합니다.' })
   @ApiProperty({
     example: '01012345678',
     description: '휴대폰 번호',
   })
-  phoneNumber: number;
+  phoneNumber: string;
 
   @IsString()
   @IsNotEmpty({ message: '비밀번호를 입력해주세요' })

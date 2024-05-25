@@ -28,8 +28,8 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: false })
   nickname: string;
 
-  @Column({ type: 'bigint', nullable: false })
-  phoneNumber: number;
+  @Column({ type: 'varchar', nullable: false })
+  phoneNumber: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
