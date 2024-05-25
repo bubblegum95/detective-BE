@@ -15,6 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
+import { Gender } from './type/gender-enum.type';
 
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
@@ -43,8 +44,26 @@ export class AuthController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'Create Detective',
-    type: CreateDetectiveAuthDto,
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+        nickname: { type: 'string' },
+        phoneNumber: { type: 'string' },
+        gender: { type: 'string', enum: ['male', 'female'] },
+        position: { type: 'string', enum: ['employer', 'employee'] },
+        password: { type: 'string' },
+        passwordConfirm: { type: 'string' },
+        address: { type: 'string' },
+        businessNumber: { type: 'string' },
+        founded: { type: 'string' },
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
   })
   async detectiveSignUp(
     @Body() createDetectiveAuthDto: CreateDetectiveAuthDto,

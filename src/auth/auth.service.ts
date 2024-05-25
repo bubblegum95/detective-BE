@@ -56,7 +56,7 @@ export class AuthService {
     }
   }
 
-  async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, fileId) {
+  async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, fileId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

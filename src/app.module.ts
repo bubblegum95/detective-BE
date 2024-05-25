@@ -8,7 +8,6 @@ import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 // import { GlobalExceptionsFilter } from './global-exception.filter';
-import { APP_FILTER } from '@nestjs/core';
 import { S3Module } from './s3/s3.module';
 import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
