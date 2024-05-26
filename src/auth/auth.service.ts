@@ -1,7 +1,6 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { UserService } from '../user/user.service';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { User } from '../user/entities/user.entity';
 import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
@@ -10,19 +9,46 @@ import { Detective } from '../user/entities/detective.entity';
 import { Position } from './type/position-enum.type';
 import { Location } from '../detectiveoffice/entities/location.entity';
 import { DetectiveOffice } from '../detectiveoffice/entities/detective-office.entity';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import bcrypt from 'bcrypt';
+import { SignInDto } from './dto/sign-in.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly httpService: HttpService,
+    private readonly jwtService: JwtService,
   ) {}
+
+  async existedEmail(email) {
+    console.log(email);
+    return await this.userRepository.findOneBy(email);
+  }
+
+  async validateUser({ email, password }: SignInDto) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: { id: true, email: true, password: true },
+    });
+
+    const isPasswordMatched = bcrypt.compareSync(password, user?.password ?? '');
+
+    if (!user || !isPasswordMatched) {
+      throw new UnauthorizedException('일치하는 회원정보가 없습니다');
+    }
+
+    return user.id;
+  }
+
   async createConsumer(createConsumerAuthDto: CreateConsumerAuthDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const userExistence = await this.userService.findByEmail(createConsumerAuthDto.email);
+    const userExistence = await this.existedEmail(createConsumerAuthDto.email);
 
     if (userExistence) {
       await queryRunner.release();
@@ -50,7 +76,7 @@ export class AuthService {
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error;
+      console.error(error.message);
     } finally {
       await queryRunner.release();
     }
@@ -60,7 +86,7 @@ export class AuthService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
-    const userExistence = await this.userService.findByEmail(createDetectiveAuthDto.email);
+    const userExistence = await this.existedEmail(createDetectiveAuthDto.email);
 
     if (userExistence) {
       await queryRunner.release();
@@ -84,7 +110,7 @@ export class AuthService {
       });
 
       if ((createDetectiveAuthDto.position = Position.Employee)) {
-        const detective = await this.dataSource.manager.getRepository(Detective).save({
+        await this.dataSource.manager.getRepository(Detective).save({
           userId: user.id,
           gender: createDetectiveAuthDto.gender,
           position: createDetectiveAuthDto.position,
@@ -109,7 +135,7 @@ export class AuthService {
           locationId: location.id,
         });
 
-        const detective = await queryRunner.manager.getRepository(Detective).save({
+        await queryRunner.manager.getRepository(Detective).save({
           userId: user.id,
           officeId: office.id,
           gender: createDetectiveAuthDto.gender,
@@ -123,7 +149,7 @@ export class AuthService {
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw error;
+      console.error(error.message);
     } finally {
       await queryRunner.release();
     }
@@ -137,7 +163,28 @@ export class AuthService {
       const response = await this.httpService.get(url).toPromise();
       return response.data;
     } catch (error) {
-      throw new Error('Error fetching business info');
+      console.error(error.message);
+    }
+  }
+
+  async signIn(signInDto: SignInDto) {
+    try {
+      const { email, password } = signInDto;
+      const user = await this.validateUser({ email, password });
+
+      if (!user) {
+        throw new UnauthorizedException('일치하는 인증 정보가 없습니다');
+      }
+
+      const payload = { id: user };
+      const accessToken = this.jwtService.sign(payload, {
+        secret: process.env.ACCESS_SECRET,
+        expiresIn: '7d',
+      });
+
+      return accessToken;
+    } catch (error) {
+      console.error(error.message);
     }
   }
 }

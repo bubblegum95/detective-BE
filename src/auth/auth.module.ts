@@ -7,10 +7,29 @@ import { User } from '../user/entities/user.entity';
 import { Detective } from '../user/entities/detective.entity';
 import { S3Module } from '../s3/s3.module';
 import { HttpModule } from '@nestjs/axios';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService],
-  imports: [UserModule, S3Module, HttpModule, TypeOrmModule.forFeature([User, Detective])],
+  imports: [
+    UserModule,
+    S3Module,
+    HttpModule,
+    PassportModule,
+    TypeOrmModule.forFeature([User, Detective]),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: {
+          expiresIn: '12h',
+        },
+      }),
+    }),
+  ],
 })
 export class AuthModule {}

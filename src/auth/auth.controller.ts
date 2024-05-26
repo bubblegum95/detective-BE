@@ -7,6 +7,9 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
+  UseGuards,
+  Response,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
@@ -15,25 +18,38 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
+import { SignInDto } from './dto/sign-in.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { JwtService } from '@nestjs/jwt';
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly s3Service: S3Service,
+    private readonly jwtService: JwtService,
   ) {}
 
   // consumer 회원가입
   @Post('signup/consumer')
   @ApiBody({
-    description: 'Create Detective',
-    type: CreateConsumerAuthDto,
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        email: { type: 'string' },
+        nickname: { type: 'string' },
+        phoneNumber: { type: 'string' },
+        password: { type: 'string' },
+        passwordConfirm: { type: 'string' },
+      },
+    },
   })
   async consumerSignUp(@Body() createConsumerAuthDto: CreateConsumerAuthDto) {
     this.authService.createConsumer(createConsumerAuthDto);
     return {
       success: true,
-      data: { message: '회원가입이 완료되었습니다' },
+      message: '회원가입이 완료되었습니다',
     };
   }
 
@@ -107,16 +123,37 @@ export class AuthController {
     }
 
     let fileId: number;
-
     if (file) {
       fileId = await this.s3Service.uploadRegistrationFile(file);
     }
+    console.log(fileId);
 
     this.authService.createDetective(createDetectiveAuthDto, fileId);
 
     return {
       success: true,
-      data: { message: '회원가입이 완료되었습니다' },
+      message: '회원가입이 완료되었습니다',
     };
+  }
+
+  // consumer 회원가입
+  @UseGuards(AuthGuard('local'))
+  @Post('signin')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        email: { type: 'string' },
+        password: { type: 'string' },
+      },
+    },
+  })
+  async signIn(@Response() res, @Body() signInDto: SignInDto) {
+    const token = this.authService.signIn(signInDto);
+
+    return res
+      .cookie('authorization', `Bearer ${token}`)
+      .status(HttpStatus.OK)
+      .json({ message: '성공적으로 로그인하였습니다.' });
   }
 }

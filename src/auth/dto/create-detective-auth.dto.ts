@@ -12,7 +12,7 @@ export class CreateDetectiveAuthDto {
   })
   name: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: '이메일 형식에 맞지 않습니다.' })
   @IsNotEmpty({ message: '이메일을 입력해주세요' })
   @ApiProperty({
     example: 'example@gmail.com',
