@@ -1,4 +1,9 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { User } from '../user/entities/user.entity';
@@ -57,7 +62,7 @@ export class AuthService {
       await queryRunner.release();
       throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
     }
-    console.log(111111);
+
     if (createConsumerAuthDto.password !== createConsumerAuthDto.passwordConfirm) {
       await queryRunner.release();
       throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
@@ -113,8 +118,6 @@ export class AuthService {
         phoneNumber: createDetectiveAuthDto.phoneNumber,
       });
 
-      console.log('user', user);
-
       if (createDetectiveAuthDto.position === Position.Employee) {
         await this.dataSource.manager.getRepository(Detective).save({
           userId: user.id,
@@ -131,14 +134,20 @@ export class AuthService {
           user.name,
         );
 
-        console.log('validateBusiness', validateBusiness);
+        if (!validateBusiness) {
+          throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
+        }
 
+        if (validateBusiness.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
+          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
+        }
+
+        // location 등록
         const location = await queryRunner.manager.getRepository(Location).save({
           address: createDetectiveAuthDto.address,
         });
 
-        console.log('location');
-
+        // office 등록
         const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
           ownerId: user.id,
           businessRegistrationNum: createDetectiveAuthDto.businessNumber,
@@ -146,14 +155,22 @@ export class AuthService {
           locationId: location.id,
         });
 
-        console.log('office');
-        await queryRunner.manager.getRepository(Detective).save({
+        if (!office) {
+          throw new BadRequestException('office create error');
+        }
+
+        // detective 등록
+        const detective = await queryRunner.manager.getRepository(Detective).save({
           userId: user.id,
           officeId: office.id,
           gender: createDetectiveAuthDto.gender,
           position: createDetectiveAuthDto.position,
           business_registration_file_id: fileId,
         });
+
+        if (!detective) {
+          throw new UnauthorizedException('detective create error');
+        }
       }
 
       await queryRunner.commitTransaction();
@@ -162,35 +179,18 @@ export class AuthService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(error.message);
+      error.message;
     } finally {
       await queryRunner.release();
     }
   }
 
-  // validateBusiness(b_no: number, start_dt: string, p_nm: string): Observable<AxiosResponse<any>> {
-  //   const data = { b_no, start_dt, p_nm };
-  //   const headers = {
-  //     accept: '*/*',
-  //     'Content-Type': 'application/json',
-  //   };
-  //   try {
-  //     const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
-  //     const url: any = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}&b_no=${b_no}&start_dt=${start_dt}&p_nm=${p_nm}`;
-
-  //     const verifiedBno = this.httpService.post(url, data, { headers }).pipe(
-  //       map((response) => response.data),
-  //       catchError((error) => {
-  //         throw new HttpException(error.response.data, error.response.status);
-  //       }),
-  //     );
-  //   } catch (error) {}
-  // }
-
+  // 사업자 등록 정보 검증
   async validationCheckBno(b_no: string, start_dt: string, p_nm: string) {
     const data = {
-      b_no,
-      start_dt,
-      p_nm,
+      b_no: [b_no],
+      start_dt: [start_dt],
+      p_nm: [p_nm],
       p_nm2: '',
       b_nm: '',
       corp_no: '',
@@ -200,30 +200,31 @@ export class AuthService {
     };
 
     const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
-
-    fetch(`https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}`, {
-      // serviceKey 값을 xxxxxx에 입력
+    const url = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}`;
+    const option = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
       body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
-    })
-      .then((response) => {
-        if (!response.ok) {
-          return response.text().then((text) => {
-            throw new Error(text);
-          });
-        }
-        return response.json();
-      })
-      .then((result) => {
-        console.log(result);
-      })
-      .catch((error) => {
-        console.error('Error:', error.message); // 에러 메시지 확인
-      });
+    };
+
+    try {
+      const response = await fetch(url, option);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      const result = await response.json();
+      console.log(result);
+      return result;
+    } catch (error) {
+      console.error('Error:', error.message); // 에러 메시지 확인
+      return null;
+    }
   }
 
   async signIn(signInDto: SignInDto) {
@@ -243,7 +244,7 @@ export class AuthService {
 
       return accessToken;
     } catch (error) {
-      console.error(error.message);
+      return console.error(error.message);
     }
   }
 }

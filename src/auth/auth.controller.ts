@@ -16,11 +16,13 @@ import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
-import { ApiBody, ApiConsumes } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiCookieAuth } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
 import { SignInDto } from './dto/sign-in.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { JwtService } from '@nestjs/jwt';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+@ApiCookieAuth('JWT')
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
@@ -126,20 +128,29 @@ export class AuthController {
       if (file) {
         fileId = await this.s3Service.uploadRegistrationFile(file);
       }
-      console.log('fileId');
-      await this.authService.createDetective(createDetectiveAuthDto, fileId);
+
+      const detective = await this.authService.createDetective(createDetectiveAuthDto, fileId);
+      console.log('detective', detective);
+
+      if (!detective) {
+        throw new Error('계정을 생성할 수 없습니다');
+      }
 
       return {
         success: true,
         message: '회원가입이 완료되었습니다',
       };
     } catch (error) {
-      console.error(error.message);
+      // console.error(error.message);
+      return {
+        success: false,
+        message: error.message,
+      };
     }
   }
 
   // consumer 회원가입
-  @UseGuards(AuthGuard('local'))
+  @UseGuards(JwtAuthGuard)
   @Post('signin')
   @ApiBody({
     schema: {
