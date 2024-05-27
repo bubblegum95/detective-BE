@@ -12,7 +12,6 @@ import {
 } from 'typeorm';
 import { Owner } from './owner.entity';
 import { Location } from './location.entity';
-import { Region } from 'src/post/entities/region.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {

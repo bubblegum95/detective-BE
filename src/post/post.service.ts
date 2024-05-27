@@ -11,23 +11,13 @@ export class PostService {
     @InjectRepository(DetectivePost)
     private detectivePostRepo: Repository<DetectivePost>,
   ) {}
-  create(createPostDto: CreatePostDto) {
-    return 'This action adds a new post';
-  }
-
-  async findRegion(r: string) {
-    await this.detectivePostRepo.find();
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} post`;
-  }
-
-  update(id: number, updatePostDto: UpdatePostDto) {
-    return `This action updates a #${id} post`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} post`;
+  async createProfile(file: Express.Multer.File, createPostDto: CreatePostDto) {
+    const uploadResult = await s3.upload({
+      Bucket: this.bucketName,
+      Key: fileKey,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
+    return;
   }
 }
