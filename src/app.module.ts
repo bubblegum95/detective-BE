@@ -10,6 +10,7 @@ import { Region } from './post/entities/region.entity';
 import { Equipment } from './post/entities/equipment.entity';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
+import { OfficeModule } from './office/detectiveoffice.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -35,6 +36,7 @@ const typeOrmModuleOptions = {
     PostModule,
     UserModule,
     AuthModule,
+    OfficeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
