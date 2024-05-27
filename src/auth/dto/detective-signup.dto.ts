@@ -83,13 +83,13 @@ export class CreateDetectiveAuthDto {
     example: '0000000000',
     description: '사업자등록번호',
   })
-  businessNumber: number;
+  businessNumber: string;
 
   @IsString()
   @IsOptional({ message: '설립일자를 입력해주세요.' })
   @ApiProperty({
     example: 'YYYYMMDD',
-    description: '설립입자',
+    description: '설립일자',
   })
-  founded: number;
+  founded: string;
 }

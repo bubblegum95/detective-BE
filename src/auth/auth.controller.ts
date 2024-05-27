@@ -12,8 +12,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
-import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
+import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
+import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
@@ -46,7 +46,7 @@ export class AuthController {
     },
   })
   async consumerSignUp(@Body() createConsumerAuthDto: CreateConsumerAuthDto) {
-    this.authService.createConsumer(createConsumerAuthDto);
+    await this.authService.createConsumer(createConsumerAuthDto);
     return {
       success: true,
       message: '회원가입이 완료되었습니다',
@@ -83,7 +83,6 @@ export class AuthController {
     @Body() createDetectiveAuthDto: CreateDetectiveAuthDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log(1111);
     if (createDetectiveAuthDto.position === Position.Employer && !file) {
       throw new BadRequestException('파일을 업로드해주세요');
     }
@@ -121,19 +120,22 @@ export class AuthController {
     if (createDetectiveAuthDto.position === Position.Employee && createDetectiveAuthDto.founded) {
       throw new BadRequestException('설립일자 입력은 업주만 가능합니다');
     }
+    try {
+      let fileId: number;
 
-    let fileId: number;
-    if (file) {
-      fileId = await this.s3Service.uploadRegistrationFile(file);
+      if (file) {
+        fileId = await this.s3Service.uploadRegistrationFile(file);
+      }
+      console.log('fileId');
+      await this.authService.createDetective(createDetectiveAuthDto, fileId);
+
+      return {
+        success: true,
+        message: '회원가입이 완료되었습니다',
+      };
+    } catch (error) {
+      console.error(error.message);
     }
-    console.log(fileId);
-
-    this.authService.createDetective(createDetectiveAuthDto, fileId);
-
-    return {
-      success: true,
-      message: '회원가입이 완료되었습니다',
-    };
   }
 
   // consumer 회원가입

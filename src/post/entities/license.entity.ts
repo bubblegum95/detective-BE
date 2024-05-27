@@ -1,4 +1,4 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { DetectivePost } from './detective-post.entity';
 
 @Entity({ name: 'license' })
@@ -15,6 +15,6 @@ export class License {
   @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.license)
-  detectivePost: DetectivePost[];
+  @ManyToOne(() => DetectivePost, (detectivePost) => detectivePost.license)
+  detectivePost: DetectivePost;
 }

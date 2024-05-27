@@ -1,25 +1,37 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-// import { GlobalExceptionsFilter } from './global-exception.filter';
 import { S3Module } from './s3/s3.module';
 import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { ChatModule } from './chat/chat.module';
-import { configModuleValidationSchema } from '../configs/env.validation.config';
-import { typeOrmModuleOptions } from '../configs/database.config';
 
+const typeOrmModuleOptions = {
+  useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
+    namingStrategy: new SnakeNamingStrategy(), // 자동으로 DB에 스네이프 케이스로
+    type: 'postgres',
+    host: configService.get('DB_HOST'),
+    port: configService.get('DB_PORT'),
+    username: configService.get('DB_USER'),
+    password: configService.get('DB_PASSWORD'),
+    database: configService.get('DB_NAME'),
+    entities: [__dirname + '/**/*.entity{.ts,.js}'],
+    synchronize: configService.get('DB_SYNC'),
+    logging: ['query', 'error'], // row query 출력
+  }),
+  inject: [ConfigService],
+};
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validationSchema: configModuleValidationSchema,
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
     AuthModule,
@@ -34,12 +46,6 @@ import { typeOrmModuleOptions } from '../configs/database.config';
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: GlobalExceptionsFilter,
-    // },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -1,10 +1,9 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
 import { DataSource, Repository } from 'typeorm';
 import { hash } from 'bcrypt';
 import { User } from '../user/entities/user.entity';
-import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
-import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
+import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
+import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { Detective } from '../user/entities/detective.entity';
 import { Position } from './type/position-enum.type';
 import { Location } from '../detectiveoffice/entities/location.entity';
@@ -20,13 +19,17 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly dataSource: DataSource,
-    private readonly httpService: HttpService,
     private readonly jwtService: JwtService,
   ) {}
 
   async existedEmail(email) {
-    console.log(email);
-    return await this.userRepository.findOneBy(email);
+    try {
+      const foundEmail = await this.userRepository.findOneBy(email);
+      console.log('foundEmail');
+      return foundEmail;
+    } catch (error) {
+      console.error(error.message);
+    }
   }
 
   async validateUser({ email, password }: SignInDto) {
@@ -54,7 +57,7 @@ export class AuthService {
       await queryRunner.release();
       throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
     }
-
+    console.log(111111);
     if (createConsumerAuthDto.password !== createConsumerAuthDto.passwordConfirm) {
       await queryRunner.release();
       throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
@@ -86,6 +89,7 @@ export class AuthService {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
+
     const userExistence = await this.existedEmail(createDetectiveAuthDto.email);
 
     if (userExistence) {
@@ -109,7 +113,9 @@ export class AuthService {
         phoneNumber: createDetectiveAuthDto.phoneNumber,
       });
 
-      if ((createDetectiveAuthDto.position = Position.Employee)) {
+      console.log('user', user);
+
+      if (createDetectiveAuthDto.position === Position.Employee) {
         await this.dataSource.manager.getRepository(Detective).save({
           userId: user.id,
           gender: createDetectiveAuthDto.gender,
@@ -117,24 +123,30 @@ export class AuthService {
         });
       }
 
-      if ((createDetectiveAuthDto.position = Position.Employer)) {
-        const businessInfo = await this.registrationVerify(
+      if (createDetectiveAuthDto.position === Position.Employer) {
+        // 사업자 등록 정보 검증
+        const validateBusiness = await this.validationCheckBno(
           createDetectiveAuthDto.businessNumber,
           createDetectiveAuthDto.founded,
           user.name,
         );
 
+        console.log('validateBusiness', validateBusiness);
+
         const location = await queryRunner.manager.getRepository(Location).save({
           address: createDetectiveAuthDto.address,
         });
 
+        console.log('location');
+
         const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
           ownerId: user.id,
-          businessRegistrationNum: businessInfo.request_param.b_no,
-          founded: businessInfo.request_param.start_dt,
+          businessRegistrationNum: createDetectiveAuthDto.businessNumber,
+          founded: createDetectiveAuthDto.founded,
           locationId: location.id,
         });
 
+        console.log('office');
         await queryRunner.manager.getRepository(Detective).save({
           userId: user.id,
           officeId: office.id,
@@ -155,16 +167,63 @@ export class AuthService {
     }
   }
 
-  async registrationVerify(b_no: number, start_dt: number, p_nm: string) {
-    const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
-    const url: any = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}&b_no=${b_no}&start_dt=${start_dt}&p_nm=${p_nm}`;
+  // validateBusiness(b_no: number, start_dt: string, p_nm: string): Observable<AxiosResponse<any>> {
+  //   const data = { b_no, start_dt, p_nm };
+  //   const headers = {
+  //     accept: '*/*',
+  //     'Content-Type': 'application/json',
+  //   };
+  //   try {
+  //     const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
+  //     const url: any = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}&b_no=${b_no}&start_dt=${start_dt}&p_nm=${p_nm}`;
 
-    try {
-      const response = await this.httpService.get(url).toPromise();
-      return response.data;
-    } catch (error) {
-      console.error(error.message);
-    }
+  //     const verifiedBno = this.httpService.post(url, data, { headers }).pipe(
+  //       map((response) => response.data),
+  //       catchError((error) => {
+  //         throw new HttpException(error.response.data, error.response.status);
+  //       }),
+  //     );
+  //   } catch (error) {}
+  // }
+
+  async validationCheckBno(b_no: string, start_dt: string, p_nm: string) {
+    const data = {
+      b_no,
+      start_dt,
+      p_nm,
+      p_nm2: '',
+      b_nm: '',
+      corp_no: '',
+      b_sector: '',
+      b_type: '',
+      b_adr: '',
+    };
+
+    const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
+
+    fetch(`https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}`, {
+      // serviceKey 값을 xxxxxx에 입력
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
+    })
+      .then((response) => {
+        if (!response.ok) {
+          return response.text().then((text) => {
+            throw new Error(text);
+          });
+        }
+        return response.json();
+      })
+      .then((result) => {
+        console.log(result);
+      })
+      .catch((error) => {
+        console.error('Error:', error.message); // 에러 메시지 확인
+      });
   }
 
   async signIn(signInDto: SignInDto) {

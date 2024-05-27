@@ -19,7 +19,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     S3Module,
     HttpModule,
     PassportModule,
-    TypeOrmModule.forFeature([User, Detective]),
+    TypeOrmModule.forFeature([User, Detective, File]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

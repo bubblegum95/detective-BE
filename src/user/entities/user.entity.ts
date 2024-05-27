@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
@@ -40,8 +41,8 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Detective, (detective) => detective.user)
-  detective: Detective[];
+  @OneToOne(() => Detective, (detective) => detective.user)
+  detective: Detective;
 
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];

@@ -1,9 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand, ListBucketsCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { Repository } from 'typeorm';
-import { File } from './entities/file.entity';
+import { File } from './entities/s3.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
@@ -49,11 +49,11 @@ export class S3Service {
       const command = new PutObjectCommand(params);
 
       const sentFile = await this.s3Client.send(command);
-      console.log(sentFile);
+      console.log('sentFile', sentFile);
       const path = `https://${this.bucketName}.s3.amazonaws.com/${fileKey}`;
-      console.log(path);
+      console.log('path', path);
       const file = await this.fileRepository.save({ path });
-
+      console.log('file', file);
       return file.id;
     } catch (error) {
       console.error(error.message);
