@@ -29,7 +29,6 @@ async function bootstrap() {
     .setTitle('Detective Project')
     .setDescription('Detective Brokerage Platform Service')
     .setVersion('1.0')
-    .addTag('cats')
     .addBearerAuth(
       {
         type: 'http',
