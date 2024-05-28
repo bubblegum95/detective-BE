@@ -7,7 +7,6 @@ import {
   BadRequestException,
   UsePipes,
   ValidationPipe,
-  UseGuards,
   Response,
   HttpStatus,
 } from '@nestjs/common';
@@ -16,11 +15,10 @@ import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
-import { ApiBody, ApiConsumes, ApiCookieAuth } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation } from '@nestjs/swagger';
 import { S3Service } from '../s3/s3.service';
 import { SignInDto } from './dto/sign-in.dto';
 import { JwtService } from '@nestjs/jwt';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiCookieAuth('JWT')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -34,6 +32,7 @@ export class AuthController {
 
   // consumer 회원가입
   @Post('signup/consumer')
+  @ApiOperation({ summary: '의뢰인 회원가입', description: '의뢰인 회원가입' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -59,6 +58,7 @@ export class AuthController {
   @Post('signup/detective')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: '탐정 회원가입', description: '탐정 회원가입' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -150,8 +150,8 @@ export class AuthController {
   }
 
   // consumer 회원가입
-  @UseGuards(JwtAuthGuard)
   @Post('signin')
+  @ApiOperation({ summary: '로그인', description: '로그인' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -165,8 +165,19 @@ export class AuthController {
     const token = this.authService.signIn(signInDto);
 
     return res
-      .cookie('authorization', `Bearer ${token}`)
+      .cookie('authorization', `Bearer ${token}`, {
+        maxAge: '24h',
+        httpOnly: true,
+        secure: true,
+      })
       .status(HttpStatus.OK)
       .json({ message: '성공적으로 로그인하였습니다.' });
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: '로그아웃', description: '로그아웃' })
+  signOut(@Response() res) {
+    res.clearCookie('authorization');
+    res.send('로그아웃에 성공하였습니다.');
   }
 }
