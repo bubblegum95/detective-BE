@@ -7,12 +7,13 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { User } from './user.entity';
 import { WishList } from './wish-list.entity';
 import { Gender } from '../../auth/type/gender-enum.type';
 import { Position } from '../../auth/type/position-enum.type';
-import { File } from '../../s3/entities/file.entity';
+import { File } from '../../s3/entities/s3.entity';
 import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
 import { Owner } from '../../detectiveoffice/entities/owner.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
@@ -45,7 +46,7 @@ export class Detective {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => User, (user) => user.detective)
+  @OneToOne(() => User, (user) => user.detective)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
@@ -60,11 +61,11 @@ export class Detective {
   @OneToMany(() => Career, (career) => career.detective)
   career: Career[];
 
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detective)
-  detectivePost: DetectivePost[];
+  @OneToOne(() => DetectivePost, (detectivePost) => detectivePost.detective)
+  detectivePost: DetectivePost;
 
-  @OneToMany(() => Owner, (owner) => owner.detective)
-  owner: Owner[];
+  @OneToOne(() => Owner, (owner) => owner.detective)
+  owner: Owner;
 
   @OneToMany(() => Consultation, (consultation) => consultation.detective)
   consultation: Consultation[];

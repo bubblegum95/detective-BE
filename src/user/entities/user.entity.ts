@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
@@ -28,8 +29,8 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: false })
   nickname: string;
 
-  @Column({ type: 'bigint', nullable: false })
-  phoneNumber: number;
+  @Column({ type: 'varchar', nullable: false })
+  phoneNumber: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
@@ -40,8 +41,8 @@ export class User {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => Detective, (detective) => detective.user)
-  detective: Detective[];
+  @OneToOne(() => Detective, (detective) => detective.user)
+  detective: Detective;
 
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
