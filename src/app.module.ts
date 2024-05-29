@@ -17,10 +17,10 @@ const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
     namingStrategy: new SnakeNamingStrategy(), // 자동으로 DB에 스네이프 케이스로
     type: 'postgres',
-    host: configService.get('DB_HOST'),
-    port: configService.get('DB_PORT'),
-    username: configService.get('DB_USER'),
-    password: configService.get('DB_PASSWORD'),
+    host: configService.get('POSTGRES_HOST'),
+    port: configService.get('POSTGRES_PORT'),
+    username: configService.get('POSTGRES_USER'),
+    password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('DB_NAME'),
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('DB_SYNC'),
