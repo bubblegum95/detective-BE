@@ -17,6 +17,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcrypt';
 import { SignInDto } from './dto/sign-in.dto';
+import { S3Service } from '../s3/s3.service';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,7 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
+    private readonly s3Service: S3Service,
   ) {}
 
   async existedEmail(email) {
@@ -90,68 +92,91 @@ export class AuthService {
     }
   }
 
-  async createDetective(createDetectiveAuthDto: CreateDetectiveAuthDto, fileId: number) {
+  async createDetective(
+    createDetectiveAuthDto: CreateDetectiveAuthDto,
+    file: Express.Multer.File | null,
+  ) {
+    const {
+      name,
+      email,
+      nickname,
+      phoneNumber,
+      password,
+      passwordConfirm,
+      gender,
+      position,
+      address,
+      businessNumber,
+      founded,
+    } = createDetectiveAuthDto;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const userExistence = await this.existedEmail(createDetectiveAuthDto.email);
+    const userExistence = await this.existedEmail(email);
 
     if (userExistence) {
       await queryRunner.release();
       throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
     }
 
-    if (createDetectiveAuthDto.password !== createDetectiveAuthDto.passwordConfirm) {
+    if (password !== passwordConfirm) {
       await queryRunner.release();
       throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
     }
 
     try {
-      const hashedPassword = await hash(createDetectiveAuthDto.password, 10);
+      const hashedPassword = await hash(password, 10);
 
       const user = await queryRunner.manager.getRepository(User).save({
-        email: createDetectiveAuthDto.email,
-        name: createDetectiveAuthDto.name,
+        email: email,
+        name: name,
         password: hashedPassword,
-        nickname: createDetectiveAuthDto.nickname,
-        phoneNumber: createDetectiveAuthDto.phoneNumber,
+        nickname: nickname,
+        phoneNumber: phoneNumber,
       });
 
-      if (createDetectiveAuthDto.position === Position.Employee) {
+      if (position === Position.Employee) {
         await this.dataSource.manager.getRepository(Detective).save({
           userId: user.id,
-          gender: createDetectiveAuthDto.gender,
-          position: createDetectiveAuthDto.position,
+          gender: gender,
+          position: position,
         });
       }
 
-      if (createDetectiveAuthDto.position === Position.Employer) {
+      if (position === Position.Employer) {
         // 사업자 등록 정보 검증
-        const validateBusiness = await this.validationCheckBno(
-          createDetectiveAuthDto.businessNumber,
-          createDetectiveAuthDto.founded,
-          user.name,
-        );
+        const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
 
         if (!validateBusiness) {
           throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
         }
 
-        if (validateBusiness.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
-          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
+        if (!validateBusiness.ok) {
+          const errorText = await validateBusiness.text();
+          throw new Error(errorText);
         }
 
+        const result = await validateBusiness.json();
+        console.log(result);
+
+        if (founded !== result.data[0].b_stt) {
+          throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
+        }
+
+        if (result.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
+          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
+        }
         // location 등록
         const location = await queryRunner.manager.getRepository(Location).save({
-          address: createDetectiveAuthDto.address,
+          address: address,
         });
 
         // office 등록
         const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
           ownerId: user.id,
-          businessRegistrationNum: createDetectiveAuthDto.businessNumber,
-          founded: createDetectiveAuthDto.founded,
+          businessRegistrationNum: businessNumber,
+          founded: founded,
           locationId: location.id,
         });
 
@@ -159,12 +184,14 @@ export class AuthService {
           throw new BadRequestException('office create error');
         }
 
+        const fileId = await this.s3Service.uploadRegistrationFile(file);
+
         // detective 등록
         const detective = await queryRunner.manager.getRepository(Detective).save({
           userId: user.id,
           officeId: office.id,
-          gender: createDetectiveAuthDto.gender,
-          position: createDetectiveAuthDto.position,
+          gender: gender,
+          position: position,
           business_registration_file_id: fileId,
         });
 
@@ -210,23 +237,12 @@ export class AuthService {
       body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
     };
 
-    try {
-      const response = await fetch(url, option);
+    const response = await fetch(url, option);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
-      const result = await response.json();
-      console.log(result);
-      return result;
-    } catch (error) {
-      console.error('Error:', error.message); // 에러 메시지 확인
-      return null;
-    }
+    return response;
   }
 
+  // 로그인
   async signIn(signInDto: SignInDto) {
     try {
       const { email, password } = signInDto;

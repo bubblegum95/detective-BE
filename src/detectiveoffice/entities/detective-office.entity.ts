@@ -8,10 +8,13 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
 import { Region } from '../../post/entities/region.entity';
+// import { OfficeRelationship } from './office-relationship.entity';
+import { DetectivePost } from '../../post/entities/detective-post.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {
@@ -50,10 +53,16 @@ export class DetectiveOffice {
   @JoinColumn({ name: 'location_id' })
   location: Location;
 
-  @OneToMany(() => Detective, (detective) => detective.detectiveOffice)
-  detective: Detective[];
-
   @ManyToOne(() => Region, (region) => region.detectiveOffice)
   @JoinColumn({ name: 'region_id' })
   region: Region;
+
+  @OneToOne(() => Detective, (detective) => detective.detectiveOffice)
+  detective: Detective;
+
+  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detectiveOffice)
+  detectivePost: DetectivePost[];
+
+  // @OneToOne(() => OfficeRelationship, (officeRelationship) => officeRelationship.detectiveOffice)
+  // officeRelationship: OfficeRelationship;
 }

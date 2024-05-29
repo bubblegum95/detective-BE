@@ -122,14 +122,9 @@ export class AuthController {
     if (createDetectiveAuthDto.position === Position.Employee && createDetectiveAuthDto.founded) {
       throw new BadRequestException('설립일자 입력은 업주만 가능합니다');
     }
+
     try {
-      let fileId: number;
-
-      if (file) {
-        fileId = await this.s3Service.uploadRegistrationFile(file);
-      }
-
-      const detective = await this.authService.createDetective(createDetectiveAuthDto, fileId);
+      const detective = await this.authService.createDetective(createDetectiveAuthDto, file);
       console.log('detective', detective);
 
       if (!detective) {

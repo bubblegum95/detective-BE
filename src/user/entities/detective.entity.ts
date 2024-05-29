@@ -15,7 +15,6 @@ import { Gender } from '../../auth/type/gender-enum.type';
 import { Position } from '../../auth/type/position-enum.type';
 import { File } from '../../s3/entities/s3.entity';
 import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
-import { Owner } from '../../detectiveoffice/entities/owner.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Career } from 'src/post/entities/career.entity';
 import { DetectivePost } from 'src/post/entities/detective-post.entity';
@@ -50,7 +49,7 @@ export class Detective {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => DetectiveOffice, (office) => office.detective)
+  @OneToOne(() => DetectiveOffice, (office) => office.detective)
   @JoinColumn({ name: 'office_id' })
   detectiveOffice: DetectiveOffice;
 
@@ -63,9 +62,6 @@ export class Detective {
 
   @OneToOne(() => DetectivePost, (detectivePost) => detectivePost.detective)
   detectivePost: DetectivePost;
-
-  @OneToOne(() => Owner, (owner) => owner.detective)
-  owner: Owner;
 
   @OneToMany(() => Consultation, (consultation) => consultation.detective)
   consultation: Consultation[];
