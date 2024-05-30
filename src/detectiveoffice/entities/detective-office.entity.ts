@@ -13,7 +13,6 @@ import {
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
 import { Region } from '../../post/entities/region.entity';
-// import { OfficeRelationship } from './office-relationship.entity';
 import { DetectivePost } from '../../post/entities/detective-post.entity';
 
 @Entity({ name: 'detective_office' })
@@ -62,7 +61,4 @@ export class DetectiveOffice {
 
   @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detectiveOffice)
   detectivePost: DetectivePost[];
-
-  // @OneToOne(() => OfficeRelationship, (officeRelationship) => officeRelationship.detectiveOffice)
-  // officeRelationship: OfficeRelationship;
 }

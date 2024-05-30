@@ -4,11 +4,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
+import { WsAdapter } from '@nestjs/platform-ws';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
-  const port = configService.get<number>('SERVER_PORT');
+
+  app.useWebSocketAdapter(new WsAdapter(app));
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -16,8 +18,8 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
     }),
   );
-
-  app.use(cookieParser());
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('SERVER_PORT');
 
   const option = {
     swaggerOptions: {
