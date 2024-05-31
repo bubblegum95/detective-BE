@@ -12,7 +12,7 @@ async function bootstrap() {
   const redisService = app.get(RedisService);
   const redisIoAdapter = new RedisIoAdapter(app);
   redisIoAdapter.setRedisService(redisService);
-
+  app.useWebSocketAdapter(redisIoAdapter);
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
