@@ -4,14 +4,14 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
-import { RedisIoAdapter } from './redis-io.adapter';
+import { RedisIoAdapter } from './redis/redis-io.adapter';
+import { RedisService } from './redis/redis.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const redisService = app.get(RedisService);
   const redisIoAdapter = new RedisIoAdapter(app);
-
-  app.useWebSocketAdapter(redisIoAdapter);
-  await redisIoAdapter.connectToRedis();
+  redisIoAdapter.setRedisService(redisService);
 
   app.use(cookieParser());
   app.useGlobalPipes(

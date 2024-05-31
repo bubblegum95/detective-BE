@@ -1,55 +1,37 @@
 import {
-  WebSocketGateway,
   SubscribeMessage,
-  MessageBody,
+  WebSocketGateway,
+  OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  OnGatewayInit,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { ChatService } from './chat.service';
-import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import { Observable } from 'rxjs';
-import { RedisClientType } from 'redis';
+import { RedisService } from '../redis/redis.service';
 
-@WebSocketGateway(80, { namespace: 'chat', cors: { origin: '*' } })
+@WebSocketGateway()
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-  private readonly redisClient: RedisClientType;
-  private readonly logger: Logger = new Logger('ChatGateway');
-
   @WebSocketServer()
   server: Server;
 
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly redisService: RedisService) {}
 
   afterInit(server: Server) {
-    this.logger.log('웹소켓 서버 초기화');
-  }
-
-  handleDisconnect(client: Socket) {
-    this.logger.log(`Client Disconnected : ${client.id}`);
+    console.log('WebSocket server initialized');
   }
 
   handleConnection(client: Socket, ...args: any[]) {
-    this.logger.log(`Client Connected : ${client.id}`);
+    console.log(`Client connected: ${client.id}`);
   }
 
-  @SubscribeMessage('message')
-  handleMessage(client: Socket, payload: { sender: string; receiver: string; content: string }) {
-    this.logger.debug(`Received message: ${JSON.stringify(payload)}`); // 디버그 로그
-    try {
-      await this.messageService.saveMessage(payload.content, payload.sender, payload.receiver);
-      this.redisClient.publish('chat', JSON.stringify(payload));
-      this.server.to(payload.receiver).emit('message', payload);
-      this.logger.log(`Message sent to ${payload.receiver}`); // 일반 로그
-    } catch (error) {
-      this.logger.error('Error handling message', error.stack); // 오류 로그
-    }
+  handleDisconnect(client: Socket) {
+    console.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('join')
-  handleJoin(@MessageBody() data: string): Observable<any> {
-    return data;
+  @SubscribeMessage('chat message')
+  async handleMessage(client: Socket, payload: string): Promise<void> {
+    const cluster = this.redisService.getCluster();
+    await cluster.set(`message:${Date.now()}`, payload);
+    this.server.emit('chat message', payload);
   }
 }

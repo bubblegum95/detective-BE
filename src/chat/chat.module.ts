@@ -5,10 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Chat } from './entities/chat.entity';
 import { Message } from './entities/message.entity';
-import { RedisIoAdapter } from '../redis-io.adapter';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  providers: [ChatGateway, ChatService, RedisIoAdapter],
+  providers: [ChatGateway, ChatService, RedisModule],
   imports: [
     TypeOrmModule.forFeature([Chat]),
     MongooseModule.forFeature([{ name: 'Message', schema: Message }]),
