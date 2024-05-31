@@ -1,34 +1,55 @@
-import { WebSocketGateway, SubscribeMessage, MessageBody } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  SubscribeMessage,
+  MessageBody,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  OnGatewayInit,
+  WebSocketServer,
+} from '@nestjs/websockets';
 import { ChatService } from './chat.service';
-import { CreateChatDto } from './dto/create-chat.dto';
-import { UpdateChatDto } from './dto/update-chat.dto';
+import { Logger } from '@nestjs/common';
+import { Server, Socket } from 'socket.io';
+import { Observable } from 'rxjs';
+import { RedisClientType } from 'redis';
 
-@WebSocketGateway(80, { namespace })
-export class ChatGateway {
+@WebSocketGateway(80, { namespace: 'chat', cors: { origin: '*' } })
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+  private readonly redisClient: RedisClientType;
+  private readonly logger: Logger = new Logger('ChatGateway');
+
+  @WebSocketServer()
+  server: Server;
+
   constructor(private readonly chatService: ChatService) {}
 
-  @SubscribeMessage('createChat')
-  create(@MessageBody() createChatDto: CreateChatDto) {
-    return this.chatService.create(createChatDto);
+  afterInit(server: Server) {
+    this.logger.log('웹소켓 서버 초기화');
   }
 
-  @SubscribeMessage('findAllChat')
-  findAll() {
-    return this.chatService.findAll();
+  handleDisconnect(client: Socket) {
+    this.logger.log(`Client Disconnected : ${client.id}`);
   }
 
-  @SubscribeMessage('findOneChat')
-  findOne(@MessageBody() id: number) {
-    return this.chatService.findOne(id);
+  handleConnection(client: Socket, ...args: any[]) {
+    this.logger.log(`Client Connected : ${client.id}`);
   }
 
-  @SubscribeMessage('updateChat')
-  update(@MessageBody() updateChatDto: UpdateChatDto) {
-    return this.chatService.update(updateChatDto.id, updateChatDto);
+  @SubscribeMessage('message')
+  handleMessage(client: Socket, payload: { sender: string; receiver: string; content: string }) {
+    this.logger.debug(`Received message: ${JSON.stringify(payload)}`); // 디버그 로그
+    try {
+      await this.messageService.saveMessage(payload.content, payload.sender, payload.receiver);
+      this.redisClient.publish('chat', JSON.stringify(payload));
+      this.server.to(payload.receiver).emit('message', payload);
+      this.logger.log(`Message sent to ${payload.receiver}`); // 일반 로그
+    } catch (error) {
+      this.logger.error('Error handling message', error.stack); // 오류 로그
+    }
   }
 
-  @SubscribeMessage('removeChat')
-  remove(@MessageBody() id: number) {
-    return this.chatService.remove(id);
+  @SubscribeMessage('join')
+  handleJoin(@MessageBody() data: string): Observable<any> {
+    return data;
   }
 }

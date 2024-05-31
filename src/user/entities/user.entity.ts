@@ -12,7 +12,7 @@ import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
-import { ChatRoom } from '../../chat/entities/chat-room.entity';
+import { Chat } from '../../chat/entities/chat.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -47,11 +47,11 @@ export class User {
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
 
-  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.sender)
-  sentChatRoom: ChatRoom[];
+  @OneToMany(() => Chat, (chat) => chat.sender)
+  sentChatRoom: Chat[];
 
-  @OneToMany(() => ChatRoom, (chatRoom) => chatRoom.receiver)
-  receivedChatRoom: ChatRoom[];
+  @OneToMany(() => Chat, (chat) => chat.receiver)
+  receivedChatRoom: Chat[];
 
   @OneToMany(() => Review, (review) => review.consumer)
   review: Review[];

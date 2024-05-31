@@ -12,6 +12,7 @@ import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module'
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { ChatModule } from './chat/chat.module';
+import { RedisModule } from './redis/redis.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -44,6 +45,7 @@ const typeOrmModuleOptions = {
     ConsultationModule,
     ReviewModule,
     ChatModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

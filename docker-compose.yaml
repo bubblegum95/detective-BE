@@ -7,6 +7,54 @@ services:
     ports:
       - '5432:5432'
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+
+  redis-6000:
+    image: arm64v8/redis:latest
+    ports:
+      - '6000:6379'
+    volumes:
+      - ./redis-conf/redis-6000.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+
+  redis-6001:
+    image: arm64v8/redis:latest
+    ports:
+      - '6001:6379'
+    volumes:
+      - ./redis-conf/redis-6001.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+
+  redis-6002:
+    image: arm64v8/redis:latest
+    ports:
+      - '6002:6379'
+    volumes:
+      - ./redis-conf/redis-6002.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+
+  redis-6003:
+    image: arm64v8/redis:latest
+    ports:
+      - '6003:6379'
+    volumes:
+      - ./redis-conf/redis-6003.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+
+  redis-6004:
+    image: arm64v8/redis:latest
+    ports:
+      - '6004:6379'
+    volumes:
+      - ./redis-conf/redis-6004.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+
+  redis-6005:
+    image: arm64v8/redis:latest
+    ports:
+      - '6005:6379'
+    volumes:
+      - ./redis-conf/redis-6005.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
