@@ -1,29 +1,25 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  Query,
-  UploadedFile,
-} from '@nestjs/common';
+import { Controller, Post, Body, UploadedFile } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
+import { S3Service } from 'src/s3/s3.service';
 
-@Controller('post')
+@Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   // 탐정 프로필 생성
   @Post()
   async createProfile(
-    @UploadedFile() file: Express.Multer.File,
+    // @UploadedFile() file: Express.Multer.File,
     @Body() createPostDto: CreatePostDto,
   ) {
-    const profile = await this.postService.createProfile(file);
-    return profile;
+    // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
+
+    // createPostDto.profileImageUrl = uploadResult.Location;
+
+    return this.postService.createProfile(createPostDto);
   }
 }
