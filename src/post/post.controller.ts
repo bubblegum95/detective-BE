@@ -1,15 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFile, Get, Param, Query, Delete } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
+import { S3Service } from 'src/s3/s3.service';
 
 @Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly s3Service: S3Service,
+  ) {}
 
-  @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postService.create(createPostDto);
-  }
   // region별 조회
   @Get('/region/:regionId')
   async filterPostsByRegion(@Param('regionId') id: number) {
@@ -28,8 +28,16 @@ export class PostController {
     return { data };
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postService.remove(+id);
+  // 탐정 프로필 생성
+  @Post()
+  async createProfile(
+    // @UploadedFile() file: Express.Multer.File,
+    @Body() createPostDto: CreatePostDto,
+  ) {
+    // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
+
+    // createPostDto.profileImageUrl = uploadResult.Location;
+
+    return this.postService.createProfile(createPostDto);
   }
 }
