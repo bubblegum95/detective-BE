@@ -1,16 +1,15 @@
 import {
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Entity,
+  UpdateDateColumn,
+  OneToMany,
   Index,
   JoinColumn,
   ManyToOne,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
 } from 'typeorm';
-import { Owner } from './owner.entity';
+import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
 
 @Entity({ name: 'detective_office' })
@@ -21,13 +20,16 @@ export class DetectiveOffice {
   @Column({ type: 'bigint', name: 'owner_id', nullable: false })
   ownerId: number;
 
-  @Column({ type: 'bigint', name: 'region_id', nullable: false })
+  @Column({ type: 'bigint', name: 'region_id', nullable: true })
   regionId: number;
 
-  @Column({ type: 'text', nullable: false })
+  @Column({ type: 'bigint', name: 'location_id', nullable: false })
+  locationId: number;
+
+  @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   name: string;
 
   @Column({ type: 'bigint', nullable: false })
@@ -35,9 +37,6 @@ export class DetectiveOffice {
 
   @Column({ type: 'date', nullable: false })
   founded: Date;
-
-  @Column({ type: 'bigint', name: 'location_id', nullable: false })
-  locationId: number;
 
   @CreateDateColumn()
   createdAt: Date;
@@ -50,10 +49,6 @@ export class DetectiveOffice {
   @JoinColumn({ name: 'location_id' })
   location: Location;
 
-  //   @OneToMany(() => Detective, (detective) => detective.detectiveOffice)
-  //   detective: Detective[];
-
-  @OneToOne(() => Owner, (owner) => owner.detectiveOffice)
-  @JoinColumn({ name: 'owner_id' })
-  owner: Owner;
+  @OneToMany(() => Detective, (detective) => detective.detectiveOffice)
+  detective: Detective[];
 }

@@ -10,7 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { GlobalExceptionsFilter } from './global-exception.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { S3Module } from './s3/s3.module';
-import { DetectiveofficeModule } from './detectiveoffice/detectiveoffice.module';
+import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { ChatModule } from './chat/chat.module';

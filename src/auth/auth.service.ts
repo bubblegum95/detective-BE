@@ -7,8 +7,8 @@ import { CreateConsumerAuthDto } from './dto/create-consumer-auth.dto';
 import { CreateDetectiveAuthDto } from './dto/create-detective-auth.dto';
 import { Detective } from '../user/entities/detective.entity';
 import { Position } from './type/position-enum.type';
-import { Location } from '../detectiveoffice/entities/location.entity';
-import { DetectiveOffice } from '../detectiveoffice/entities/detective-office.entity';
+import { Location } from '../office/entities/location.entity';
+import { DetectiveOffice } from '../office/entities/detective-office.entity';
 
 @Injectable()
 export class AuthService {
