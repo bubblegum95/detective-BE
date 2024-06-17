@@ -21,7 +21,7 @@ const typeOrmModuleOptions = {
     port: configService.get('POSTGRES_PORT'),
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
-    database: configService.get('POSTGRES_NAME'),
+    database: configService.get('POSTGRES_DB'),
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: ['query', 'error'], // row query 출력
