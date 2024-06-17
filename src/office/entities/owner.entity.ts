@@ -4,8 +4,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
 
@@ -23,7 +23,7 @@ export class Owner {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Detective, (detective) => detective.owner)
+  @OneToOne(() => Detective, (detective) => detective.owner)
   @JoinColumn({ name: 'detective_id' })
   detective: Detective;
 }

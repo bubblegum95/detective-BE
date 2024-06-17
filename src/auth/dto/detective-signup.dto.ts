@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { Gender } from '../type/gender-enum.type';
 import { Position } from '../type/position-enum.type';
 
@@ -12,7 +12,7 @@ export class CreateDetectiveAuthDto {
   })
   name: string;
 
-  @IsEmail()
+  @IsEmail({}, { message: '이메일 형식에 맞지 않습니다.' })
   @IsNotEmpty({ message: '이메일을 입력해주세요' })
   @ApiProperty({
     example: 'example@gmail.com',
@@ -28,13 +28,14 @@ export class CreateDetectiveAuthDto {
   })
   nickname: string;
 
-  @IsNumber()
+  @IsString()
   @IsNotEmpty({ message: '휴대폰 번호를 입력해주세요' })
+  @Matches(/^\d{10,11}$/, { message: '휴대폰 번호는 10자리 또는 11자리의 숫자여야 합니다.' })
   @ApiProperty({
     example: '01012345678',
     description: '휴대폰 번호',
   })
-  phoneNumber: number;
+  phoneNumber: string;
 
   @IsString()
   @IsNotEmpty({ message: '비밀번호를 입력해주세요' })
@@ -69,10 +70,26 @@ export class CreateDetectiveAuthDto {
   position: Position;
 
   @IsString()
-  @IsNotEmpty({ message: '회사 주소를 입력해주세요' })
+  @IsOptional({ message: '사업장 주소를 입력해주세요' })
   @ApiProperty({
     example: '서울특별시 중구난방 뉘집이여 하온이네',
-    description: '직책',
+    description: '사업장 주소',
   })
   address: string;
+
+  @IsString()
+  @IsOptional({ message: '사업자등록번호를 입력해주세요.' })
+  @ApiProperty({
+    example: '0000000000',
+    description: '사업자등록번호',
+  })
+  businessNumber: string;
+
+  @IsString()
+  @IsOptional({ message: '설립일자를 입력해주세요.' })
+  @ApiProperty({
+    example: 'YYYYMMDD',
+    description: '설립일자',
+  })
+  founded: string;
 }

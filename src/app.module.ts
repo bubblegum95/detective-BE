@@ -7,8 +7,6 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { GlobalExceptionsFilter } from './global-exception.filter';
-import { APP_FILTER } from '@nestjs/core';
 import { S3Module } from './s3/s3.module';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
@@ -23,10 +21,10 @@ const typeOrmModuleOptions = {
     port: configService.get('POSTGRES_PORT'),
     username: configService.get('POSTGRES_USER'),
     password: configService.get('POSTGRES_PASSWORD'),
-    database: configService.get('POSTGRES_DB'),
+    database: configService.get('POSTGRES_NAME'),
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('POSTGRES_SYNC'),
-    logging: true, // row query 출력
+    logging: ['query', 'error'], // row query 출력
   }),
   inject: [ConfigService],
 };
@@ -48,12 +46,6 @@ const typeOrmModuleOptions = {
     ChatModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    {
-      provide: APP_FILTER,
-      useClass: GlobalExceptionsFilter,
-    },
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

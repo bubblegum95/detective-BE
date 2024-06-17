@@ -6,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -16,7 +17,7 @@ import { Category } from './category.entity';
 import { Career } from './career.entity';
 import { Detective } from '../../user/entities/detective.entity';
 import { Review } from '../../review/entities/review.entity';
-import { File } from '../../s3/entities/file.entity';
+import { File } from '../../s3/entities/s3.entity';
 
 @Entity({ name: 'detective_post' })
 export class DetectivePost {
@@ -29,6 +30,7 @@ export class DetectivePost {
   @Column({ type: 'bigint', name: 'profile_file_id', nullable: false })
   profileFileId: number;
 
+  @Index('detective_post_detective_id_index')
   @Column({ type: 'bigint', name: 'detective_id', nullable: false })
   detectiveId: number;
 
@@ -53,8 +55,7 @@ export class DetectivePost {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Index('detective_post_detective_id_index')
-  @ManyToOne(() => Detective, (detective) => detective.detectivePost)
+  @OneToOne(() => Detective, (detective) => detective.detectivePost)
   @JoinColumn({ name: 'detective_id' })
   detective: Detective;
 
@@ -62,7 +63,7 @@ export class DetectivePost {
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  @ManyToOne(() => License, (license) => license.detectivePost)
+  @OneToMany(() => License, (license) => license.detectivePost)
   @JoinColumn({ name: 'license_id' })
   license: License;
 

@@ -32,11 +32,11 @@ export class DetectiveOffice {
   @Column({ type: 'varchar', length: 255, nullable: true })
   name: string;
 
-  @Column({ type: 'bigint', nullable: false })
-  businessRegistrationNum: number;
+  @Column({ type: 'varchar', nullable: true })
+  businessRegistrationNum: string;
 
-  @Column({ type: 'date', nullable: false })
-  founded: Date;
+  @Column({ type: 'varchar', nullable: false })
+  founded: string;
 
   @CreateDateColumn()
   createdAt: Date;

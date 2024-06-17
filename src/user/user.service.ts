@@ -9,8 +9,4 @@ export class UserService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}
-  async findByEmail(email) {
-    console.log(email);
-    return await this.userRepository.findOneBy({ email });
-  }
 }
