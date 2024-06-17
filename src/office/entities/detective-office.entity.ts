@@ -8,9 +8,11 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
+import { OfficeRelationship } from './office-relationship.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {
@@ -51,4 +53,7 @@ export class DetectiveOffice {
 
   @OneToMany(() => Detective, (detective) => detective.detectiveOffice)
   detective: Detective[];
+
+  @OneToOne(() => OfficeRelationship, (officeRelationship) => officeRelationship.detectiveOffice)
+  officeRelationship: OfficeRelationship;
 }

@@ -19,6 +19,7 @@ import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Career } from 'src/post/entities/career.entity';
 import { DetectivePost } from 'src/post/entities/detective-post.entity';
 import { File } from 'src/s3/entities/s3.entity';
+import { OfficeRelationship } from 'src/office/entities/office-relationship.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
@@ -72,4 +73,7 @@ export class Detective {
 
   @OneToMany(() => WishList, (wishList) => wishList.detective)
   wishList: WishList[];
+
+  @OneToOne(() => OfficeRelationship, (officeRelationship) => officeRelationship.detective)
+  officeRelationship: OfficeRelationship;
 }
