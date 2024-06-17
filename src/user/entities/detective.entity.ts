@@ -13,12 +13,12 @@ import { User } from './user.entity';
 import { WishList } from './wish-list.entity';
 import { Gender } from '../../auth/type/gender-enum.type';
 import { Position } from '../../auth/type/position-enum.type';
-import { File } from '../../s3/entities/s3.entity';
-import { DetectiveOffice } from '../../detectiveoffice/entities/detective-office.entity';
-import { Owner } from '../../detectiveoffice/entities/owner.entity';
+import { DetectiveOffice } from '../../office/entities/detective-office.entity';
+import { Owner } from '../../office/entities/owner.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Career } from 'src/post/entities/career.entity';
 import { DetectivePost } from 'src/post/entities/detective-post.entity';
+import { File } from 'src/s3/entities/s3.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {

@@ -11,7 +11,6 @@ import {
 } from 'typeorm';
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
-import { Region } from '../../post/entities/region.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {
@@ -52,8 +51,4 @@ export class DetectiveOffice {
 
   @OneToMany(() => Detective, (detective) => detective.detectiveOffice)
   detective: Detective[];
-
-  @ManyToOne(() => Region, (region) => region.detectiveOffice)
-  @JoinColumn({ name: 'region_id' })
-  region: Region;
 }

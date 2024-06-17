@@ -1,36 +1,25 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFile } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { RegionEnum } from './type/region.type';
+import { S3Service } from 'src/s3/s3.service';
 
 @Controller('posts')
 export class PostController {
-  constructor(private readonly postService: PostService) {}
+  constructor(
+    private readonly postService: PostService,
+    private readonly s3Service: S3Service,
+  ) {}
 
+  // 탐정 프로필 생성
   @Post()
-  create(@Body() createPostDto: CreatePostDto) {
-    return this.postService.create(createPostDto);
-  }
-  // region별 조회
-  @Get('/region')
-  async findRegion(@Query('r') regionName: RegionEnum) {
-    const post = await this.postService.findRegion(regionName);
-    return { post };
-  }
+  async createProfile(
+    // @UploadedFile() file: Express.Multer.File,
+    @Body() createPostDto: CreatePostDto,
+  ) {
+    // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.postService.findOne(+id);
-  }
+    // createPostDto.profileImageUrl = uploadResult.Location;
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
-    return this.postService.update(+id, updatePostDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.postService.remove(+id);
+    return this.postService.createProfile(createPostDto);
   }
 }

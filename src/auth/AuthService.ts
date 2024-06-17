@@ -16,7 +16,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcrypt';
 import { SignInDto } from './dto/sign-in.dto';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
-import { Location } from 'src/office/entities/location.entity';
 
 @Injectable()
 export class AuthService {
@@ -143,34 +142,34 @@ export class AuthService {
         }
 
         // location 등록
-        const location = await queryRunner.manager.getRepository(Location).save({
-          address: createDetectiveAuthDto.address,
-        });
+        // const location = await queryRunner.manager.getRepository(Location).save({
+        //   address: createDetectiveAuthDto.address,
+        // });
 
-        // office 등록
-        const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
-          ownerId: user.id,
-          businessRegistrationNum: createDetectiveAuthDto.businessNumber,
-          founded: createDetectiveAuthDto.founded,
-          locationId: location.id,
-        });
+        // // office 등록
+        // const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
+        //   ownerId: user.id,
+        //   businessRegistrationNum: createDetectiveAuthDto.businessNumber,
+        //   founded: createDetectiveAuthDto.founded,
+        //   locationId: location.id,
+        // });
 
-        if (!office) {
-          throw new BadRequestException('office create error');
-        }
+        // if (!office) {
+        //   throw new BadRequestException('office create error');
+        // }
 
-        // detective 등록
-        const detective = await queryRunner.manager.getRepository(Detective).save({
-          userId: user.id,
-          officeId: office.id,
-          gender: createDetectiveAuthDto.gender,
-          position: createDetectiveAuthDto.position,
-          business_registration_file_id: fileId,
-        });
+        // // detective 등록
+        // const detective = await queryRunner.manager.getRepository(Detective).save({
+        //   userId: user.id,
+        //   officeId: office.id,
+        //   gender: createDetectiveAuthDto.gender,
+        //   position: createDetectiveAuthDto.position,
+        //   business_registration_file_id: fileId,
+        // });
 
-        if (!detective) {
-          throw new UnauthorizedException('detective create error');
-        }
+        // if (!detective) {
+        //   throw new UnauthorizedException('detective create error');
+        // }
       }
 
       await queryRunner.commitTransaction();
