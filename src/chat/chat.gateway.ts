@@ -10,6 +10,7 @@ import {
 import { Inject, OnModuleInit } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import Redis from 'ioredis';
+import { ChatService } from './chat.service';
 
 @WebSocketGateway()
 export class ChatGateway
@@ -21,6 +22,7 @@ export class ChatGateway
   constructor(
     @Inject('REDIS_PUBLISHER') private readonly redisPublisher: Redis,
     @Inject('REDIS_SUBSCRIBER') private readonly redisSubscriber: Redis,
+    private readonly chatService: ChatService,
   ) {}
 
   onModuleInit() {
@@ -54,7 +56,11 @@ export class ChatGateway
   }
 
   @SubscribeMessage('sendMessage')
-  handleMessage(@MessageBody() message: string): void {
-    this.redisPublisher.publish('messages', message);
+  async handleMessage(
+    @MessageBody() data: { content: string; sender: string; receiver: string },
+  ): Promise<void> {
+    const { content, sender, receiver } = data;
+    await this.chatService.createMessage(content, sender, receiver);
+    this.redisPublisher.publish('messages', JSON.stringify(data));
   }
 }

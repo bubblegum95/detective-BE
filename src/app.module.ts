@@ -12,7 +12,8 @@ import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { RedisModule } from './redis/redis.module';
-import { ChatGateway } from './chat/chat.gateway';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ChatModule } from './chat/chat.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -31,6 +32,7 @@ const typeOrmModuleOptions = {
 };
 @Module({
   imports: [
+    MongooseModule.forRoot('mongodb://localhost/nest'),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -45,8 +47,9 @@ const typeOrmModuleOptions = {
     ConsultationModule,
     ReviewModule,
     RedisModule,
+    ChatModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ChatGateway],
+  providers: [AppService],
 })
 export class AppModule {}
