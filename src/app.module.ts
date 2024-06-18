@@ -11,7 +11,8 @@ import { S3Module } from './s3/s3.module';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
-import { ChatModule } from './chat/chat.module';
+import { RedisModule } from './redis/redis.module';
+import { ChatGateway } from './chat/chat.gateway';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -43,9 +44,9 @@ const typeOrmModuleOptions = {
     AuthModule,
     ConsultationModule,
     ReviewModule,
-    ChatModule,
+    RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ChatGateway],
 })
 export class AppModule {}

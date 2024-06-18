@@ -77,7 +77,7 @@ export class CreateDetectiveAuthDto {
   })
   address: string;
 
-  @IsString()
+  @IsString() // 10자리
   @IsOptional({ message: '사업자등록번호를 입력해주세요.' })
   @ApiProperty({
     example: '0000000000',

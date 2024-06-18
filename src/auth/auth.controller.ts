@@ -10,25 +10,20 @@ import {
   Response,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService } from './AuthService';
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { S3Service } from '../s3/s3.service';
 import { SignInDto } from './dto/sign-in.dto';
-import { JwtService } from '@nestjs/jwt';
+import { AuthService } from './auth.service';
+
 @ApiTags('Auth')
 @ApiCookieAuth('JWT')
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
-  constructor(
-    private readonly authService: AuthService,
-    private readonly s3Service: S3Service,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly authService: AuthService) {}
 
   // consumer 회원가입
   @Post('signup/consumer')
@@ -122,14 +117,9 @@ export class AuthController {
     if (createDetectiveAuthDto.position === Position.Employee && createDetectiveAuthDto.founded) {
       throw new BadRequestException('설립일자 입력은 업주만 가능합니다');
     }
+
     try {
-      let fileId: number;
-
-      if (file) {
-        fileId = await this.s3Service.uploadRegistrationFile(file);
-      }
-
-      const detective = await this.authService.createDetective(createDetectiveAuthDto, fileId);
+      const detective = await this.authService.createDetective(createDetectiveAuthDto, file);
       console.log('detective', detective);
 
       if (!detective) {
