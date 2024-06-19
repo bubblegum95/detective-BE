@@ -1,8 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 
-@Entity({ name: 'chat_room' })
-export class ChatRoom {
+@Entity({ name: 'chat' })
+export class Chat {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 

@@ -1,8 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, Matches } from 'class-validator';
 import { Gender } from '../type/gender-enum.type';
+import { Position } from '../type/position-enum.type';
 
-export class CreateDetectiveAuthDto {
+export class CreateDetectiveEmployeeAuthDto {
   @IsString()
   @IsNotEmpty({ message: '이름을 입력해주세요' })
   @ApiProperty({
@@ -59,28 +60,4 @@ export class CreateDetectiveAuthDto {
     description: '성별',
   })
   gender: Gender;
-
-  @IsString()
-  @ApiProperty({
-    example: '서울특별시 중구난방 뉘집이여 하온이네',
-    description: '사업장 주소',
-  })
-  address: string;
-
-  @IsString() // 10자리
-  @ApiProperty({
-    example: '0000000000',
-    description: '사업자등록번호',
-  })
-  businessNumber: string;
-
-  @IsString()
-  @ApiProperty({
-    example: 'YYYYMMDD',
-    description: '설립일자',
-  })
-  founded: string;
-
-  @ApiProperty({ type: 'string', format: 'binary' })
-  file: any;
 }
