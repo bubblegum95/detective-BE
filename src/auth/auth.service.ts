@@ -59,7 +59,22 @@ export class AuthService {
     return user;
   }
 
+  async createUserInfo(name, email, nickname, phoneNumber, password) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    const hashedPassword = await hash(password, 10);
+    const user = await queryRunner.manager.getRepository(User).save({
+      email: email,
+      name: name,
+      password: hashedPassword,
+      nickname: nickname,
+      phoneNumber: phoneNumber,
+    });
+
+    return user;
+  }
+
   async createConsumer(createConsumerAuthDto: CreateConsumerAuthDto) {
+    const { email, name, password, nickname, phoneNumber } = createConsumerAuthDto;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -76,14 +91,46 @@ export class AuthService {
     }
 
     try {
-      const hashedPassword = await hash(createConsumerAuthDto.password, 10);
+      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
 
-      const user = await queryRunner.manager.getRepository(User).save({
-        email: createConsumerAuthDto.email,
-        name: createConsumerAuthDto.name,
-        password: hashedPassword,
-        nickname: createConsumerAuthDto.nickname,
-        phoneNumber: createConsumerAuthDto.phoneNumber,
+      await queryRunner.commitTransaction();
+
+      return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      console.error(error.message);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createDetectiveWithNoFile(createDetectiveAuthDto: CreateDetectiveAuthDto) {
+    const { name, email, nickname, phoneNumber, password, passwordConfirm, gender, position } =
+      createDetectiveAuthDto;
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    const userExistence = await this.existedEmail(email);
+
+    if (userExistence) {
+      await queryRunner.release();
+      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
+    }
+
+    if (password !== passwordConfirm) {
+      await queryRunner.release();
+      throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
+    }
+
+    try {
+      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
+
+      await this.dataSource.manager.getRepository(Detective).save({
+        userId: user.id,
+        gender: gender,
+        position: position,
       });
 
       await queryRunner.commitTransaction();
@@ -92,6 +139,7 @@ export class AuthService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
       console.error(error.message);
+      error.message;
     } finally {
       await queryRunner.release();
     }
@@ -141,68 +189,59 @@ export class AuthService {
         phoneNumber: phoneNumber,
       });
 
-      if (position === Position.Employee) {
-        await this.dataSource.manager.getRepository(Detective).save({
-          userId: user.id,
-          gender: gender,
-          position: position,
-        });
+      // 사업자 등록 정보 검증
+      const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
+
+      if (!validateBusiness) {
+        throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
       }
 
-      if (position === Position.Employer) {
-        // 사업자 등록 정보 검증
-        const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
+      if (!validateBusiness.ok) {
+        const errorText = await validateBusiness.text();
+        throw new Error(errorText);
+      }
 
-        if (!validateBusiness) {
-          throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
-        }
+      const result = await validateBusiness.json();
+      console.log(result);
 
-        if (!validateBusiness.ok) {
-          const errorText = await validateBusiness.text();
-          throw new Error(errorText);
-        }
+      if (result.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
+        throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
+      }
 
-        const result = await validateBusiness.json();
-        console.log(result);
+      if (founded !== result.data[0].b_stt) {
+        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
+      }
 
-        if (founded !== result.data[0].b_stt) {
-          throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-        }
+      // location 등록
+      const location = await queryRunner.manager.getRepository(Location).save({
+        address: address,
+      });
 
-        if (result.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
-          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
-        }
-        // location 등록
-        const location = await queryRunner.manager.getRepository(Location).save({
-          address: address,
-        });
+      // office 등록
+      const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
+        ownerId: user.id,
+        businessRegistrationNum: businessNumber,
+        founded: founded,
+        locationId: location.id,
+      });
 
-        // office 등록
-        const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
-          ownerId: user.id,
-          businessRegistrationNum: businessNumber,
-          founded: founded,
-          locationId: location.id,
-        });
+      if (!office) {
+        throw new BadRequestException('office create error');
+      }
 
-        if (!office) {
-          throw new BadRequestException('office create error');
-        }
+      const fileId = await this.s3Service.uploadRegistrationFile(file);
 
-        const fileId = await this.s3Service.uploadRegistrationFile(file);
+      // detective 등록
+      const detective = await queryRunner.manager.getRepository(Detective).save({
+        userId: user.id,
+        officeId: office.id,
+        gender: gender,
+        position: position,
+        business_registration_file_id: fileId,
+      });
 
-        // detective 등록
-        const detective = await queryRunner.manager.getRepository(Detective).save({
-          userId: user.id,
-          officeId: office.id,
-          gender: gender,
-          position: position,
-          business_registration_file_id: fileId,
-        });
-
-        if (!detective) {
-          throw new UnauthorizedException('detective create error');
-        }
+      if (!detective) {
+        throw new UnauthorizedException('detective create error');
       }
 
       await queryRunner.commitTransaction();

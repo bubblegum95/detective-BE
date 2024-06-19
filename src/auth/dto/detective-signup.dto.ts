@@ -92,4 +92,8 @@ export class CreateDetectiveAuthDto {
     description: '설립일자',
   })
   founded: string;
+
+  @IsOptional({ message: '사업자등록증을 업로드해주세요.' })
+  @ApiProperty({ type: 'string', format: 'binary' })
+  file: any;
 }
