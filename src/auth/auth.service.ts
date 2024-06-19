@@ -18,6 +18,7 @@ import { S3Service } from '../s3/s3.service';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 import { Location } from 'src/office/entities/location.entity';
 import { UserService } from '../user/user.service';
+import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
 
 @Injectable()
 export class AuthService {
@@ -34,7 +35,7 @@ export class AuthService {
       console.log('foundEmail');
       return foundEmail;
     } catch (error) {
-      console.error(error.message);
+      throw error;
     }
   }
 
@@ -44,33 +45,41 @@ export class AuthService {
 
       return foundUser;
     } catch (error) {
-      console.error(error.message);
+      throw error;
     }
   }
 
   async validateUser({ email, password }: SignInDto) {
-    const user = await this.userService.findUser(email, password);
-    const isPasswordMatched = bcrypt.compareSync(password, user?.password ?? '');
+    try {
+      const user = await this.userService.findUser(email, password);
+      const isPasswordMatched = bcrypt.compareSync(password, user?.password ?? '');
 
-    if (!user || !isPasswordMatched) {
-      throw new UnauthorizedException('일치하는 회원정보가 없습니다');
+      if (!user || !isPasswordMatched) {
+        throw new UnauthorizedException('일치하는 회원정보가 없습니다');
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
     }
-
-    return user;
   }
 
   async createUserInfo(name, email, nickname, phoneNumber, password) {
-    const queryRunner = this.dataSource.createQueryRunner();
-    const hashedPassword = await hash(password, 10);
-    const user = await queryRunner.manager.getRepository(User).save({
-      email: email,
-      name: name,
-      password: hashedPassword,
-      nickname: nickname,
-      phoneNumber: phoneNumber,
-    });
+    try {
+      const queryRunner = this.dataSource.createQueryRunner();
+      const hashedPassword = await hash(password, 10);
+      const user = await queryRunner.manager.getRepository(User).save({
+        email: email,
+        name: name,
+        password: hashedPassword,
+        nickname: nickname,
+        phoneNumber: phoneNumber,
+      });
 
-    return user;
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async createConsumer(createConsumerAuthDto: CreateConsumerAuthDto) {
@@ -98,15 +107,15 @@ export class AuthService {
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error(error.message);
+      throw error;
     } finally {
       await queryRunner.release();
     }
   }
 
-  async createDetectiveWithNoFile(createDetectiveAuthDto: CreateDetectiveAuthDto) {
-    const { name, email, nickname, phoneNumber, password, passwordConfirm, gender, position } =
-      createDetectiveAuthDto;
+  async createDetectiveWithNoFile(createDetectiveEmployeeAuthDto: CreateDetectiveEmployeeAuthDto) {
+    const { name, email, nickname, phoneNumber, password, passwordConfirm, gender } =
+      createDetectiveEmployeeAuthDto;
 
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -130,7 +139,7 @@ export class AuthService {
       await this.dataSource.manager.getRepository(Detective).save({
         userId: user.id,
         gender: gender,
-        position: position,
+        position: Position.Employee,
       });
 
       await queryRunner.commitTransaction();
@@ -138,8 +147,7 @@ export class AuthService {
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error(error.message);
-      error.message;
+      throw error;
     } finally {
       await queryRunner.release();
     }
@@ -157,7 +165,6 @@ export class AuthService {
       password,
       passwordConfirm,
       gender,
-      position,
       address,
       businessNumber,
       founded,
@@ -179,15 +186,7 @@ export class AuthService {
     }
 
     try {
-      const hashedPassword = await hash(password, 10);
-
-      const user = await queryRunner.manager.getRepository(User).save({
-        email: email,
-        name: name,
-        password: hashedPassword,
-        nickname: nickname,
-        phoneNumber: phoneNumber,
-      });
+      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
 
       // 사업자 등록 정보 검증
       const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
@@ -236,7 +235,7 @@ export class AuthService {
         userId: user.id,
         officeId: office.id,
         gender: gender,
-        position: position,
+        position: Position.Employer,
         business_registration_file_id: fileId,
       });
 
@@ -249,8 +248,7 @@ export class AuthService {
       return user;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      console.error(error.message);
-      error.message;
+      throw error;
     } finally {
       await queryRunner.release();
     }
@@ -304,7 +302,7 @@ export class AuthService {
 
       return accessToken;
     } catch (error) {
-      return console.error(error.message);
+      throw error;
     }
   }
 }

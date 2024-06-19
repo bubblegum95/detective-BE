@@ -18,6 +18,7 @@ import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
+import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
 
 @ApiTags('Auth')
 @ApiCookieAuth('JWT')
@@ -42,11 +43,15 @@ export class AuthController {
   // detective/employee 회원가입
   @Post('signup/employee')
   @ApiOperation({ summary: '탐정 직원 회원가입', description: '탐정 직원 회원가입' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({ type: CreateDetectiveAuthDto })
-  async detectiveEmployeeSignUp(@Body() createDetectiveAuthDto: CreateDetectiveAuthDto) {
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBody({ type: CreateDetectiveEmployeeAuthDto })
+  async detectiveEmployeeSignUp(
+    @Body() createDetectiveEmployeeAuthDto: CreateDetectiveEmployeeAuthDto,
+  ) {
     try {
-      const detective = await this.authService.createDetectiveWithNoFile(createDetectiveAuthDto);
+      const detective = await this.authService.createDetectiveWithNoFile(
+        createDetectiveEmployeeAuthDto,
+      );
       console.log('detective', detective);
 
       if (!detective) {
@@ -70,28 +75,26 @@ export class AuthController {
   @Post('signup/employer')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: '탐정 회원가입', description: '탐정 회원가입' })
+  @ApiOperation({ summary: '탐정 업주 회원가입', description: '탐정 업주 회원가입' })
   @ApiBody({ type: CreateDetectiveAuthDto })
   async detectiveSignUp(
+    @Res() res,
     @Body() createDetectiveAuthDto: CreateDetectiveAuthDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (createDetectiveAuthDto.position === Position.Employer && !file) {
+    if (!file) {
       throw new BadRequestException('파일을 업로드해주세요');
     }
 
-    if (createDetectiveAuthDto.position === Position.Employer && !createDetectiveAuthDto.address) {
+    if (!createDetectiveAuthDto.address) {
       throw new BadRequestException('사업장 주소를 입력해주세요');
     }
 
-    if (
-      createDetectiveAuthDto.position === Position.Employer &&
-      !createDetectiveAuthDto.businessNumber
-    ) {
+    if (!createDetectiveAuthDto.businessNumber) {
       throw new BadRequestException('사업자등록번호를 입력해주세요.');
     }
 
-    if (createDetectiveAuthDto.position === Position.Employer && !createDetectiveAuthDto.founded) {
+    if (!createDetectiveAuthDto.founded) {
       throw new BadRequestException('설립일자를 입력해주세요.');
     }
 
@@ -99,20 +102,12 @@ export class AuthController {
       const detective = await this.authService.createDetective(createDetectiveAuthDto, file);
       console.log('detective', detective);
 
-      if (!detective) {
-        throw new Error('계정을 생성할 수 없습니다');
-      }
-
       return {
         success: true,
         message: '회원가입이 완료되었습니다',
       };
     } catch (error) {
-      console.error(error.message);
-      return {
-        success: false,
-        message: error.message,
-      };
+      return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
     }
   }
 
