@@ -10,7 +10,7 @@ import {
   Response,
   HttpStatus,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService } from './AuthService';
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';

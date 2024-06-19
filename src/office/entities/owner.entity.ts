@@ -1,14 +1,13 @@
 import {
+  Entity,
+  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToOne,
-  PrimaryGeneratedColumn,
   UpdateDateColumn,
+  JoinColumn,
+  OneToOne,
 } from 'typeorm';
-import { DetectiveOffice } from './detective-office.entity';
+import { Detective } from '../../user/entities/detective.entity';
 
 @Entity({ name: 'owner' })
 export class Owner {
@@ -24,11 +23,7 @@ export class Owner {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  // @ManyToOne(() => Detective, (detective: { owner: any }) => detective.owner)
-  // @JoinColumn({ name: 'detective_id' })
-  // detective: Detective;
-
-  @OneToOne(() => DetectiveOffice, (detectiveOffice) => detectiveOffice.owner)
-  @JoinColumn({ name: 'detectiveOffice_id' })
-  detectiveOffice: DetectiveOffice;
+  @OneToOne(() => Detective, (detective) => detective.owner)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 }
