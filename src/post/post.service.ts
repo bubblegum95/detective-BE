@@ -26,7 +26,7 @@ export class PostService {
       const equipment = await queryRunner.manager.save(Equipment, createPostDto.equipment);
       const region = await queryRunner.manager.save(Region, createPostDto.region);
       const category = await queryRunner.manager.save(Category, createPostDto.category);
-
+      console.log(career);
       const detectivePost = new DetectivePost();
       detectivePost.description = createPostDto.description;
       detectivePost.careerId = career.id;
@@ -41,9 +41,13 @@ export class PostService {
       return detectivePost;
     } catch (err) {
       await queryRunner.rollbackTransaction();
-      throw err;
+      throw new Error(`프로필 생성에 실패하였습니다: ${err.message}`);
     } finally {
       await queryRunner.release();
     }
+  }
+
+  daeunbabo() {
+    return { message: 'hi' };
   }
 }
