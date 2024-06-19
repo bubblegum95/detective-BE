@@ -118,7 +118,9 @@ export class AuthController {
   @ApiBody({ type: SignInDto })
   async signIn(@Res() res, @Body() signInDto: SignInDto) {
     try {
-      const token = this.authService.signIn(signInDto);
+      const token = await this.authService.signIn(signInDto);
+
+      if (!token) throw new UnauthorizedException('로그인에 실패하였습니다.');
 
       return res
         .cookie('authorization', `Bearer ${token}`, {
@@ -129,12 +131,7 @@ export class AuthController {
         .status(HttpStatus.OK)
         .json({ message: '성공적으로 로그인하였습니다.' });
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
-      }
-      return res
-        .status(HttpStatus.INTERNAL_SERVER_ERROR)
-        .json({ message: '로그인에 실패했습니다.' });
+      return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
     }
   }
 

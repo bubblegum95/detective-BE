@@ -51,7 +51,7 @@ export class AuthService {
 
   async validateUser({ email, password }: SignInDto) {
     try {
-      const user = await this.userService.findUser(email, password);
+      const user = await this.userService.findUser(email);
       const isPasswordMatched = bcrypt.compareSync(password, user?.password ?? '');
 
       if (!user || !isPasswordMatched) {
@@ -299,6 +299,7 @@ export class AuthService {
         secret: process.env.ACCESS_SECRET,
         expiresIn: '7d',
       });
+      console.log(accessToken);
 
       return accessToken;
     } catch (error) {

@@ -26,16 +26,20 @@ export class UserService {
     return foundUser;
   }
 
-  async findUser(email: string, password: string) {
-    const foundUser = await this.userRepository.findOne({
-      where: { email, password },
-      select: { id: true, email: true, password: true },
-    });
+  async findUser(email: string) {
+    try {
+      const foundUser = await this.userRepository.findOne({
+        where: { email },
+        select: { id: true, email: true, password: true },
+      });
 
-    if (!foundUser) {
-      throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
+      if (!foundUser) {
+        throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
+      }
+
+      return foundUser;
+    } catch (error) {
+      throw error;
     }
-
-    return foundUser;
   }
 }
