@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Client</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>WebSocket Client</h1>
+    <input id="roomInput" type="text" placeholder="Enter room" />
+    <button onclick="joinRoom()">Join Room</button>
+    <br /><br />
+    <input id="messageInput" type="text" placeholder="Enter message" />
+    <button onclick="sendMessage()">Send Message</button>
+    <ul id="messages"></ul>
+
+    <script>
+      const socket = io('http://localhost:3000');
+
+      function joinRoom() {
+        const room = document.getElementById('roomInput').value;
+        socket.emit('joinRoom', { room: room });
+        socket.on('joinedRoom', (room) => {
+          console.log(`Joined room: ${room}`);
+        });
+      }
+
+      socket.on('message', (message) => {
+        const li = document.createElement('li');
+        li.textContent = message;
+        document.getElementById('messages').appendChild(li);
+      });
+
+      function sendMessage() {
+        const message = document.getElementById('messageInput').value;
+        const room = document.getElementById('roomInput').value;
+        socket.emit('message', { room: room, message: message });
+      }
+    </script>
+  </body>
+</html>

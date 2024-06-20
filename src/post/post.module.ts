@@ -11,10 +11,13 @@ import { Detective } from 'src/user/entities/detective.entity';
 import { User } from 'src/user/entities/user.entity';
 import { DetectivePost } from './entities/detective-post.entity';
 import { S3Module } from 'src/s3/s3.module';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
     S3Module,
+    AuthModule,
     TypeOrmModule.forFeature([
       DetectivePost,
       Region,
@@ -25,6 +28,7 @@ import { S3Module } from 'src/s3/s3.module';
       Detective,
       User,
       Detective,
+      JwtModule,
     ]),
   ],
   controllers: [PostController],

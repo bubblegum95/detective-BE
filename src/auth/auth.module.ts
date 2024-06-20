@@ -6,7 +6,7 @@ import { User } from '../user/entities/user.entity';
 import { Detective } from '../user/entities/detective.entity';
 import { S3Module } from '../s3/s3.module';
 import { HttpModule } from '@nestjs/axios';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -14,7 +14,7 @@ import { AuthService } from './auth.service';
 
 @Module({
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtService, JwtStrategy],
   imports: [
     UserModule,
     S3Module,
@@ -32,5 +32,6 @@ import { AuthService } from './auth.service';
       }),
     }),
   ],
+  exports: [JwtModule, JwtService],
 })
 export class AuthModule {}

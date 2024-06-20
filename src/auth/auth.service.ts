@@ -299,7 +299,6 @@ export class AuthService {
         secret: process.env.ACCESS_SECRET,
         expiresIn: '7d',
       });
-      console.log(accessToken);
 
       return accessToken;
     } catch (error) {

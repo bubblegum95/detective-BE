@@ -1,24 +1,42 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthService } from '../auth.service';
+import { ConfigService } from '@nestjs/config';
+import { UserService } from '../../user/user.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly userService: UserService,
+  ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: ExtractJwt.fromExtractors([JwtStrategy.extractJWT]),
+      secretOrKey: configService.get<string>('JWT_SECRET'),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET,
     });
   }
 
-  // 토큰 유효성 검사
-  async validate(payload: any) {
-    const user = await this.authService.existedUserId(payload.id);
-    if (!user) {
-      throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
+  private static extractJWT(req): string | null {
+    const { authorization } = req.cookies;
+
+    if (authorization) {
+      const [tokenType, token] = authorization.split(' ');
+      if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
+      if (token) {
+        return token;
+      }
     }
-    return user; // 리턴된 유저 정보는 Request 객체에 user 필드로 추가됩니다.
+    return null;
+  }
+
+  async validate(payload: any) {
+    try {
+      const user = await this.userService.findUserbyId(payload.id);
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
   }
 }
