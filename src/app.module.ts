@@ -14,6 +14,7 @@ import { ReviewModule } from './review/review.module';
 import { RedisModule } from './redis/redis.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
+import { JwtModule } from '@nestjs/jwt';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -43,11 +44,18 @@ const typeOrmModuleOptions = {
     DetectiveofficeModule,
     PostModule,
     UserModule,
-    AuthModule,
     ConsultationModule,
     ReviewModule,
     RedisModule,
     ChatModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

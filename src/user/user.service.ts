@@ -11,13 +11,17 @@ export class UserService {
   ) {}
 
   async findUserbyId(userId: number) {
-    const foundUser = await this.userRepository.findOneBy({ id: userId });
+    try {
+      const foundUser = await this.userRepository.findOneBy({ id: userId });
 
-    if (!foundUser) {
-      throw new UnauthorizedException('일치하는 회원 정보가 없습니다.');
+      if (!foundUser) {
+        throw new UnauthorizedException('일치하는 회원 정보가 없습니다.');
+      }
+
+      return foundUser;
+    } catch (error) {
+      throw error;
     }
-
-    return foundUser;
   }
 
   async findUserbyEmail(email: string) {

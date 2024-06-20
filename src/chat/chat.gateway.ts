@@ -6,13 +6,15 @@ import {
   OnGatewayInit,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  ConnectedSocket,
 } from '@nestjs/websockets';
 import { Inject, OnModuleInit } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import Redis from 'ioredis';
 import { ChatService } from './chat.service';
+import { MessageBodyDto } from './dto/message-body.dto';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: { origin: '*' } })
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
@@ -55,12 +57,25 @@ export class ChatGateway
     console.log('Client disconnected:', client.id);
   }
 
-  @SubscribeMessage('sendMessage')
-  async handleMessage(
-    @MessageBody() data: { content: string; sender: string; receiver: string },
-  ): Promise<void> {
-    const { content, sender, receiver } = data;
-    await this.chatService.createMessage(content, sender, receiver);
-    this.redisPublisher.publish('messages', JSON.stringify(data));
+  // @SubscribeMessage('message')
+  // async handleMessage(@MessageBody() data: MessageBodyDto): Promise<void> {
+  //   await this.chatService.createMessage(data);
+  //   this.redisPublisher.publish('messages', JSON.stringify(data));
+  // }
+
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(@MessageBody() data: { room: string }, @ConnectedSocket() client: Socket): void {
+    console.log('room: ', data.room);
+    client.join(data.room);
+    client.emit('joinedRoom', data.room);
+  }
+
+  @SubscribeMessage('message')
+  handleMessage(
+    @MessageBody() data: { room: string; message: string },
+    @ConnectedSocket() client: Socket,
+  ): void {
+    console.log('message: ', data.message);
+    this.server.to(data.room).emit('message', data.message);
   }
 }
