@@ -18,6 +18,7 @@ import { Career } from './career.entity';
 import { Detective } from '../../user/entities/detective.entity';
 import { Review } from '../../review/entities/review.entity';
 import { File } from '../../s3/entities/s3.entity';
+import { DetectiveOffice } from '../../office/entities/detective-office.entity';
 
 @Entity({ name: 'detective_post' })
 export class DetectivePost {
@@ -36,6 +37,9 @@ export class DetectivePost {
 
   @Column({ type: 'bigint', name: 'career_id', nullable: true })
   careerId: number;
+
+  @Column({ type: 'bigint', name: 'office_id', nullable: false })
+  officeId: number;
 
   @Column({ type: 'bigint', name: 'license_id', nullable: true })
   licenseId: number;
@@ -85,4 +89,8 @@ export class DetectivePost {
   @ManyToOne(() => File, (file) => file.detectivePost)
   @JoinColumn({ name: 'profile_file_id' })
   profileFile: File;
+
+  @ManyToOne(() => DetectiveOffice, (detectiveOffice) => detectiveOffice.detectivePost)
+  @JoinColumn({ name: 'office_id' })
+  detectiveOffice: DetectiveOffice;
 }
