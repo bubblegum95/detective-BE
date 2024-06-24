@@ -1,19 +1,85 @@
-import { IsNotEmpty, IsString } from 'class-validator';
-import { CreateLicenseDto } from './create-licnese.dto';
-import { CreateCareerDto } from './create-career.dto';
-import { CreateCategoryDto } from './create-category.dto';
-import { CreateEquipmentDto } from './create-equipment.dto';
-import { CreateRegionDto } from './create-region.dto';
+import { IsString, IsNotEmpty, ValidateNested, IsDateString, IsEnum } from 'class-validator';
+import { Type } from 'class-transformer';
+import { RegionEnum } from '../type/region.type';
+import { CategoryEnum } from '../type/category.type';
+import { EquipmentEnum } from '../type/equiment.type';
+
+class CareerDto {
+  @IsDateString()
+  startDate: string;
+
+  @IsDateString()
+  endDate: string;
+
+  @IsString()
+  @IsNotEmpty()
+  businessDetails: string;
+
+  @IsString()
+  @IsNotEmpty()
+  corporateName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  position: string;
+}
+
+class LicenseDto {
+  @IsDateString()
+  issuedAt: string;
+
+  @IsString()
+  @IsNotEmpty()
+  issuedBy: string;
+
+  @IsString()
+  @IsNotEmpty()
+  title: string;
+}
+
+class RegionDto {
+  @IsEnum(RegionEnum)
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+class CategoryDto {
+  @IsEnum(CategoryEnum)
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+class EquipmentDto {
+  @IsEnum(EquipmentEnum)
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
 
 export class CreatePostDto {
   @IsString()
   @IsNotEmpty()
-  readonly description: string;
-  // profileFile: CreateFileDto;
-  detectiveId: number;
-  career: CreateCareerDto;
-  license: CreateLicenseDto;
-  region: CreateRegionDto;
-  category: CreateCategoryDto;
-  equipment: CreateEquipmentDto;
+  description: string;
+
+  @ValidateNested()
+  @Type(() => CareerDto)
+  career: CareerDto;
+
+  @ValidateNested()
+  @Type(() => LicenseDto)
+  license: LicenseDto;
+
+  @ValidateNested()
+  @Type(() => RegionDto)
+  region: RegionDto;
+
+  @ValidateNested()
+  @Type(() => CategoryDto)
+  category: CategoryDto;
+
+  @ValidateNested()
+  @Type(() => EquipmentDto)
+  equipment: EquipmentDto;
 }
