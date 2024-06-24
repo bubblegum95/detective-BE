@@ -21,8 +21,22 @@ export class ReviewService {
     private readonly dataSource: DataSource,
   ) {}
   // 작성
-  async writeReview(createReviewDTO: CreateReviewDTO) {
+  async writeReview(createReviewDTO: CreateReviewDTO, userId: number, postId: number) {
+    console.log('ReviewService ~ writeReview ~ userId:', userId);
     const { comment, reliability, speed, accuracy, completion } = createReviewDTO;
-    await this.reviewRepo.create();
+    // const totalScore: number = parseFloat((reliability + speed + accuracy + completion) / 4);
+    const totalScore2: number = reliability + speed + accuracy + completion;
+    console.log('ReviewService ~ writeReview ~ totalScore:', totalScore2);
+    const review = await this.reviewRepo.save({
+      consumerId: +userId,
+      detectivePostId: +postId,
+      comment,
+      reliability,
+      speed,
+      accuracy,
+      completion,
+      totalScore: totalScore2,
+    });
+    return review;
   }
 }
