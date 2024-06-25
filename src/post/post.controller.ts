@@ -7,7 +7,6 @@ import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@UseGuards(JwtAuthGuard)
 @ApiTags('Post')
 @Controller('posts')
 export class PostController {
@@ -24,8 +23,8 @@ export class PostController {
   }
 
   @Get('/category/:categoryId')
-  filterPostsByCategory(@Param('categoryId') id: string) {
-    return this.postService.filterPostsByCategory(+id);
+  filterPostsByCategory(@Param('categoryId') id: number) {
+    return this.postService.filterPostsByCategory(id);
   }
 
   @Get('/keyword')
@@ -35,6 +34,7 @@ export class PostController {
   }
 
   // 탐정 프로필 생성
+  @UseGuards(JwtAuthGuard)
   @Post()
   @ApiOperation({ summary: '탐정 프로필 생성', description: '탐정 프로필 생성' })
   @ApiBody({ type: CreatePostDto })
