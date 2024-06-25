@@ -15,10 +15,10 @@ import { Gender } from '../../auth/type/gender-enum.type';
 import { Position } from '../../auth/type/position-enum.type';
 import { DetectiveOffice } from '../../office/entities/detective-office.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
-import { Career } from 'src/post/entities/career.entity';
-import { DetectivePost } from 'src/post/entities/detective-post.entity';
-import { File } from 'src/s3/entities/s3.entity';
-import { OfficeRelationship } from 'src/office/entities/office-relationship.entity';
+import { Career } from '../../post/entities/career.entity';
+import { DetectivePost } from '../../post/entities/detective-post.entity';
+import { File } from '../../s3/entities/s3.entity';
+import { OfficeRelationship } from '../../office/entities/office-relationship.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {

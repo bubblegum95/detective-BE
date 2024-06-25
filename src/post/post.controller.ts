@@ -1,10 +1,7 @@
 import { Controller, Post, Body, UploadedFile, Get, UseGuards, Param, Query } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
-import { S3Service } from 'src/s3/s3.service';
-import { RegionEnum } from './type/region.type';
-import { CategoryEnum } from './type/category.type';
-import { EquipmentEnum } from './type/equiment.type';
+import { S3Service } from '../s3/s3.service';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
