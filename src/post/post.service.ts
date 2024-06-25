@@ -12,6 +12,8 @@ import { Equipment } from './entities/equipment.entity';
 import { Category } from './entities/category.entity';
 import { EquipmentEnum } from './type/equiment.type';
 import { CategoryEnum } from './type/category.type';
+import { User } from 'src/user/entities/user.entity';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class PostService {
@@ -21,6 +23,7 @@ export class PostService {
     private detectivePostRepo: Repository<DetectivePost>,
     @InjectRepository(Region)
     private regionRepo: Repository<Region>,
+    private userService: UserService,
   ) {}
 
   // 지역별 조회
@@ -58,58 +61,72 @@ export class PostService {
 
   // 탐정 프로필 생성
 
-  async createProfile(createPostDto: CreatePostDto) {
+  async createProfile(createPostDto: CreatePostDto, userId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      const career = await queryRunner.manager.save(Career, createPostDto.career);
+      const user = await this.userService.findOneById(userId);
+      const detectiveId = user.detective ? user.detective.id : null;
+
+      if (!detectiveId) {
+        throw new Error('탐정 로그인이 필요합니다.');
+      }
+
+      createPostDto.detectiveId = detectiveId;
+
+      const career = new Career();
+      Object.assign(career, createPostDto.career);
+      career.detectiveId = detectiveId;
+      const saveCareer = await queryRunner.manager.save(career);
+
       const license = await queryRunner.manager.save(License, createPostDto.license);
 
-      const equipment = new Equipment();
       const equipmentName = createPostDto.equipment.name;
 
-      // 문자열을 EquipmentEnum으로 변환
-      if (Object.values(EquipmentEnum).includes(equipmentName as EquipmentEnum)) {
-        equipment.name = equipmentName as EquipmentEnum;
-      } else {
+      const equipment = await queryRunner.manager.findOne(Equipment, {
+        where: { name: equipmentName as EquipmentEnum },
+      });
+
+      if (!equipment) {
         throw new Error(`유효하지 않은 장비 이름입니다: ${equipmentName}`);
       }
-      await queryRunner.manager.save(equipment);
-
-      const region = new Region();
       const regionName = createPostDto.region.name;
 
-      if (Object.values(RegionEnum).includes(regionName as RegionEnum)) {
-        region.name = regionName as RegionEnum;
-      } else {
+      const region = await queryRunner.manager.findOne(Region, {
+        where: { name: regionName as RegionEnum },
+      });
+
+      if (!region) {
         throw new Error(`유효하지 않은 지역 이름입니다: ${regionName}`);
       }
-      await queryRunner.manager.save(region);
 
-      const category = new Category();
       const categoryName = createPostDto.category.name;
 
-      if (Object.values(CategoryEnum).includes(categoryName as CategoryEnum)) {
-        category.name = categoryName as CategoryEnum;
-      } else {
+      const category = await queryRunner.manager.findOne(Category, {
+        where: { name: categoryName as CategoryEnum },
+      });
+
+      if (!category) {
         throw new Error(`유효하지 않은 카테고리 이름입니다: ${categoryName}`);
       }
-      await queryRunner.manager.save(category);
 
       const detectivePost = new DetectivePost();
       detectivePost.description = createPostDto.description;
-      detectivePost.careerId = career.id;
+      detectivePost.careerId = saveCareer.id;
       detectivePost.licenseId = license.id;
       detectivePost.regionId = region.id;
       detectivePost.categoryId = category.id;
       detectivePost.equipmentId = equipment.id;
+      detectivePost.detectiveId = detectiveId;
 
-      await queryRunner.manager.save(detectivePost);
+      console.log('s1', detectivePost);
+
+      const saveDetectivePost = await queryRunner.manager.save(detectivePost);
       await queryRunner.commitTransaction();
 
-      return detectivePost;
+      return { detectivePost: saveDetectivePost };
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw new Error(`프로필 생성에 실패하였습니다: ${err.message}`);

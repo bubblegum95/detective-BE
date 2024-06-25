@@ -14,11 +14,11 @@ import { WishList } from './wish-list.entity';
 import { Gender } from '../../auth/type/gender-enum.type';
 import { Position } from '../../auth/type/position-enum.type';
 import { DetectiveOffice } from '../../office/entities/detective-office.entity';
-import { Owner } from '../../office/entities/owner.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Career } from 'src/post/entities/career.entity';
 import { DetectivePost } from 'src/post/entities/detective-post.entity';
 import { File } from 'src/s3/entities/s3.entity';
+import { OfficeRelationship } from 'src/office/entities/office-relationship.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
@@ -50,7 +50,7 @@ export class Detective {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => DetectiveOffice, (office) => office.detective)
+  @OneToOne(() => DetectiveOffice, (office) => office.detective)
   @JoinColumn({ name: 'office_id' })
   detectiveOffice: DetectiveOffice;
 
@@ -64,12 +64,12 @@ export class Detective {
   @OneToOne(() => DetectivePost, (detectivePost) => detectivePost.detective)
   detectivePost: DetectivePost;
 
-  @OneToOne(() => Owner, (owner) => owner.detective)
-  owner: Owner;
-
   @OneToMany(() => Consultation, (consultation) => consultation.detective)
   consultation: Consultation[];
 
   @OneToMany(() => WishList, (wishList) => wishList.detective)
   wishList: WishList[];
+
+  @OneToOne(() => OfficeRelationship, (officeRelationship) => officeRelationship.detective)
+  officeRelationship: OfficeRelationship;
 }

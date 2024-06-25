@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, ValidateNested, IsDateString, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  ValidateNested,
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { RegionEnum } from '../type/region.type';
 import { CategoryEnum } from '../type/category.type';
@@ -62,6 +70,14 @@ export class CreatePostDto {
   @IsString()
   @IsNotEmpty()
   description: string;
+
+  // @IsNumber()
+  // profileFileId: number;
+
+  @IsOptional()
+  @IsNotEmpty()
+  @IsNumber()
+  detectiveId?: number;
 
   @ValidateNested()
   @Type(() => CareerDto)
