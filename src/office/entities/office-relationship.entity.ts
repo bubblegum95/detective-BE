@@ -1,4 +1,4 @@
-import { Detective } from 'src/user/entities/detective.entity';
+import { Detective } from '../../user/entities/detective.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
