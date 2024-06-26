@@ -23,8 +23,9 @@ export class PostController {
   }
 
   @Get('/category/:categoryId')
-  filterPostsByCategory(@Param('categoryId') id: number) {
-    return this.postService.filterPostsByCategory(id);
+  async filterPostsByCategory(@Param('categoryId') id: number) {
+    const posts = await this.postService.filterPostsByCategory(id);
+    return { data: posts };
   }
 
   @Get('/keyword')

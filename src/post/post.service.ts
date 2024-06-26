@@ -20,18 +20,40 @@ export class PostService {
     private regionRepo: Repository<Region>,
   ) {}
 
+  //! 출력값 타입 손 봐야함
+
   // 지역별 조회
-  filterPostsByRegion(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { regionId: id },
-    });
+  async filterPostsByRegion(id: number): Promise<DetectivePost[]> {
+    const posts = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .select([
+        'detectivePost.officeId',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+      ])
+      .where('detectivePost.regionId = :id', { id })
+      .getRawMany();
+
     return posts;
   }
 
-  filterPostsByCategory(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { categoryId: id },
-    });
+  async filterPostsByCategory(id: number): Promise<DetectivePost[]> {
+    const posts = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .select([
+        'detectivePost.officeId',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+      ])
+      .where('detectivePost.categoryId = :id', { id })
+      .getRawMany();
+
     return posts;
   }
 
@@ -40,15 +62,27 @@ export class PostService {
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.user', 'user')
+      .select([
+        'detectivePost.officeId',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+      ])
       .where('user.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
+      .getRawMany();
 
     const offices = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.detectiveOffice', 'detectiveOffice')
+      .select([
+        'detectivePost.officeId',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'detectiveOffice.name',
+      ])
       .where('detectiveOffice.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
+      .getRawMany();
 
     return { detectives, offices };
   }
