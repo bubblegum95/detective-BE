@@ -6,7 +6,7 @@ import { RegionEnum } from './type/region.type';
 import { CategoryEnum } from './type/category.type';
 import { EquipmentEnum } from './type/equiment.type';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserInfo } from '../utils/decorator';
+import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 

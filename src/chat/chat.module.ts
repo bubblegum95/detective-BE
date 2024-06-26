@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ChatService } from './chat.service';
+import { WebSocketClientService } from './chat-client.service';
 import { Message, MessageSchema } from './entities/message.entity';
 import { ChatGateway } from './chat.gateway';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
-  providers: [ChatService, ChatGateway],
-  exports: [ChatService, ChatGateway],
+  imports: [JwtModule, MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }])],
+  providers: [WebSocketClientService, ChatGateway, JwtService],
+  exports: [WebSocketClientService, ChatGateway],
 })
 export class ChatModule {}

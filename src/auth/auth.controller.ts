@@ -118,15 +118,17 @@ export class AuthController {
   @ApiBody({ type: SignInDto })
   async signIn(@Res() res, @Body() signInDto: SignInDto) {
     try {
+      console.log('로그인');
       const token = await this.authService.signIn(signInDto);
 
       if (!token) throw new UnauthorizedException('로그인에 실패하였습니다.');
-
+      console.log('token: ', token);
       return res
         .cookie('authorization', `Bearer ${token}`, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
-          httpOnly: false,
+          httpOnly: true,
           secure: true,
+          sameSite: 'None',
         })
         .status(HttpStatus.OK)
         .json({ message: '성공적으로 로그인하였습니다.' });

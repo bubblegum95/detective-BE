@@ -8,42 +8,17 @@ import {
   OnGatewayDisconnect,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { Inject, OnModuleInit } from '@nestjs/common';
+import { OnModuleInit, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-import Redis from 'ioredis';
-import { ChatService } from './chat.service';
-import { MessageBodyDto } from './dto/message-body.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserInfo } from '../utils/user-info.decorator';
+import { User } from '../user/entities/user.entity';
 
-@WebSocketGateway({ cors: { origin: '*' } })
-export class ChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
-{
+@UseGuards(JwtAuthGuard)
+@WebSocketGateway()
+export class ChatGateway {
   @WebSocketServer()
   server: Server;
-
-  constructor(
-    @Inject('REDIS_PUBLISHER') private readonly redisPublisher: Redis,
-    @Inject('REDIS_SUBSCRIBER') private readonly redisSubscriber: Redis,
-    private readonly chatService: ChatService,
-  ) {}
-
-  onModuleInit() {
-    this.redisSubscriber.subscribe('messages', (err, count) => {
-      if (err) {
-        console.error('Failed to subscribe: %s', err.message);
-      } else {
-        console.log(
-          `Subscribed successfully! This client is currently subscribed to ${count} channels.`,
-        );
-      }
-    });
-
-    this.redisSubscriber.on('message', (channel, message) => {
-      if (channel === 'messages') {
-        this.server.emit('message', message);
-      }
-    });
-  }
 
   afterInit(server: Server) {
     console.log('Init');
@@ -57,25 +32,59 @@ export class ChatGateway
     console.log('Client disconnected:', client.id);
   }
 
-  // @SubscribeMessage('message')
-  // async handleMessage(@MessageBody() data: MessageBodyDto): Promise<void> {
-  //   await this.chatService.createMessage(data);
-  //   this.redisPublisher.publish('messages', JSON.stringify(data));
-  // }
+  requestUserInfo(client: Socket) {
+    client.emit('requestUserInfo');
+  }
+
+  private rooms = new Map<string, Set<string>>(); // 룸 관리를 위한 맵
+
+  @SubscribeMessage('createRoom')
+  handleCreateRoom(client: Socket, roomId: string, @UserInfo() user: User): void {
+    // 새로운 룸 생성
+    this.rooms.set(roomId, new Set<string>());
+    console.log(`Room ${roomId} created.`);
+    console.log('user: ', user);
+  }
+
+  @SubscribeMessage('inviteToRoom')
+  handleInviteToRoom(client: Socket, data: { roomId: string; invitedUserId: string }): void {
+    const { roomId, invitedUserId } = data;
+    if (this.rooms.has(roomId)) {
+      // 초대된 사용자를 룸에 추가
+      this.rooms.get(roomId).add(invitedUserId);
+      console.log(`User ${invitedUserId} invited to room ${roomId}.`);
+      // 초대된 사용자에게 초대 메시지 전송 (예시)
+      this.server.to(invitedUserId).emit('roomInvitation', { roomId });
+    } else {
+      console.log(`Room ${roomId} does not exist.`);
+    }
+  }
 
   @SubscribeMessage('joinRoom')
-  handleJoinRoom(@MessageBody() data: { room: string }, @ConnectedSocket() client: Socket): void {
-    console.log('room: ', data.room);
-    client.join(data.room);
-    client.emit('joinedRoom', data.room);
+  handleJoinRoom(client: Socket, roomId: string): void {
+    // 사용자가 룸에 입장
+    client.join(roomId);
+    console.log(`User ${client.id} joined room ${roomId}.`);
+  }
+
+  private removeClientFromRooms(clientId: string): void {
+    this.rooms.forEach((users, roomId) => {
+      if (users.has(clientId)) {
+        users.delete(clientId);
+        console.log(`User ${clientId} left room ${roomId}.`);
+      }
+    });
   }
 
   @SubscribeMessage('message')
   handleMessage(
     @MessageBody() data: { room: string; message: string },
     @ConnectedSocket() client: Socket,
+    @UserInfo() user: User,
+    server: Server,
   ): void {
-    console.log('message: ', data.message);
+    console.log('data: ', data);
+    console.group('user: ', client);
     this.server.to(data.room).emit('message', data.message);
   }
 }

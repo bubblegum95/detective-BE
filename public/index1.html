@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket Client</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <!-- Socket.IO 클라이언트 라이브러리 -->
+    <script src="/dist/websocket-client.service.js"></script>
+    <!-- 컴파일된 자바스크립트 파일 -->
+  </head>
+  <body>
+    <h1>WebSocket Client</h1>
+    <div>
+      <label for="recipientId">Recipient ID:</label>
+      <input type="text" id="recipientId" placeholder="Enter recipient ID" />
+    </div>
+    <div>
+      <label for="message">Message:</label>
+      <input type="text" id="message" placeholder="Enter your message" />
+    </div>
+    <button id="sendButton">Send Message</button>
+    <div id="messages"></div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', (event) => {
+        const webSocketClientService = new WebSocketClientService();
+
+        // 'onModuleInit' 메서드를 호출하여 WebSocket 연결을 설정합니다.
+        webSocketClientService.onModuleInit();
+
+        const sendButton = document.getElementById('sendButton');
+        sendButton.addEventListener('click', () => {
+          const recipientId = document.getElementById('recipientId').value;
+          const message = document.getElementById('message').value;
+          webSocketClientService.sendRequest(recipientId, message);
+        });
+
+        webSocketClientService.socket.on('requestReceived', (data) => {
+          const messagesDiv = document.getElementById('messages');
+          const newMessage = document.createElement('div');
+          newMessage.textContent = `Message from ${data.senderId}: ${data.message}`;
+          messagesDiv.appendChild(newMessage);
+        });
+      });
+    </script>
+  </body>
+</html>
