@@ -13,6 +13,7 @@ import { CategoryEnum } from './type/category.type';
 import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
+import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 
 @Injectable()
 export class PostService {
@@ -20,6 +21,7 @@ export class PostService {
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
     private detectivePostRepo: Repository<DetectivePost>,
+
     @InjectRepository(Region)
     private regionRepo: Repository<Region>,
     private userService: UserService,
@@ -29,68 +31,63 @@ export class PostService {
   //! 출력값 타입 손 봐야함
 
   // 지역별 조회
-  async filterPostsByRegion(id: number): Promise<DetectivePost[]> {
-    const posts = await this.detectivePostRepo
+  async filterPostsByRegion(id: number, page: number): Promise<DetectivePost[]> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+
+    const [posts, count] = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.user', 'user')
       .select([
-        'detectivePost.officeId',
+        'detectivePost.id',
         'detectivePost.categoryId',
         'detectivePost.regionId',
         'user.name',
       ])
       .where('detectivePost.regionId = :id', { id })
-      .getRawMany();
+      .skip(skip)
+      .take(pageSize)
+      .getManyAndCount();
 
     return posts;
   }
 
-  async filterPostsByCategory(id: number): Promise<DetectivePost[]> {
+  async filterPostsByCategory(id: number, page: number): Promise<DetectivePost[]> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
     const posts = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.user', 'user')
-      .select([
-        'detectivePost.officeId',
-        'detectivePost.categoryId',
-        'detectivePost.regionId',
-        'user.name',
-      ])
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name', 'office.name'])
       .where('detectivePost.categoryId = :id', { id })
+      .skip(skip)
+      .take(pageSize)
       .getRawMany();
 
     return posts;
   }
 
   async findPostsByKeyword(key: string): Promise<any> {
-    const detectives = await this.detectivePostRepo
-      .createQueryBuilder('detectivePost')
-      .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.user', 'user')
-      .select([
-        'detectivePost.officeId',
-        'detectivePost.categoryId',
-        'detectivePost.regionId',
-        'user.name',
-      ])
-      .where('user.name ILIKE :key', { key: `%${key}%` })
-      .getRawMany();
+    // const detectives = await this.detectivePostRepo
+    //   .createQueryBuilder('detectivePost')
+    //   .leftJoinAndSelect('detectivePost.detective', 'detective')
+    //   .leftJoinAndSelect('detective.user', 'user')
+    //   .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name'])
+    //   .where('user.name ILIKE :key', { key: `%${key}%` })
+    //   .getRawMany();
 
     const offices = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.detectiveOffice', 'detectiveOffice')
-      .select([
-        'detectivePost.officeId',
-        'detectivePost.categoryId',
-        'detectivePost.regionId',
-        'detectiveOffice.name',
-      ])
-      .where('detectiveOffice.name ILIKE :key', { key: `%${key}%` })
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select(['office.name', 'detectivePost.categoryId', 'detectivePost.regionId', 'office.id'])
+      .where('office.name ILIKE :key', { key: `%${key}%` })
       .getRawMany();
-
-    return { detectives, offices };
+    console.log(offices);
+    return { offices };
   }
 
   async uploadFile(file: Express.Multer.File): Promise<number> {
