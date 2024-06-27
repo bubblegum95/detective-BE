@@ -13,7 +13,6 @@ import {
 import { Detective } from '../../user/entities/detective.entity';
 import { Location } from './location.entity';
 import { OfficeRelationship } from './office-relationship.entity';
-import { DetectivePost } from '../../post/entities/detective-post.entity';
 
 @Entity({ name: 'detective_office' })
 export class DetectiveOffice {
@@ -22,9 +21,6 @@ export class DetectiveOffice {
 
   @Column({ type: 'bigint', name: 'owner_id', nullable: false })
   ownerId: number;
-
-  @Column({ type: 'bigint', name: 'region_id', nullable: true })
-  regionId: number;
 
   @Column({ type: 'bigint', name: 'location_id', nullable: false })
   locationId: number;
@@ -35,7 +31,7 @@ export class DetectiveOffice {
   @Column({ type: 'varchar', length: 255, nullable: true })
   name: string;
 
-  @Column({ type: 'varchar', nullable: true })
+  @Column({ type: 'varchar', nullable: false })
   businessRegistrationNum: string;
 
   @Column({ type: 'varchar', nullable: false })
@@ -57,7 +53,4 @@ export class DetectiveOffice {
 
   @OneToOne(() => Detective, (detective) => detective.detectiveOffice)
   detective: Detective;
-
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detectiveOffice)
-  detectivePost: DetectivePost[];
 }
