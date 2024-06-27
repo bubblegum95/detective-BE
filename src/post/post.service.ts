@@ -14,6 +14,7 @@ import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
+import { S3Service } from 'src/s3/s3.service';
 
 @Injectable()
 export class PostService {
@@ -24,6 +25,7 @@ export class PostService {
     @InjectRepository(Region)
     private regionRepo: Repository<Region>,
     private userService: UserService,
+    private readonly s3Service: S3Service,
   ) {}
 
   // 지역별 조회
@@ -59,8 +61,19 @@ export class PostService {
     return { detectives, offices };
   }
 
-  // 탐정 프로필 생성
+  async uploadFile(file: Express.Multer.File): Promise<number> {
+    try {
+      console.log('파일 업로드 서비스 시작');
+      const fileId = await this.s3Service.uploadRegistrationFile(file);
+      console.log('파일 업로드 성공, 파일 ID:', fileId);
+      return fileId;
+    } catch (err) {
+      console.error('파일 업로드 실패:', err);
+      throw err;
+    }
+  }
 
+  // 탐정 프로필 생성
   async createProfile(createPostDto: CreatePostDto, userId: number) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -81,7 +94,9 @@ export class PostService {
       career.detectiveId = detectiveId;
       const saveCareer = await queryRunner.manager.save(career);
 
-      const license = await queryRunner.manager.save(License, createPostDto.license);
+      const license = new License();
+      Object.assign(license, createPostDto.license);
+      const saveLicense = await queryRunner.manager.save(license);
 
       const equipmentName = createPostDto.equipment.name;
 
@@ -115,13 +130,14 @@ export class PostService {
       const detectivePost = new DetectivePost();
       detectivePost.description = createPostDto.description;
       detectivePost.careerId = saveCareer.id;
-      detectivePost.licenseId = license.id;
+      detectivePost.licenseId = saveLicense.id;
       detectivePost.regionId = region.id;
       detectivePost.categoryId = category.id;
       detectivePost.equipmentId = equipment.id;
       detectivePost.detectiveId = detectiveId;
+      detectivePost.profileFileId = createPostDto.file;
 
-      console.log('s1', detectivePost);
+      console.log('detectivePost:', detectivePost);
 
       const saveDetectivePost = await queryRunner.manager.save(detectivePost);
       await queryRunner.commitTransaction();

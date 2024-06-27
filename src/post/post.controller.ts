@@ -20,7 +20,6 @@ import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@UseGuards(JwtAuthGuard)
 @ApiTags('Post')
 @Controller('posts')
 export class PostController {
@@ -48,21 +47,19 @@ export class PostController {
   }
 
   // 탐정 프로필 생성
+  @UseGuards(JwtAuthGuard)
   @Post('profile')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 생성', description: '탐정 프로필 생성' })
   @ApiBody({ type: CreatePostDto })
   async createProfile(
-    // @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @Body(new ValidationPipe()) createPostDto: CreatePostDto,
     @UserInfo() user: User,
   ) {
-    console.log('s2', createPostDto);
-    // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
-
-    // createPostDto.profileFileId = Number(uploadResult);
-
+    const fileId = await this.postService.uploadFile(file);
+    createPostDto.file = fileId;
     return this.postService.createProfile(createPostDto, user.id);
   }
 }
