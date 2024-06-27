@@ -55,15 +55,12 @@ export class PostController {
   @ApiOperation({ summary: '탐정 프로필 생성', description: '탐정 프로필 생성' })
   @ApiBody({ type: CreatePostDto })
   async createProfile(
-    // @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
     @Body(new ValidationPipe()) createPostDto: CreatePostDto,
     @UserInfo() user: User,
   ) {
-    console.log('s2', createPostDto);
-    // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
-
-    // createPostDto.profileFileId = Number(uploadResult);
-
+    const fileId = await this.postService.uploadFile(file);
+    createPostDto.file = fileId;
     return this.postService.createProfile(createPostDto, user.id);
   }
 }

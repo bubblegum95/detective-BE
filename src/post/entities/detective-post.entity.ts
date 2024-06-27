@@ -38,9 +38,6 @@ export class DetectivePost {
   @Column({ type: 'bigint', name: 'career_id', nullable: true })
   careerId: number;
 
-  @Column({ type: 'bigint', name: 'office_id', nullable: false })
-  officeId: number;
-
   @Column({ type: 'bigint', name: 'license_id', nullable: true })
   licenseId: number;
 
@@ -89,8 +86,4 @@ export class DetectivePost {
   @ManyToOne(() => File, (file) => file.detectivePost)
   @JoinColumn({ name: 'profile_file_id' })
   profileFile: File;
-
-  @ManyToOne(() => DetectiveOffice, (detectiveOffice) => detectiveOffice.detectivePost)
-  @JoinColumn({ name: 'office_id' })
-  detectiveOffice: DetectiveOffice;
 }

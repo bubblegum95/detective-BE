@@ -57,7 +57,4 @@ export class DetectiveOffice {
 
   @OneToOne(() => Detective, (detective) => detective.detectiveOffice)
   detective: Detective;
-
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.detectiveOffice)
-  detectivePost: DetectivePost[];
 }

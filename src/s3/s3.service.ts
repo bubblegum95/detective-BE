@@ -52,7 +52,6 @@ export class S3Service {
       console.log('sentFile', sentFile);
       const path = `https://${this.bucketName}.s3.amazonaws.com/${fileKey}`;
       console.log('path', path);
-
       const file = await this.fileRepository.save({ path });
       console.log('file', file);
       return file.id;

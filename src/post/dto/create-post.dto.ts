@@ -19,6 +19,9 @@ export class CreatePostDto {
   @ApiProperty({ example: 1, description: '탐정 ID' })
   detectiveId?: number;
 
+  @ApiProperty({ type: 'string', format: 'binary' })
+  file: any;
+
   @ValidateNested()
   @Type(() => CareerDto)
   @ApiProperty({ type: CareerDto, description: '경력 정보' })
