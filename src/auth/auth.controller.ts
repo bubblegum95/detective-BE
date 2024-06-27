@@ -126,7 +126,7 @@ export class AuthController {
         .cookie('authorization', `Bearer ${token}`, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
           httpOnly: false,
-          secure: true,
+          secure: false,
         })
         .status(HttpStatus.OK)
         .json({ message: '성공적으로 로그인하였습니다.' });

@@ -14,6 +14,7 @@ import { CategoryEnum } from './type/category.type';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { S3Service } from 'src/s3/s3.service';
+import { RegionEnum } from './type/region.type';
 
 @Injectable()
 export class PostService {
