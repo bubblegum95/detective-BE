@@ -58,6 +58,7 @@ export class PostController {
     @Body(new ValidationPipe()) createPostDto: CreatePostDto,
     @UserInfo() user: User,
   ) {
+    console.log('s2', createPostDto);
     // const uploadResult = await this.s3Service.uploadRegistrationFile(file);
 
     // createPostDto.profileFileId = Number(uploadResult);

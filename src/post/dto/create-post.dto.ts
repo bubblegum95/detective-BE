@@ -13,10 +13,6 @@ export class CreatePostDto {
   @ApiProperty({ example: 'test description', description: '설명' })
   description: string;
 
-  @IsNumber()
-  @ApiProperty({ example: 1, description: '프로필 파일 ID' })
-  profileFileId: number;
-
   @IsOptional()
   @IsNotEmpty()
   @IsNumber()
@@ -35,16 +31,19 @@ export class CreatePostDto {
 
   @ValidateNested()
   @Type(() => RegionDto)
+  @IsNotEmpty()
   @ApiProperty({ type: RegionDto, description: '지역 정보' })
   region: RegionDto;
 
   @ValidateNested()
   @Type(() => CategoryDto)
+  @IsNotEmpty()
   @ApiProperty({ type: CategoryDto, description: '카테고리 정보' })
   category: CategoryDto;
 
   @ValidateNested()
   @Type(() => EquipmentDto)
+  @IsNotEmpty()
   @ApiProperty({ type: EquipmentDto, description: '장비 정보' })
   equipment: EquipmentDto;
 }

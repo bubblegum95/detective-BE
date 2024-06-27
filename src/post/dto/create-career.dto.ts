@@ -3,10 +3,12 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class CareerDto {
   @IsDateString()
+  @IsNotEmpty()
   @ApiProperty({ example: '2023-01-01', description: '시작 날짜' })
   startDate: string;
 
   @IsDateString()
+  @IsNotEmpty()
   @ApiProperty({ example: '2024-01-01', description: '종료 날짜' })
   endDate: string;
 

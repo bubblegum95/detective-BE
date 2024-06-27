@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class LicenseDto {
   @IsDateString()
+  @IsNotEmpty()
   @ApiProperty({ example: '2023-01-01', description: '발급 날짜' })
   issuedAt: string;
 
