@@ -1,6 +1,6 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { DetectivePost } from './detective-post.entity';
-import { EquipmentEnum } from '../type/equiment.type';
+import { EquipmentEnum } from '../type/equipment.type';
 
 @Entity({ name: 'equipment' })
 export class Equipment {

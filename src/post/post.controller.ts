@@ -14,7 +14,7 @@ import {
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { S3Service } from 'src/s3/s3.service';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -49,9 +49,10 @@ export class PostController {
 
   // 탐정 프로필 생성
   @Post('profile')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 생성', description: '탐정 프로필 생성' })
   @ApiBody({ type: CreatePostDto })
-  // @UseInterceptors(FileInterceptor('file'))
   async createProfile(
     // @UploadedFile() file: Express.Multer.File,
     @Body(new ValidationPipe()) createPostDto: CreatePostDto,

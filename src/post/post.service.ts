@@ -10,7 +10,7 @@ import { Career } from './entities/career.entity';
 import { License } from './entities/license.entity';
 import { Equipment } from './entities/equipment.entity';
 import { Category } from './entities/category.entity';
-import { EquipmentEnum } from './type/equiment.type';
+import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';

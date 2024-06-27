@@ -28,7 +28,7 @@ export class DetectivePost {
   @Column({ type: 'text', nullable: false })
   description: string;
 
-  @Column({ type: 'bigint', name: 'profile_file_id', nullable: false })
+  @Column({ type: 'bigint', name: 'profile_file_id', nullable: true })
   profileFileId: number;
 
   @Index('detective_post_detective_id_index')
