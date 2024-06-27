@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PostController } from './post.controller';
 import { PostService } from './post.service';
 import { S3Service } from '../s3/s3.service';
-import { DetectivePost } from './entities/detective-post.entity';
 
 const mockPostServices = () => ({
   filterPostsByRegion: jest.fn(),
@@ -133,7 +132,5 @@ describe('PostController', () => {
       expect(postService.findPostsByKeyword).toHaveReturnedTimes(1);
       expect(posts).toEqual(mockData);
     });
-
-    test('keyword 별 조회 성공 - data가 비었을 때', async () => {});
   });
 });

@@ -19,6 +19,7 @@ import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { DetectivePost } from './entities/detective-post.entity';
 
 @ApiTags('Post')
 @Controller('posts')
@@ -38,7 +39,7 @@ export class PostController {
   @Get('/category/:categoryId')
   async filterPostsByCategory(@Param('categoryId') id: number) {
     const posts = await this.postService.filterPostsByCategory(id);
-    return { data: posts };
+    return { posts };
   }
 
   @Get('/keyword')
