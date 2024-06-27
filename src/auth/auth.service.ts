@@ -191,25 +191,7 @@ export class AuthService {
       // 사업자 등록 정보 검증
       const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
 
-      if (!validateBusiness) {
-        throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
-      }
-
-      if (!validateBusiness.ok) {
-        const errorText = await validateBusiness.text();
-        throw new Error(errorText);
-      }
-
-      const result = await validateBusiness.json();
-      console.log(result);
-
-      if (result.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
-        throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
-      }
-
-      if (founded !== result.data[0].b_stt) {
-        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-      }
+      
 
       // location 등록
       const location = await queryRunner.manager.getRepository(Location).save({
@@ -279,9 +261,35 @@ export class AuthService {
       body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
     };
 
-    const response = await fetch(url, option);
+    try {
+      const response = fetch(url, option)
+      .then((a) => response.json())
+      .then((data) => {
+        if(data.status_code!=="ok"){
+          throw new BadRequestException(data.status_code)
+        }
+        
+        if (data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
+          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
+        }
+        
+        console.log('data: ', data)
+        return data[0][3].request_param
+      })    
+      
+      if (response.start_dt[0] !== start_dt) {
+        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
+      }  
 
-    return response;
+      if (response.p_nm[0] !== p_nm) {
+        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
+      }  
+      
+      console.log(response)
+      return response;
+    } catch(error) {
+      throw error
+    } 
   }
 
   // 로그인

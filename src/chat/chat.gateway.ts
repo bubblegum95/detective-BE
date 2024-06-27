@@ -3,12 +3,9 @@ import {
   WebSocketServer,
   SubscribeMessage,
   MessageBody,
-  OnGatewayInit,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
   ConnectedSocket,
 } from '@nestjs/websockets';
-import { OnModuleInit, UseGuards } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
@@ -17,7 +14,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Message } from './entities/message.entity';
 import { Model } from 'mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository, getConnection } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Room } from './entities/room.entity';
 
 @UseGuards(JwtAuthGuard)
@@ -35,14 +32,17 @@ export class ChatGateway {
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
     client: Socket,
-    data: { message: string; url: string },
+    data: { message: string; email: string },
     @UserInfo() user: User,
   ) {
     const room = await this.roomRepository.save({});
     const roomId = room.id.toString();
+    const recipient = await this.dataSource.getRepository(User)
+    .findOne({where: {email: data.email}, select: {id: true}})
 
     room.user.push(user, recipient);
-    await this.roomRepository.save(room);
+    await this.roomRepository.save(room)
+    console.log('room: ', room)
 
     client.join(roomId);
     client.emit('create roomm and join', roomId);
@@ -51,25 +51,49 @@ export class ChatGateway {
   }
 
   @SubscribeMessage('joinRoom')
-  async handleJoinRoom(client: Socket, roomId: string): void {
-    const room = Number(roomId);
-    const existUserInRoom = client.join(roomId);
+  async handleJoinRoom(client: Socket, room: string, @UserInfo() user: User) {
+    const roomId = Number(room);
+    const userId = user.id
+    const existUserInRoom = this.existClientInRoom(userId, roomId)
+
+    if(!existUserInRoom){
+      console.error('user is not exist in room');
+      client.emit('user is not exist in room')
+    }
+
+    client.join(room)
     console.log(`User ${client.id} joined room ${roomId}.`);
   }
 
-  async existClientFromRooms(clientId: string, roomId: string): void {
-    const foundRoom = await this.roomRepository.update({ where: { roomId } });
+  async existClientInRoom(user: number, room: number) {
+    const foundRoom = await this.dataSource.getRepository(User)
+    .createQueryBuilder('roomList')
+    .leftJoin('room.user', 'user')
+    .where('room.id = roomId', {room})
+    .andWhere('user.id = :userId', {user})
+    .getOne()
+
+    return foundRoom
   }
 
   @SubscribeMessage('message')
-  handleMessage(
+  async handleMessage(
     @MessageBody() data: { room: string; message: string },
     @ConnectedSocket() client: Socket,
     @UserInfo() user: User,
     server: Server,
-  ): void {
+  ) {
     console.log('data: ', data);
-    console.group('user: ', client);
+    const room = data.room
+    const roomId = Number(data.room)
+    const userId = user.id
+
+    const existInRoom = await this.existClientInRoom(userId, roomId)
+    if(!existInRoom) {
+      console.error('User isnt in this room')
+    }
+
+    this.messageModel.create({sender: user.id, content: data.message, room: data.room})
     this.server.to(data.room).emit('message', data.message);
   }
 }
