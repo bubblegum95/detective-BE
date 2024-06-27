@@ -36,8 +36,8 @@ export class PostController {
   }
 
   @Get('/category/:categoryId')
-  filterPostsByCategory(@Param('categoryId') id: string) {
-    return this.postService.filterPostsByCategory(+id);
+  filterPostsByCategory(@Param('categoryId') id: number) {
+    return this.postService.filterPostsByCategory(id);
   }
 
   @Get('/keyword')

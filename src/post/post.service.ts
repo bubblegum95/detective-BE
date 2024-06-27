@@ -5,7 +5,6 @@ import { DetectivePost } from './entities/detective-post.entity';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Region } from './entities/region.entity';
-import { RegionEnum } from './type/region.type';
 import { Career } from './entities/career.entity';
 import { License } from './entities/license.entity';
 import { Equipment } from './entities/equipment.entity';

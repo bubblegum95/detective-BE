@@ -17,3 +17,4 @@ export enum RegionEnum {
   GYEONGNAM = 'gyeongnam',
   JEJU = 'jeju',
 }
+
