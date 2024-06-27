@@ -5,14 +5,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Detective } from 'src/user/entities/detective.entity';
 import { DetectiveOffice } from './entities/detective-office.entity';
 import { OfficeRelationship } from './entities/office-relationship.entity';
-import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { AuthModule } from 'src/auth/auth.module';
+import { EmailModule } from 'src/mail/email.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
+    EmailModule,
+    UserModule,
     AuthModule,
-    TypeOrmModule.forFeature([JwtModule, Detective, DetectiveOffice, OfficeRelationship]),
+    TypeOrmModule.forFeature([Detective, DetectiveOffice, OfficeRelationship]),
   ],
   controllers: [DetectiveofficeController],
   providers: [DetectiveofficeService, JwtAuthGuard],

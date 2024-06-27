@@ -1,6 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { DetectivePost } from './entities/detective-post.entity';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
@@ -11,10 +10,10 @@ import { Equipment } from './entities/equipment.entity';
 import { Category } from './entities/category.entity';
 import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
-import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/user.service';
-import { S3Service } from 'src/s3/s3.service';
+import { UserService } from '../user/user.service';
+import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
+import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 
 @Injectable()
 export class PostService {
@@ -22,43 +21,73 @@ export class PostService {
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
     private detectivePostRepo: Repository<DetectivePost>,
+
     @InjectRepository(Region)
     private regionRepo: Repository<Region>,
     private userService: UserService,
     private readonly s3Service: S3Service,
   ) {}
 
+  //! 출력값 타입 손 봐야함
+
   // 지역별 조회
-  filterPostsByRegion(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { regionId: id },
-    });
+  async filterPostsByRegion(id: number, page: number): Promise<DetectivePost[]> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+
+    const [posts, count] = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .select([
+        'detectivePost.id',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+      ])
+      .where('detectivePost.regionId = :id', { id })
+      .skip(skip)
+      .take(pageSize)
+      .getManyAndCount();
+
     return posts;
   }
 
-  filterPostsByCategory(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { categoryId: id },
-    });
+  async filterPostsByCategory(id: number, page: number): Promise<DetectivePost[]> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+    const posts = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name', 'office.name'])
+      .where('detectivePost.categoryId = :id', { id })
+      .skip(skip)
+      .take(pageSize)
+      .getRawMany();
+
     return posts;
   }
 
   async findPostsByKeyword(key: string): Promise<any> {
-    const detectives = await this.detectivePostRepo
-      .createQueryBuilder('detectivePost')
-      .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.user', 'user')
-      .where('user.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
+    // const detectives = await this.detectivePostRepo
+    //   .createQueryBuilder('detectivePost')
+    //   .leftJoinAndSelect('detectivePost.detective', 'detective')
+    //   .leftJoinAndSelect('detective.user', 'user')
+    //   .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name'])
+    //   .where('user.name ILIKE :key', { key: `%${key}%` })
+    //   .getRawMany();
 
     const offices = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.detectiveOffice', 'detectiveOffice')
-      .where('detectiveOffice.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
-
-    return { detectives, offices };
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select(['office.name', 'detectivePost.categoryId', 'detectivePost.regionId', 'office.id'])
+      .where('office.name ILIKE :key', { key: `%${key}%` })
+      .getRawMany();
+    console.log(offices);
+    return { offices };
   }
 
   async uploadFile(file: Express.Multer.File): Promise<number> {

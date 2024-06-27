@@ -10,3 +10,14 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_NAME}
+
+  promtail:
+    image: grafana/promtail:latest
+    command: '-config.file=/etc/promtail/promtail-config.yaml'
+    volumes:
+      - ./config/promtail-config.yaml:/etc/promtail/promtail-config.yaml
+    restart: always
+
+  loki:
+    image: grafana/loki:latest
+    command: ['-config.file=/etc/loki/loki-config/yaml', '-log.level=']

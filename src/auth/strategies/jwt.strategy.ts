@@ -19,7 +19,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   private static extractJWT(req) {
     const { authorization } = req.cookies;
-    console.log('s4', authorization);
     if (authorization) {
       const [tokenType, token] = authorization.split(' ');
       if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
