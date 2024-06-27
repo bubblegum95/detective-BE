@@ -51,7 +51,7 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   @Post('profile')
   @UseInterceptors(FileInterceptor('file'))
-  // @ApiConsumes('multipart/form-data')
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 생성', description: '탐정 프로필 생성' })
   @ApiBody({ type: CreatePostDto })
   async createProfile(

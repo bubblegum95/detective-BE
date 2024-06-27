@@ -12,7 +12,7 @@ import { Category } from './entities/category.entity';
 import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
 import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '../user/user.service';
 import { RegionEnum } from './type/region.type';
 
 @Injectable()

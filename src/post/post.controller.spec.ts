@@ -113,7 +113,7 @@ describe('PostController', () => {
 
   describe('findPostsByKeyword', () => {
     test('keyword 별 조회 성공', async () => {
-      const key = '홍길동';
+      const key: any = '홍길동';
       const mockData = {
         detectives: [
           {
@@ -125,6 +125,13 @@ describe('PostController', () => {
         ],
         offices: [],
       };
+      (postService.findPostsByKeyword as jest.Mock).mockResolvedValue(mockData);
+
+      const posts = await postService.findPostsByKeyword(key);
+
+      expect(postService.findPostsByKeyword).toHaveBeenCalledWith(key);
+      expect(postService.findPostsByKeyword).toHaveReturnedTimes(1);
+      expect(posts).toEqual(mockData);
     });
 
     test('keyword 별 조회 성공 - data가 비었을 때', async () => {});
