@@ -81,6 +81,13 @@ export class CreateDetectiveAuthDto {
   })
   founded: string;
 
+  @IsString()
+  @ApiProperty({
+    example: '퐁식이네',
+    description: '기업이름',
+  })
+  company: string;
+
   @ApiProperty({ type: 'string', format: 'binary' })
   file: any;
 }

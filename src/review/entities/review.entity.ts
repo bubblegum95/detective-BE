@@ -16,16 +16,16 @@ export class Review {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'bigint', name: 'consumer_id', unsigned: true, nullable: false })
+  @Column({ type: 'int', name: 'consumer_id', unsigned: true, nullable: false })
   consumerId: number;
 
-  @Column({ type: 'bigint', name: 'detective_post_id', unsigned: true, nullable: false })
+  @Column({ type: 'int', name: 'detective_post_id', unsigned: true, nullable: false })
   detectivePostId: number;
 
   @Column({ type: 'text', nullable: false })
   comment: string;
 
-  @Column({ type: 'text', nullable: false })
+  @Column({ type: 'text', nullable: true })
   reply: string;
 
   @Column({ type: 'int', nullable: false, default: 5 })

@@ -12,11 +12,13 @@ import { User } from 'src/user/entities/user.entity';
 import { DetectivePost } from './entities/detective-post.entity';
 import { S3Module } from 'src/s3/s3.module';
 import { AuthModule } from '../auth/auth.module';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
   imports: [
     S3Module,
     AuthModule,
+    UserModule,
     TypeOrmModule.forFeature([
       DetectivePost,
       Region,

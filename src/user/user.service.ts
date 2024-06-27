@@ -46,4 +46,8 @@ export class UserService {
       throw error;
     }
   }
+
+  async findOneById(id: number): Promise<User> {
+    return this.userRepository.findOne({ where: { id }, relations: ['detective'] });
+  }
 }

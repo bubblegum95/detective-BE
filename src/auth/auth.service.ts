@@ -168,6 +168,7 @@ export class AuthService {
       address,
       businessNumber,
       founded,
+      company, 
     } = createDetectiveAuthDto;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -186,12 +187,11 @@ export class AuthService {
     }
 
     try {
-      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
+      // 사용자 정보 생성
+      const user = await queryRunner.manager.getRepository(User).save({name, email, nickname, phoneNumber, password})
 
       // 사업자 등록 정보 검증
-      const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
-
-      
+      const validateBusiness = await this.validationCheckBno(businessNumber, founded, name);
 
       // location 등록
       const location = await queryRunner.manager.getRepository(Location).save({
@@ -201,6 +201,7 @@ export class AuthService {
       // office 등록
       const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
         ownerId: user.id,
+        name: company,
         businessRegistrationNum: businessNumber,
         founded: founded,
         locationId: location.id,
@@ -238,20 +239,25 @@ export class AuthService {
 
   // 사업자 등록 정보 검증
   async validationCheckBno(b_no: string, start_dt: string, p_nm: string) {
+    console.log(p_nm)
     const data = {
-      b_no: [b_no],
-      start_dt: [start_dt],
-      p_nm: [p_nm],
-      p_nm2: '',
-      b_nm: '',
-      corp_no: '',
-      b_sector: '',
-      b_type: '',
-      b_adr: '',
-    };
+      businesses: [
+        {
+          b_no: b_no,
+          start_dt: start_dt,
+          p_nm: p_nm,
+          p_nm2: "",
+          b_nm: "",
+          corp_no: "",
+          b_sector: "",
+          b_type: "",
+          b_adr: ""
+        }
+      ]
+    }
 
     const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
-    const url = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}`;
+    const url = `https://api.odcloud.kr/api/nts-businessman/v1/validate?serviceKey=${SERVICE_KEY}`;
     const option = {
       method: 'POST',
       headers: {
@@ -263,27 +269,24 @@ export class AuthService {
 
     try {
       const response = fetch(url, option)
-      .then((a) => response.json())
+      .then((a) => a.json())
       .then((data) => {
-        if(data.status_code!=="ok"){
-          throw new BadRequestException(data.status_code)
-        }
-        
-        if (data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
+        const validationMsg = data.data[0].valid_msg
+        if (validationMsg === '확인할 수 없습니다.') {
           throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
         }
         
-        console.log('data: ', data)
-        return data[0][3].request_param
-      })    
-      
-      if (response.start_dt[0] !== start_dt) {
-        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-      }  
+        const result = data.data[0].request_param
+        if (result.start_dt !== start_dt) {
+          throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
+        }  
 
-      if (response.p_nm[0] !== p_nm) {
-        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-      }  
+        if (result.p_nm !== p_nm) {
+          throw new UnauthorizedException('사업자명이 일치하지 않습니다.');
+        }
+
+        return result
+      })
       
       console.log(response)
       return response;
@@ -308,6 +311,7 @@ export class AuthService {
         expiresIn: '7d',
       });
 
+      console.log('AuthService ~ signIn ~ accessToken:', accessToken);
       return accessToken;
     } catch (error) {
       throw error;

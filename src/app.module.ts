@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
@@ -8,11 +8,12 @@ import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { S3Module } from './s3/s3.module';
-import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
+import { JwtModule } from '@nestjs/jwt';
+import { DetectiveofficeModule } from './office/detectiveoffice.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -24,7 +25,7 @@ const typeOrmModuleOptions = {
     password: configService.get('POSTGRES_PASSWORD'),
     database: configService.get('POSTGRES_DB'),
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
-    synchronize: configService.get('POSTGRES_SYNC'),
+    synchronize: configService.get('POSTGRES_SYNC') === 'true',
     logging: ['query', 'error'], // row query 출력
   }),
   inject: [ConfigService],
@@ -45,6 +46,14 @@ const typeOrmModuleOptions = {
     ConsultationModule,
     ReviewModule,
     ChatModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('ACCESS_SECRET'),
+        signOptions: { expiresIn: '7d' },
+      }),
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],
