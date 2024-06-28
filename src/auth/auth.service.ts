@@ -272,17 +272,15 @@ export class AuthService {
       .then((a) => a.json())
       .then((data) => {
         const validationMsg = data.data[0].valid_msg
-        if (validationMsg === '확인할 수 없습니다.') {
-          throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
-        }
-        
         const result = data.data[0].request_param
-        if (result.start_dt !== start_dt) {
-          throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-        }  
 
-        if (result.p_nm !== p_nm) {
-          throw new UnauthorizedException('사업자명이 일치하지 않습니다.');
+        console.log(data)
+        console.log('valMsg: ', validationMsg)
+        console.log('status_code: ', data.status_code)
+        console.log('request_param: ', result)
+        
+        if (validationMsg === '확인할 수 없습니다.') {
+          throw new BadRequestException('확인할 수 없습니다. 입력하신 정보를 확인해주세요.');
         }
 
         return result
