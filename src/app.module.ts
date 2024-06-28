@@ -10,7 +10,6 @@ import { AuthModule } from './auth/auth.module';
 import { S3Module } from './s3/s3.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
-import { RedisModule } from './redis/redis.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
 import { JwtModule } from '@nestjs/jwt';
@@ -46,7 +45,6 @@ const typeOrmModuleOptions = {
     UserModule,
     ConsultationModule,
     ReviewModule,
-    RedisModule,
     ChatModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

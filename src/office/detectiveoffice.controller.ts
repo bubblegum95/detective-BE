@@ -8,7 +8,7 @@ export class DetectiveofficeController {
   constructor(private readonly detectiveofficeService: DetectiveofficeService) {}
 
   @Post()
-  create(@Body() createDetectiveOfficeDto: CreateDetectiveOfficeDto): Promise<DetectiveOffice> {
-    return this.detectiveofficeService.createDetectiveOffice(createDetectiveOfficeDto);
+  create(@Body() createDetectiveOfficeDto: CreateDetectiveOfficeDto){
+    console.log('hi')
   }
 }
