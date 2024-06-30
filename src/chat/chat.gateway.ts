@@ -16,6 +16,8 @@ import { Model } from 'mongoose';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Room } from './entities/room.entity';
+import { UserService } from 'src/user/user.service';
+import { v4 as uuidv4} from 'uuid';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway()
@@ -27,73 +29,108 @@ export class ChatGateway {
     @InjectModel('Message') private readonly messageModel: Model<Message>,
     @InjectRepository(Room) private readonly roomRepository: Repository<Room>,
     private readonly dataSource: DataSource,
+    private readonly userService: UserService,
   ) {}
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
-    client: Socket,
-    data: { message: string; email: string },
+    @ConnectedSocket() client: Socket,
+    @MessageBody() recipientId: number,
     @UserInfo() user: User,
   ) {
-    const room = await this.roomRepository.save({});
-    const roomId = room.id.toString();
-    const recipient = await this.dataSource.getRepository(User)
-    .findOne({where: {email: data.email}, select: {id: true}})
+    let roomName: string;
+    user = await this.userService.findUserbyId(user.id)
+    const recipient = await this.userService.findUserbyId(recipientId)
+    const foundRoom = await this.findExistRoom(user.id, recipientId)
 
-    room.user.push(user, recipient);
-    await this.roomRepository.save(room)
-    console.log('room: ', room)
+    if(!foundRoom) {
+      console.log('didnt find room')
+      const name = uuidv4(); 
+      console.log('name: ', name)
+      const room = await this.roomRepository.save({name}); // Room 생성
+      room.user = [user, recipient]; // 관계 설정 추가 
+      const createdRoom = await this.roomRepository.save(room); // 설정 추가 후 저장
+      roomName = room.name;
 
-    client.join(roomId);
-    client.emit('create roomm and join', roomId);
-
-    console.log(`Room ${roomId} created.`);
-  }
-
-  @SubscribeMessage('joinRoom')
-  async handleJoinRoom(client: Socket, room: string, @UserInfo() user: User) {
-    const roomId = Number(room);
-    const userId = user.id
-    const existUserInRoom = this.existClientInRoom(userId, roomId)
-
-    if(!existUserInRoom){
-      console.error('user is not exist in room');
-      client.emit('user is not exist in room')
+    } else if (foundRoom) {
+      console.log('found room')
+      const roomName = foundRoom;
     }
 
-    client.join(room)
-    console.log(`User ${client.id} joined room ${roomId}.`);
+    client.join(roomName);
+    client.emit('createdRoom', roomName);
   }
 
-  async existClientInRoom(user: number, room: number) {
-    const foundRoom = await this.dataSource.getRepository(User)
-    .createQueryBuilder('roomList')
-    .leftJoin('room.user', 'user')
-    .where('room.id = roomId', {room})
-    .andWhere('user.id = :userId', {user})
-    .getOne()
-
-    return foundRoom
+  @SubscribeMessage('joinRooms')
+  async handleJoinRoom(
+    @ConnectedSocket() client: Socket, 
+    @UserInfo() user: User
+  ) {
+    const userId = user.id
+    const foundRooms: string[] | null = await this.findRoomsUserBelongsTo(userId)
+    client.join(foundRooms)
+    const roomlist = this.server.sockets.adapter.rooms; // socket.io room
+    console.log('roomlist: ', roomlist)
   }
 
   @SubscribeMessage('message')
   async handleMessage(
-    @MessageBody() data: { room: string; message: string },
     @ConnectedSocket() client: Socket,
+    @MessageBody() data: { room: string; message: string },
     @UserInfo() user: User,
-    server: Server,
   ) {
-    console.log('data: ', data);
     const room = data.room
-    const roomId = Number(data.room)
     const userId = user.id
-
-    const existInRoom = await this.existClientInRoom(userId, roomId)
+    const existInRoom = await this.existClientInRoom(userId, room)
+    
     if(!existInRoom) {
-      console.error('User isnt in this room')
+      console.log({message: 'User isnt in this room'})
+      return;
     }
 
-    this.messageModel.create({sender: user.id, content: data.message, room: data.room})
-    this.server.to(data.room).emit('message', data.message);
+    const messageInfo = await this.messageModel.create({sender: userId, content: data.message, room: data.room})
+    const foundUserNickname = await this.userService.findUserNameById(userId)
+    const returnData = {sender: foundUserNickname, content: messageInfo.content, time: messageInfo.timestamp}
+    this.server.to(room).emit('getMessage', returnData);
+  }
+
+  async existClientInRoom(userId: number, roomName: string): Promise<Room | undefined> {
+    const foundRoom = await this.dataSource.getRepository(Room)
+      .createQueryBuilder('room')
+      .leftJoinAndSelect('room.user', 'user')
+      .where('room.name = :roomName', { roomName })
+      .andWhere('user.id = :userId', { userId })
+      .getOne();
+    
+    console.log('found room: ', foundRoom)
+    return foundRoom;
+  }  
+
+  async findRoomsUserBelongsTo(userId: number):Promise<string[] | null> {
+    const foundRooms = await this.dataSource.getRepository(Room)
+      .createQueryBuilder('room')
+      .leftJoin('room.user', 'user')
+      .where('user.id = :userId', { userId })
+      .getMany();
+
+    let roomArr = [];
+
+    foundRooms.filter(room => {
+      const rooms = room.name; 
+      roomArr.push(rooms);
+    })
+    
+    return roomArr;
+  }
+
+  async findExistRoom (userId: number, recipientId: number): Promise<string | null> {
+    const room = await this.roomRepository.createQueryBuilder('room')
+    .innerJoin('room.user', 'user1', 'user1.id = :userId', { userId })
+    .innerJoin('room.user', 'user2', 'user2.id = :recipientId', { recipientId })
+    .getOne();
+
+    console.log('room: ', room);
+    if (room) {return room.name}
+    else if (!room) {return null}
   }
 }

@@ -20,7 +20,7 @@ export class RedisIoAdapter extends IoAdapter {
     options = {
       ...options,
       cors: {
-        origin: 'http://127.0.0.1:3000',
+        origin: 'http://127.0.0.1:3001',
         methods: ['GET', 'POST'],
         credentials: true,
       },

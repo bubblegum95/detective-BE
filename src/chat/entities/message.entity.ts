@@ -7,7 +7,7 @@ export class Message extends Document {
   content: string;
 
   @Prop({ required: true })
-  sender: string;
+  sender: number;
 
   @Prop({ required: true })
   room: string;

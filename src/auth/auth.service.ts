@@ -309,7 +309,6 @@ export class AuthService {
         expiresIn: '7d',
       });
 
-      console.log('AuthService ~ signIn ~ accessToken:', accessToken);
       return accessToken;
     } catch (error) {
       throw error;

@@ -50,7 +50,6 @@ export class User {
   wishList: WishList[];
 
   @ManyToMany(() => Room, (room) => room.user) //many to many로 관계설정 변경
-  @JoinTable()
   room: Room[];
 
   @OneToMany(() => Review, (review) => review.consumer)

@@ -50,4 +50,9 @@ export class UserService {
   async findOneById(id: number): Promise<User> {
     return this.userRepository.findOne({ where: { id }, relations: ['detective'] });
   }
+
+  async findUserNameById(id: number ): Promise<string> {
+    const userName = await this.userRepository.findOne({where: {id}, select: {nickname: true}})
+    return userName.nickname
+  }
 }
