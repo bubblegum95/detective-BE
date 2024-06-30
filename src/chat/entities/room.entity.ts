@@ -1,12 +1,19 @@
-import { Entity, PrimaryGeneratedColumn, Column, JoinTable, ManyToMany, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinTable,
+  ManyToMany,
+  CreateDateColumn,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 
 @Entity({ name: 'room' })
 export class Room {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
-  
-  @Column({ type: 'varchar', nullable: false})
+
+  @Column({ type: 'varchar', nullable: false })
   name: string;
 
   @CreateDateColumn({ type: 'date', nullable: false })

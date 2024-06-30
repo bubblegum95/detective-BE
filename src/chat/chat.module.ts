@@ -11,10 +11,9 @@ import { UserService } from 'src/user/user.service';
 
 @Module({
   imports: [
-    JwtModule, 
+    JwtModule,
     UserModule,
-    MongooseModule.
-    forFeature([{ name: Message.name, schema: MessageSchema }]),
+    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     TypeOrmModule.forFeature([User, Room]),
   ],
   providers: [ChatGateway, JwtService, UserService],

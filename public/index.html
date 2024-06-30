@@ -25,7 +25,7 @@
       <input id="messageInput" type="text" placeholder="Enter message" />
       <input id="roomNameInput" type="text" placeholder="room name" />
       <button onclick="sendMessage()">Send Message</button>
-      
+
       <ul id="messages"></ul>
     </div>
 
@@ -64,8 +64,8 @@
 
         io.on('connect', () => {
           console.log('WebSocket 연결 성공');
-          joinRooms() // 소켓 연결 시 모든 룸과 연결하기
-          getMessages() // 연결된 룸에 메시지 받기 
+          joinRooms(); // 소켓 연결 시 모든 룸과 연결하기
+          getMessages(); // 연결된 룸에 메시지 받기
         });
 
         io.on('disconnect', () => {
@@ -74,22 +74,22 @@
       }
 
       function getMessages() {
-        console.log('get messages')
+        console.log('get messages');
         // 'getMessage' 이벤트를 수신하여 메시지를 화면에 추가
         io.on('getMessage', (data) => {
-          makeSpeechBubble(data)
+          makeSpeechBubble(data);
         });
       }
 
       function createRoom() {
-        console.log('create room')
-        const recipientId = document.getElementById('recipientIdInput').value
+        console.log('create room');
+        const recipientId = document.getElementById('recipientIdInput').value;
         console.log('recipientId: ', recipientId);
         io.emit('createRoom', recipientId);
         document.getElementById('recipientIdInput').value = '';
-        io.on('createdRoom', (room)=> {
-          console.log(`Created room: ${room}`)
-        })
+        io.on('createdRoom', (room) => {
+          console.log(`Created room: ${room}`);
+        });
       }
 
       function joinRooms() {
@@ -102,19 +102,19 @@
       function sendMessage() {
         const message = document.getElementById('messageInput').value;
         const room = document.getElementById('roomNameInput').value;
-        let data; 
+        let data;
 
         if (message) {
           io.emit('message', { message, room });
           document.getElementById('messageInput').value = '';
         }
       }
-      
-      function makeSpeechBubble (data) {
-        console.log(data)
+
+      function makeSpeechBubble(data) {
+        console.log(data);
         const item = document.createElement('li');
-          item.textContent = `${data.time}: ${data.sender}: ${data.content}`;
-          document.getElementById('messages').appendChild(item);
+        item.textContent = `${data.time}: ${data.sender}: ${data.content}`;
+        document.getElementById('messages').appendChild(item);
       }
     </script>
   </body>

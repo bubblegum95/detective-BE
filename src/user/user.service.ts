@@ -51,8 +51,11 @@ export class UserService {
     return this.userRepository.findOne({ where: { id }, relations: ['detective'] });
   }
 
-  async findUserNameById(id: number ): Promise<string> {
-    const userName = await this.userRepository.findOne({where: {id}, select: {nickname: true}})
-    return userName.nickname
+  async findUserNameById(id: number): Promise<string> {
+    const userName = await this.userRepository.findOne({
+      where: { id },
+      select: { nickname: true },
+    });
+    return userName.nickname;
   }
 }
