@@ -1,0 +1,18 @@
+server:
+  http_listen_port: 9080 # Promtail 서버가 HTTP 요청을 수신하는 포트를 설정
+  grpc_listen_port: 0 # gRPC 포트를 비활성화 (0으로 설정하여 비활성화).
+
+positions:
+  filename: /tmp/positions.yaml # 로그 수집 위치를 저장하는 파일을 정의 Promtail이 로그 파일의 어느 위치까지 읽었는지 기억
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push # Loki 서버의 URL을 정의. 이 URL로 로그를 전송
+
+scrape_configs:
+  - job_name: system # 수집 작업의 이름을 설정
+    static_configs:
+      - targets:
+          - localhost # 로그 수집 대상 호스트를 설정
+        labels:
+          job: varlogs # 수집된 로그에 추가할 라벨을 정의
+          __path__: /logs/*log # 수집할 로그 파일의 경로를 정의

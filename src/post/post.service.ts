@@ -31,32 +31,58 @@ export class PostService {
   //! 출력값 타입 손 봐야함
 
   // 지역별 조회
-  async filterPostsByRegion(id: number, page: number): Promise<DetectivePost[]> {
+  async filterPostsByRegion(
+    id: number,
+    page: number,
+  ): Promise<{ posts: Partial<DetectivePost>[]; totalCount: number }> {
     const pageSize = 20;
     const skip = (page - 1) * pageSize;
+    const [posts, totalCount] = await Promise.all([
+      this.detectivePostRepo
+        .createQueryBuilder('detectivePost')
+        .leftJoin('detectivePost.detective', 'detective')
+        .leftJoin('detective.user', 'user')
+        .select([
+          'detectivePost.id',
+          'detectivePost.categoryId',
+          'detectivePost.regionId',
+          'user.name',
+        ])
+        .where('detectivePost.regionId = :id', { id })
+        .skip(skip)
+        .take(pageSize)
+        .getMany(),
+      this.detectivePostRepo.count({
+        where: {
+          regionId: id,
+        },
+      }),
+    ]);
+    // const [posts, totalCount] = await this.detectivePostRepo
+    //   .createQueryBuilder('detectivePost')
+    //   .leftJoin('detectivePost.detective', 'detective')
+    //   .leftJoin('detective.user', 'user')
+    //   .select([
+    //     'detectivePost.id',
+    //     'detectivePost.categoryId',
+    //     'detectivePost.regionId',
+    //     'user.name',
+    //   ])
+    //   .where('detectivePost.regionId = :id', { id })
+    //   .skip(skip)
+    //   .take(pageSize)
+    //   .getManyAndCount();
 
-    const [posts, count] = await this.detectivePostRepo
-      .createQueryBuilder('detectivePost')
-      .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.user', 'user')
-      .select([
-        'detectivePost.id',
-        'detectivePost.categoryId',
-        'detectivePost.regionId',
-        'user.name',
-      ])
-      .where('detectivePost.regionId = :id', { id })
-      .skip(skip)
-      .take(pageSize)
-      .getManyAndCount();
-
-    return posts;
+    return { posts, totalCount };
   }
 
-  async filterPostsByCategory(id: number, page: number): Promise<DetectivePost[]> {
+  async filterPostsByCategory(
+    id: number,
+    page: number,
+  ): Promise<{ posts: Partial<DetectivePost>[]; totalCount: number }> {
     const pageSize = 20;
     const skip = (page - 1) * pageSize;
-    const posts = await this.detectivePostRepo
+    const [posts, totalCount] = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.user', 'user')
@@ -65,29 +91,21 @@ export class PostService {
       .where('detectivePost.categoryId = :id', { id })
       .skip(skip)
       .take(pageSize)
-      .getRawMany();
+      .getManyAndCount();
 
-    return posts;
+    return { posts, totalCount };
   }
 
   async findPostsByKeyword(key: string): Promise<any> {
-    // const detectives = await this.detectivePostRepo
-    //   .createQueryBuilder('detectivePost')
-    //   .leftJoinAndSelect('detectivePost.detective', 'detective')
-    //   .leftJoinAndSelect('detective.user', 'user')
-    //   .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name'])
-    //   .where('user.name ILIKE :key', { key: `%${key}%` })
-    //   .getRawMany();
-
-    const offices = await this.detectivePostRepo
+    const detectives = await this.detectivePostRepo
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.detectiveOffice', 'office')
-      .select(['office.name', 'detectivePost.categoryId', 'detectivePost.regionId', 'office.id'])
-      .where('office.name ILIKE :key', { key: `%${key}%` })
+      .leftJoinAndSelect('detective.user', 'user')
+      .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name'])
+      .where('user.name ILIKE :key', { key: `%${key}%` })
       .getRawMany();
-    console.log(offices);
-    return { offices };
+
+    return detectives;
   }
 
   async uploadFile(file: Express.Multer.File): Promise<number> {
