@@ -72,7 +72,7 @@ export class ChatService {
 
         const chanegUserName: object[] = messages.map((message) => {
           const chaneMessage = {
-            sender: foundUserNickname as unknown as number,
+            sender: foundUserNickname,
             content: message.content,
             timestamp: message.timestamp,
           };
