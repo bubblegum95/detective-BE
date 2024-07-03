@@ -5,7 +5,7 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   </head>
   <body>
-    <h1>WebSocket Client</h1>
+    <h1>WebSocket Client 1</h1>
 
     <!-- 로그인 폼 -->
     <div id="loginForm">
@@ -20,7 +20,7 @@
       <button onclick="createRoom()">Create Room</button>
       <br /><br />
       <input id="roomInput" type="text" placeholder="Enter room" />
-      <button onclick="joinRoom()">Join Room</button>
+      <button onclick="handleJoinRoomMessages()">Get all messages in room</button>
       <br /><br />
       <input id="messageInput" type="text" placeholder="Enter message" />
       <input id="roomNameInput" type="text" placeholder="room name" />
@@ -57,8 +57,8 @@
           });
       }
 
-      function connectWebSocket() {
-        io = io('http://localhost:3000', {
+      async function connectWebSocket() {
+        io = await io('http://localhost:3000', {
           withCredentials: true,
         });
 
@@ -81,10 +81,24 @@
         });
       }
 
+      function handleJoinRoomMessages() {
+        console.log('get all messages');
+        const roomId = document.getElementById('roomInput').value;
+
+        io.emit('handlejoinRoomMessages', roomId);
+
+        io.on('joinRoomMessages', (data) => {
+          console.log('data: ', data);
+          for (let i = 0; i < data.length; i++) {
+            makeSpeechBubble(data[i]);
+          }
+        });
+      }
+
       function createRoom() {
         console.log('create room');
         const recipientId = document.getElementById('recipientIdInput').value;
-        console.log('recipientId: ', recipientId);
+
         io.emit('createRoom', recipientId);
         document.getElementById('recipientIdInput').value = '';
         io.on('createdRoom', (room) => {
@@ -94,6 +108,7 @@
 
       function joinRooms() {
         io.emit('joinRooms');
+        console.log('join room');
         io.on('joinedRooms', (room) => {
           console.log(`Joined room: ${room}`);
         });
@@ -113,7 +128,7 @@
       function makeSpeechBubble(data) {
         console.log(data);
         const item = document.createElement('li');
-        item.textContent = `${data.time}: ${data.sender}: ${data.content}`;
+        item.textContent = `${data.timestamp}: ${data.sender}: ${data.content}`;
         document.getElementById('messages').appendChild(item);
       }
     </script>
