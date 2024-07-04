@@ -16,7 +16,7 @@ export class DetectiveofficeController {
   // create(@Body() createDetectiveOfficeDto: CreateDetectiveOfficeDto): Promise<DetectiveOffice> {
   //   return this.officeService.createDetectiveOffice(createDetectiveOfficeDto);
   // }
-  @Get('')
+  @Post('')
   async findOfficeByKeyword(@Query('key') key: string) {
     return await this.officeService.findOfficeByKeyword(key);
   }
@@ -24,14 +24,19 @@ export class DetectiveofficeController {
   @UseGuards(JwtAuthGuard)
   @Post('request')
   @ApiOperation({ summary: '오피스 등록 요청', description: '오피스 등록 요청' })
-  async requestRegistration(@Body() key: string, @UserInfo() user: User) {
-    return this.officeService.requestRegistration(key, user.id);
+  async requestRegistration(@Body() body: { key: string }, @UserInfo() user: User) {
+    return this.officeService.requestRegistration(body.key, user.id);
   }
 
   // 오피스 등록 수락
-  @Post('approve/:id')
+  @UseGuards(JwtAuthGuard)
+  @Post('approve/:officeId')
   @ApiOperation({ summary: '오피스 등록 수락', description: '오피스 등록 수락' })
-  async approveRegistration(@Param('id') id: number) {
-    return this.officeService.approveRegistration(id);
+  async approveRegistration(
+    @Param('officeId') officeId: number,
+    @Body('email') email: string,
+    @UserInfo() user: User,
+  ) {
+    return this.officeService.approveRegistration(officeId, email, user.id);
   }
 }

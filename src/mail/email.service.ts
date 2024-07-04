@@ -11,7 +11,7 @@ export class EmailService {
       service: 'gmail',
       auth: {
         user: process.env.GMAIL_USER,
-        password: process.env.GMAIL_PASSWORD,
+        pass: process.env.GMAIL_PASSWORD,
       },
     });
   }
@@ -25,7 +25,7 @@ export class EmailService {
     };
 
     try {
-      await this.transporter.sendEmail(mailOptions);
+      await this.transporter.sendMail(mailOptions);
       console.log('성공');
     } catch (error) {
       console.error('실패:', error);

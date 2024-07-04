@@ -14,7 +14,6 @@ import {
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Position } from './type/position-enum.type';
 import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
@@ -125,8 +124,9 @@ export class AuthController {
       return res
         .cookie('authorization', `Bearer ${token}`, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
-          httpOnly: false,
-          secure: false,
+          httpOnly: true,
+          secure: true,
+          sameSite: 'None',
         })
         .status(HttpStatus.OK)
         .json({ message: '성공적으로 로그인하였습니다.' });

@@ -7,10 +7,10 @@ export class Message extends Document {
   content: string;
 
   @Prop({ required: true })
-  sender: string;
+  sender: number;
 
   @Prop({ required: true })
-  receiver: string;
+  room: string;
 
   @Prop({ default: Date.now })
   timestamp: Date;
