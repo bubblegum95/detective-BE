@@ -4,33 +4,53 @@ import {
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  OnGatewayInit,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { UseGuards } from '@nestjs/common';
+import { Inject, Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
-import { InjectModel } from '@nestjs/mongoose';
-import { Message } from './entities/message.entity';
-import { Model } from 'mongoose';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
-import { Room } from './entities/room.entity';
-import { UserService } from 'src/user/user.service';
-import { v4 as uuidv4} from 'uuid';
+import { ChatService } from './chat.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway()
-export class ChatGateway {
+export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
+  private readonly logger = new Logger(ChatGateway.name);
 
   constructor(
-    @InjectModel('Message') private readonly messageModel: Model<Message>,
-    @InjectRepository(Room) private readonly roomRepository: Repository<Room>,
-    private readonly dataSource: DataSource,
-    private readonly userService: UserService,
-  ) {}
+    private readonly chatService: ChatService,
+    @Inject('REDIS_SERVICE') private readonly client: ClientProxy,
+  ) {
+    // this.receiveMessages('message');
+  }
+
+  async onModuleInit() {
+    await this.client.connect();
+    this.logger.log('Redis Server initialized');
+  }
+
+  async onApplicationBootstrap() {
+    await this.client.connect();
+    this.logger.log('Nest Application Boot');
+  }
+
+  async afterInit(server: Server) {
+    this.logger.log('Websocket Server initialized');
+  }
+
+  handleConnection() {
+    this.logger.log('socket connection');
+  }
+
+  handleDisconnect() {
+    this.logger.log('socket disconnection');
+  }
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
@@ -38,39 +58,21 @@ export class ChatGateway {
     @MessageBody() recipientId: number,
     @UserInfo() user: User,
   ) {
-    let roomName: string;
-    user = await this.userService.findUserbyId(user.id)
-    const recipient = await this.userService.findUserbyId(recipientId)
-    const foundRoom = await this.findExistRoom(user.id, recipientId)
-
-    if(!foundRoom) {
-      console.log('didnt find room')
-      const name = uuidv4(); 
-      console.log('name: ', name)
-      const room = await this.roomRepository.save({name}); // Room 생성
-      room.user = [user, recipient]; // 관계 설정 추가 
-      const createdRoom = await this.roomRepository.save(room); // 설정 추가 후 저장
-      roomName = room.name;
-
-    } else if (foundRoom) {
-      console.log('found room')
-      const roomName = foundRoom;
-    }
-
-    client.join(roomName);
-    client.emit('createdRoom', roomName);
+    const createdRoom = await this.chatService.createRoom(client, user, recipientId);
+    client.join(createdRoom);
+    client.emit('createdRoom', createdRoom);
+    this.logger.log('handle create room');
   }
 
   @SubscribeMessage('joinRooms')
-  async handleJoinRoom(
-    @ConnectedSocket() client: Socket, 
-    @UserInfo() user: User
-  ) {
-    const userId = user.id
-    const foundRooms: string[] | null = await this.findRoomsUserBelongsTo(userId)
-    client.join(foundRooms)
+  async handleJoinRoom(@ConnectedSocket() client: Socket, @UserInfo() user: User) {
+    const joinedRoom = await this.chatService.joinRoom(client, user);
+
+    client.join(joinedRoom);
+
+    this.logger.log('handle join room');
     const roomlist = this.server.sockets.adapter.rooms; // socket.io room
-    console.log('roomlist: ', roomlist)
+    console.log('roomlist: ', roomlist);
   }
 
   @SubscribeMessage('message')
@@ -79,58 +81,33 @@ export class ChatGateway {
     @MessageBody() data: { room: string; message: string },
     @UserInfo() user: User,
   ) {
-    const room = data.room
-    const userId = user.id
-    const existInRoom = await this.existClientInRoom(userId, room)
-    
-    if(!existInRoom) {
-      console.log({message: 'User isnt in this room'})
-      return;
-    }
-
-    const messageInfo = await this.messageModel.create({sender: userId, content: data.message, room: data.room})
-    const foundUserNickname = await this.userService.findUserNameById(userId)
-    const returnData = {sender: foundUserNickname, content: messageInfo.content, time: messageInfo.timestamp}
-    this.server.to(room).emit('getMessage', returnData);
+    // message 생성
+    const message = await this.chatService.saveMassage(client, data, user);
+    // Redis로 전송
+    this.client.send({ cmd: 'chat_message' }, message).subscribe({
+      next: (response) => {
+        // Redis Microservice에서 받은 메시지를 클라이언트로 전송
+        const { sender, content, timestamp, room } = response;
+        this.server.to(room).emit('getMessage', { sender, content, timestamp, room });
+        this.logger.log('Message sent to clients');
+      },
+      error: (err) => {
+        this.logger.error('Error sending message to clients', err);
+      },
+    });
+    this.logger.log('send message to Redis');
   }
 
-  async existClientInRoom(userId: number, roomName: string): Promise<Room | undefined> {
-    const foundRoom = await this.dataSource.getRepository(Room)
-      .createQueryBuilder('room')
-      .leftJoinAndSelect('room.user', 'user')
-      .where('room.name = :roomName', { roomName })
-      .andWhere('user.id = :userId', { userId })
-      .getOne();
-    
-    console.log('found room: ', foundRoom)
-    return foundRoom;
-  }  
+  @SubscribeMessage('handlejoinRoomMessages')
+  async handlejoinRoomMessages(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() roomId: string,
+    @UserInfo() user: User,
+  ): Promise<void> {
+    this.logger.log('handle join room messages');
+    const messages = await this.chatService.findRoomMessages(client, roomId, user);
 
-  async findRoomsUserBelongsTo(userId: number):Promise<string[] | null> {
-    const foundRooms = await this.dataSource.getRepository(Room)
-      .createQueryBuilder('room')
-      .leftJoin('room.user', 'user')
-      .where('user.id = :userId', { userId })
-      .getMany();
-
-    let roomArr = [];
-
-    foundRooms.filter(room => {
-      const rooms = room.name; 
-      roomArr.push(rooms);
-    })
-    
-    return roomArr;
-  }
-
-  async findExistRoom (userId: number, recipientId: number): Promise<string | null> {
-    const room = await this.roomRepository.createQueryBuilder('room')
-    .innerJoin('room.user', 'user1', 'user1.id = :userId', { userId })
-    .innerJoin('room.user', 'user2', 'user2.id = :recipientId', { recipientId })
-    .getOne();
-
-    console.log('room: ', room);
-    if (room) {return room.name}
-    else if (!room) {return null}
+    client.emit('joinRoomMessages', messages);
+    this.logger.log('handle join room messages');
   }
 }
