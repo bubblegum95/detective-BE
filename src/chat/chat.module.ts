@@ -1,21 +1,38 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { WebSocketClientService } from './chat-client.service';
 import { Message, MessageSchema } from './entities/message.entity';
 import { ChatGateway } from './chat.gateway';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Room } from './entities/room.entity';
+import { UserModule } from 'src/user/user.module';
+import { UserService } from 'src/user/user.service';
+import { ChatService } from './chat.service';
+import { RedisModule } from 'src/redis/redis.module';
+import { RedisController } from 'src/redis/redis.service';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
-    JwtModule, 
-    MongooseModule.
-    forFeature([{ name: Message.name, schema: MessageSchema }]),
+    RedisModule,
+    JwtModule,
+    UserModule,
+    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     TypeOrmModule.forFeature([User, Room]),
+    ClientsModule.register([
+      {
+        name: 'REDIS_SERVICE',
+        transport: Transport.REDIS,
+        options: {
+          host: 'localhost',
+          port: 6379,
+        },
+      },
+    ]),
   ],
-  providers: [WebSocketClientService, ChatGateway, JwtService],
-  exports: [WebSocketClientService, ChatGateway],
+  controllers: [RedisController],
+  providers: [ChatGateway, ChatService, JwtService, UserService],
+  exports: [ChatGateway],
 })
 export class ChatModule {}

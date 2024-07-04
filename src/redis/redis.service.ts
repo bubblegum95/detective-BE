@@ -1,28 +1,30 @@
-// import { Injectable } from '@nestjs/common';
+// src/redis/redis.service.ts
+import { Controller, Inject, Injectable, Logger } from '@nestjs/common';
+import { MessagePattern, Payload, Ctx, RedisContext, ClientProxy } from '@nestjs/microservices';
 
-// @Injectable()
-// export class RedisService {
-//   private client: Redis;
+@Controller()
+export class RedisController {
+  private readonly logger = new Logger(RedisController.name);
+  constructor(@Inject('REDIS_SERVICE') private readonly client: ClientProxy) {}
 
-//   constructor() {
-//     this.client = new RedisClient({ host: 'localhost', port: 6379 });
-//   }
-
-//   saveMessage(senderId: string, recipientId: string, message: string): Promise<void> {
-//     return new Promise((resolve, reject) => {
-//       this.client.lpush(`messages:${recipientId}`, JSON.stringify({ senderId, message }), (err) => {
-//         if (err) return reject(err);
-//         resolve();
-//       });
-//     });
-//   }
-
-//   getMessages(recipientId: string): Promise<any[]> {
-//     return new Promise((resolve, reject) => {
-//       this.client.lrange(`messages:${recipientId}`, 0, -1, (err, messages) => {
-//         if (err) return reject(err);
-//         resolve(messages.map(message => JSON.parse(message)));
-//       });
-//     });
-//   }
-// }
+  @MessagePattern({ cmd: 'chat_message' })
+  handleMessage(
+    @Payload()
+    data: {
+      sender: string;
+      content: string;
+      timestamp: string;
+      room: string;
+    },
+    @Ctx() context: RedisContext,
+  ) {
+    this.logger.log(`Channel: ${context.getChannel()}`);
+    // 메시지 처리 로직
+    return {
+      sender: data.sender,
+      content: data.content,
+      timestamp: data.timestamp,
+      room: data.room,
+    };
+  }
+}

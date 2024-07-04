@@ -2,25 +2,27 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ServerOptions } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
+import { Logger } from '@nestjs/common';
 
 export class RedisIoAdapter extends IoAdapter {
   private adapterConstructor: ReturnType<typeof createAdapter>;
+  private readonly logger = new Logger(RedisIoAdapter.name);
 
   async connectToRedis(): Promise<void> {
-    const pubClient = createClient({ url: `redis://localhost:6379` });
-    const subClient = pubClient.duplicate();
+    const publisher = createClient({ url: `redis://localhost:6379` });
+    const subscriber = publisher.duplicate();
 
-    await Promise.all([pubClient.connect(), subClient.connect()]);
+    await Promise.all([publisher.connect(), subscriber.connect()]);
+    this.adapterConstructor = createAdapter(publisher, subscriber);
 
-    this.adapterConstructor = createAdapter(pubClient, subClient);
+    this.logger.log('connect to Redis');
   }
 
   createIOServer(port: number, options?: ServerOptions): any {
-    console.log('create io server');
     options = {
       ...options,
       cors: {
-        origin: 'http://127.0.0.1:3000',
+        origin: 'http://127.0.0.1:3001',
         methods: ['GET', 'POST'],
         credentials: true,
       },
@@ -28,6 +30,7 @@ export class RedisIoAdapter extends IoAdapter {
 
     const server = super.createIOServer(port, options);
     server.adapter(this.adapterConstructor);
+    this.logger.log(`create io server on port ${port}`);
     return server;
   }
 }
