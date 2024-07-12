@@ -7,12 +7,14 @@ import {
   Index,
   OneToMany,
   OneToOne,
+  JoinTable,
+  ManyToMany,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
-import { Chat } from '../../chat/entities/chat.entity';
+import { Room } from '../../chat/entities/room.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -23,7 +25,7 @@ export class User {
   name: string;
 
   @Index('user_email_index')
-  @Column({ type: 'varchar', length: 40, nullable: false })
+  @Column({ type: 'varchar', length: 40, nullable: false, unique: true })
   email: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
@@ -47,11 +49,8 @@ export class User {
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
 
-  @OneToMany(() => Chat, (chat) => chat.sender)
-  sentChatRoom: Chat[];
-
-  @OneToMany(() => Chat, (chat) => chat.receiver)
-  receivedChatRoom: Chat[];
+  @ManyToMany(() => Room, (room) => room.user) //many to many로 관계설정 변경
+  room: Room[];
 
   @OneToMany(() => Review, (review) => review.consumer)
   review: Review[];

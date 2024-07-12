@@ -132,9 +132,10 @@ export class AuthService {
       await queryRunner.release();
       throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
     }
+    const hashedPassword = await hash(password, 10);
 
     try {
-      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
+      const user = await this.createUserInfo(name, email, nickname, phoneNumber, hashedPassword);
 
       await this.dataSource.manager.getRepository(Detective).save({
         userId: user.id,
@@ -168,6 +169,7 @@ export class AuthService {
       address,
       businessNumber,
       founded,
+      company,
     } = createDetectiveAuthDto;
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -185,31 +187,15 @@ export class AuthService {
       throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
     }
 
+    const hashedPassword = await hash(password, 10);
     try {
-      const user = await this.createUserInfo(name, email, nickname, phoneNumber, password);
+      // 사용자 정보 생성
+      const user = await queryRunner.manager
+        .getRepository(User)
+        .save({ name, email, nickname, phoneNumber, password: hashedPassword });
 
       // 사업자 등록 정보 검증
-      const validateBusiness = await this.validationCheckBno(businessNumber, founded, user.name);
-
-      if (!validateBusiness) {
-        throw new UnauthorizedException('사업자 등록 정보가 없거나 올바르지 않습니다');
-      }
-
-      if (!validateBusiness.ok) {
-        const errorText = await validateBusiness.text();
-        throw new Error(errorText);
-      }
-
-      const result = await validateBusiness.json();
-      console.log(result);
-
-      if (result.data[0].tax_type === '국세청에 등록되지 않은 사업자등록번호입니다.') {
-        throw new BadRequestException('국세청에 등록되지 않은 사업자등록번호입니다.');
-      }
-
-      if (founded !== result.data[0].b_stt) {
-        throw new UnauthorizedException('설립일자가 일치하지 않습니다.');
-      }
+      const validateBusiness = await this.validationCheckBno(businessNumber, founded, name);
 
       // location 등록
       const location = await queryRunner.manager.getRepository(Location).save({
@@ -219,6 +205,7 @@ export class AuthService {
       // office 등록
       const office = await queryRunner.manager.getRepository(DetectiveOffice).save({
         ownerId: user.id,
+        name: company,
         businessRegistrationNum: businessNumber,
         founded: founded,
         locationId: location.id,
@@ -256,20 +243,25 @@ export class AuthService {
 
   // 사업자 등록 정보 검증
   async validationCheckBno(b_no: string, start_dt: string, p_nm: string) {
+    console.log(p_nm);
     const data = {
-      b_no: [b_no],
-      start_dt: [start_dt],
-      p_nm: [p_nm],
-      p_nm2: '',
-      b_nm: '',
-      corp_no: '',
-      b_sector: '',
-      b_type: '',
-      b_adr: '',
+      businesses: [
+        {
+          b_no: b_no,
+          start_dt: start_dt,
+          p_nm: p_nm,
+          p_nm2: '',
+          b_nm: '',
+          corp_no: '',
+          b_sector: '',
+          b_type: '',
+          b_adr: '',
+        },
+      ],
     };
 
     const SERVICE_KEY = process.env.BUSINESS_REGISTRATION_SERVICEKEY;
-    const url = `https://api.odcloud.kr/api/nts-businessman/v1/status?serviceKey=${SERVICE_KEY}`;
+    const url = `https://api.odcloud.kr/api/nts-businessman/v1/validate?serviceKey=${SERVICE_KEY}`;
     const option = {
       method: 'POST',
       headers: {
@@ -279,9 +271,30 @@ export class AuthService {
       body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
     };
 
-    const response = await fetch(url, option);
+    try {
+      const response = fetch(url, option)
+        .then((a) => a.json())
+        .then((data) => {
+          const validationMsg = data.data[0].valid_msg;
+          const result = data.data[0].request_param;
 
-    return response;
+          console.log(data);
+          console.log('valMsg: ', validationMsg);
+          console.log('status_code: ', data.status_code);
+          console.log('request_param: ', result);
+
+          if (validationMsg === '확인할 수 없습니다.') {
+            throw new BadRequestException('확인할 수 없습니다. 입력하신 정보를 확인해주세요.');
+          }
+
+          return result;
+        });
+
+      console.log(response);
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // 로그인
@@ -300,7 +313,6 @@ export class AuthService {
         expiresIn: '7d',
       });
 
-      console.log('AuthService ~ signIn ~ accessToken:', accessToken);
       return accessToken;
     } catch (error) {
       throw error;

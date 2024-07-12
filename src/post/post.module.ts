@@ -11,10 +11,10 @@ import { Detective } from 'src/user/entities/detective.entity';
 import { User } from 'src/user/entities/user.entity';
 import { DetectivePost } from './entities/detective-post.entity';
 import { S3Module } from 'src/s3/s3.module';
-import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from '../auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
