@@ -1,8 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { DetectiveofficeService } from './detectiveoffice.service';
-import { CreateDetectiveOfficeDto } from './dto/create-office.dto';
-import { DetectiveOffice } from './entities/detective-office.entity';
-import { RelationshipDto } from './dto/create-relationship.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { ApiOperation } from '@nestjs/swagger';
 import { UserInfo } from 'src/utils/decorator';

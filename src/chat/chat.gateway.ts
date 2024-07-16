@@ -14,7 +14,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { ChatService } from './chat.service';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientNats, ClientProxy } from '@nestjs/microservices';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway()
@@ -109,5 +109,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     client.emit('joinRoomMessages', messages);
     this.logger.log('handle join room messages');
+  }
+
+  @SubscribeMessage('notification')
+  async handleNotification(
+    @MessageBody() data: { type: string; message: string; senderId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    this.chatService.handleNotification(data);
+    this.server.emit('notification', data);
   }
 }

@@ -158,4 +158,12 @@ export class ChatService {
       return null;
     }
   }
+
+  async handleNotification(data: { type: string; message: string; senderId: number }) {
+    console.log('알림:', data);
+  }
+
+  acceptRegistration(senderId: number) {
+    console.log(`등록 수락: ${senderId}`);
+  }
 }

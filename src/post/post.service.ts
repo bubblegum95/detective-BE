@@ -14,9 +14,12 @@ import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
+import * as AWS from 'aws-sdk';
+import { create } from 'domain';
 
 @Injectable()
 export class PostService {
+  private lambda: AWS.Lambda;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
@@ -26,7 +29,9 @@ export class PostService {
     private regionRepo: Repository<Region>,
     private userService: UserService,
     private readonly s3Service: S3Service,
-  ) {}
+  ) {
+    this.lambda = new AWS.Lambda();
+  }
 
   //! 출력값 타입 손 봐야함
 
@@ -91,11 +96,25 @@ export class PostService {
   }
 
   async uploadFile(file: Express.Multer.File): Promise<number> {
+    const params = {
+      FunctionName: 'file-compression',
+      Payload: JSON.stringify({
+        fileContent: file.buffer.toString('base64'),
+        fileName: file.originalname,
+      }),
+    };
+
     try {
-      console.log('파일 업로드 서비스 시작');
-      const fileId = await this.s3Service.uploadRegistrationFile(file);
-      console.log('파일 업로드 성공, 파일 ID:', fileId);
-      return fileId;
+      const result = await this.lambda.invoke(params).promise();
+      console.log('람다 함수 호출 후 result:', result);
+      const payload = JSON.parse(result.Payload as string);
+      if (result.StatusCode === 200) {
+        console.log('파일 업로드 성공, 파일 Id:', payload.fileId);
+        return payload.fileId;
+      } else {
+        console.error('람다 함수 호출 실패:', payload.error);
+        throw new Error(payload.error);
+      }
     } catch (err) {
       console.error('파일 업로드 실패:', err);
       throw err;
