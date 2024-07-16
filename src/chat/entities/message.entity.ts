@@ -13,7 +13,7 @@ export class Message extends Document {
   room: string;
 
   @Prop({ default: Date.now() })
-  timestamp: Date;
+  timestamp: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

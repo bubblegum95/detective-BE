@@ -9,6 +9,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Message } from './entities/message.entity';
 import { Room } from './entities/room.entity';
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 
 @Injectable()
 export class ChatService {
@@ -97,10 +98,13 @@ export class ChatService {
       return;
     }
 
+    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
     const messageInfo = await this.messageModel.create({
       sender: userId,
       content: data.message,
       room: data.room,
+      timestamp: timestamp,
     });
 
     const foundUserNickname = await this.userService.findUserNameById(userId);

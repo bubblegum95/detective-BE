@@ -10,8 +10,8 @@ import { UserModule } from 'src/user/user.module';
 import { UserService } from 'src/user/user.service';
 import { ChatService } from './chat.service';
 import { RedisModule } from 'src/redis/redis.module';
-import { RedisController } from 'src/redis/redis.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisController } from 'src/redis/redis.controller';
 
 @Module({
   imports: [

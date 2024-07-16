@@ -88,6 +88,6 @@ export class CreateDetectiveAuthDto {
   })
   company: string;
 
-  @ApiProperty({ type: 'string', format: 'binary' })
+  @ApiProperty({ type: 'string', format: 'binary', description: '사업자등록증 이미지 파일' })
   file: any;
 }

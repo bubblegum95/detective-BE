@@ -11,9 +11,9 @@ import { Equipment } from './entities/equipment.entity';
 import { Category } from './entities/category.entity';
 import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
-import { User } from 'src/user/entities/user.entity';
-import { UserService } from 'src/user/user.service';
-import { S3Service } from 'src/s3/s3.service';
+import { User } from '../user/entities/user.entity';
+import { UserService } from '../user/user.service';
+import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
 
 @Injectable()
