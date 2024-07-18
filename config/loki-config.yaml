@@ -3,6 +3,7 @@ auth_enabled: false # 인증 비활성화
 server:
   http_listen_port: 3100 # Loki 서버가 HTTP 요청을 수신하는 포트를 설정
   http_listen_address: 0.0.0.0
+  # log_level: debug
 ingester:
   wal:
     enabled: true # Write Ahead Log(WAL)를 활성화 -> 로그 데이터의 내구성을 보장

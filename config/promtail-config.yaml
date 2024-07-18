@@ -9,10 +9,10 @@ clients:
   - url: http://loki:3100/loki/api/v1/push # Loki 서버의 URL을 정의. 이 URL로 로그를 전송
 
 scrape_configs:
-  - job_name: system # 수집 작업의 이름을 설정
+  - job_name: postgres_log
     static_configs:
       - targets:
-          - localhost # 로그 수집 대상 호스트를 설정
+          - localhost
         labels:
-          job: varlogs # 수집된 로그에 추가할 라벨을 정의
-          __path__: /logs/*log # 수집할 로그 파일의 경로를 정의
+          job: postgres
+          __path__: /var/log/postgresql/*.log
