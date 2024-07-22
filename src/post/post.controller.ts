@@ -14,11 +14,13 @@ import {
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { S3Service } from '../s3/s3.service';
+import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { DetectivePost } from './entities/detective-post.entity';
 
 @ApiTags('Post')
 @Controller('posts')
@@ -30,14 +32,19 @@ export class PostController {
 
   // region별 조회
   @Get('/region/:regionId')
-  async filterPostsByRegion(@Param('regionId') id: number) {
-    const posts = await this.postService.filterPostsByRegion(id);
+  @ApiParam({ type: 'number', name: 'regionId', example: 1 })
+  @ApiQuery({ type: 'number', name: 'page', example: 1 })
+  async filterPostsByRegion(@Param('regionId') id: number, @Query('page') page: number = 1) {
+    const posts = await this.postService.filterPostsByRegion(id, page);
     return { data: posts };
   }
 
   @Get('/category/:categoryId')
-  filterPostsByCategory(@Param('categoryId') id: number) {
-    return this.postService.filterPostsByCategory(id);
+  @ApiParam({ type: 'number', name: 'categoryId', example: 1 })
+  @ApiQuery({ type: 'number', name: 'page', example: 1 })
+  async filterPostsByCategory(@Param('categoryId') id: number, @Query('page') page: number = 1) {
+    const posts = await this.postService.filterPostsByCategory(id, page);
+    return { posts };
   }
 
   @Get('/keyword')
@@ -59,6 +66,7 @@ export class PostController {
     @UserInfo() user: User,
   ) {
     const fileId = await this.postService.uploadFile(file);
+    console.log('fileId:', fileId);
     createPostDto.file = fileId;
     return this.postService.createProfile(createPostDto, user.id);
   }

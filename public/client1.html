@@ -27,6 +27,14 @@
       <button onclick="sendMessage()">Send Message</button>
 
       <ul id="messages"></ul>
+
+      <h2>오피스 등록 요청</h2>
+      <form id="registrationForm">
+        <label for="officeKeyword">오피스 키워드</label>
+        <input type="text" id="officeKeyword" name="officeKeyword" required />
+        <input type="hidden" id="userId" name="userId" , value="4" />
+        <button type="submit">등록 요청</button>
+      </form>
     </div>
 
     <script>
@@ -132,6 +140,26 @@
         item.textContent = `${data.timestamp}: ${data.sender}: ${data.content}`;
         document.getElementById('messages').appendChild(item);
       }
+
+      document
+        .getElementById('registrationForm')
+        .addEventListener('submit', async function (event) {
+          event.preventDefault();
+          const officeKeyword = document.getElementById('officeKeyword').value;
+          const userId = document.getElementById('userId').value;
+
+          const response = await fetch('http://localhost:3000/offices/request', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ key: officeKeyword, userId: parseInt(userId) }),
+            credentials: 'include',
+          });
+
+          const result = await response.json();
+          alert(result.message);
+        });
     </script>
   </body>
 </html>

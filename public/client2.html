@@ -28,6 +28,10 @@
 
       <ul id="messages"></ul>
     </div>
+    <h2>알림</h2>
+    <div id="notification">
+      <button onclick="acceptRegistration()">수락</button>
+    </div>
 
     <script>
       let socket;
@@ -71,6 +75,26 @@
         io.on('disconnect', () => {
           console.log('WebSocket 연결 끊김');
         });
+
+        io.on('notification', () => {
+          console.log('오피스 등록 요청 알람');
+          recievedNotification();
+        });
+      }
+
+      function recievedNotification(data) {
+        console.log('Received notification:', data);
+        const { type, message, senderId } = data;
+        if (type === 'registration_request') {
+          const notifications = document.getElementById('notification');
+          const notificationElement = document.createElement('div');
+          notificationElement.innerText = message;
+          const acceptButton = document.createElement('button');
+          acceptButton.innerText = '수락';
+          acceptButton.onclick = () => acceptRegistration(senderId);
+          notificationElement.appendChild(acceptButton);
+          notifications.appendChild(notificationElement);
+        }
       }
 
       function getMessages() {
@@ -130,6 +154,26 @@
         const item = document.createElement('li');
         item.textContent = `${data.timestamp}: ${data.sender}: ${data.content}`;
         document.getElementById('messages').appendChild(item);
+      }
+
+      async function acceptRegistration() {
+        // officeId 다른 데서 받기
+        // email도
+        const response = await fetch(`http://localhost:3000/offices/approve/${officeId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, userId }),
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log(result.message);
+        } else {
+          console.error('등록 요청 수락에 실패했습니다.');
+        }
       }
     </script>
   </body>

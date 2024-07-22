@@ -173,6 +173,14 @@ export class AuthService {
       throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
     }
 
+    if (password !== passwordConfirm) {
+      await queryRunner.release();
+      throw new ConflictException('비밀번호와 확인용 비밀번호가 서로 일치하지 않습니다.');
+    }
+    const hashedPassword = await hash(password, 10);
+
+    try {
+      const user = await this.createUserInfo(name, email, nickname, phoneNumber, hashedPassword);
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -251,8 +259,12 @@ export class AuthService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    const hashedPassword = await hash(password, 10);
     try {
       // 사용자 정보 생성
+      const user = await queryRunner.manager
+        .getRepository(User)
+        .save({ name, email, nickname, phoneNumber, password: hashedPassword });
       const user = await this.createUserInfo(
         queryRunner,
         name,
@@ -383,6 +395,7 @@ export class AuthService {
           console.log('request_param: ', result);
 
           if (validationMsg === '확인할 수 없습니다.') {
+            throw new BadRequestException('확인할 수 없습니다. 입력하신 정보를 확인해주세요.');
             return false;
           }
 
@@ -390,6 +403,7 @@ export class AuthService {
         });
 
       console.log(response);
+      return response;
       return true;
     } catch (error) {
       throw error;
