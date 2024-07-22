@@ -115,9 +115,10 @@
       }
 
       function joinRooms() {
-        io.emit('joinRooms');
+        io.emit('joinRooms'); // 'joinRooms' event를 publishing
         console.log('join room');
         io.on('joinedRooms', (room) => {
+          // 'joinedRooms' event를 subscribe
           console.log(`Joined room: ${room}`);
         });
       }
