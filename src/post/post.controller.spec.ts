@@ -75,7 +75,7 @@ describe('PostController', () => {
       const page = 1;
       const mockPosts = [];
 
-      jest.spyOn(postService, 'filterPostsByRegion').mockResolvedValue(mockPosts);
+      // jest.spyOn(postService, 'filterPostsByRegion').mockResolvedValue(mockPosts);
 
       const posts = await postService.filterPostsByRegion(regionId, page);
 
