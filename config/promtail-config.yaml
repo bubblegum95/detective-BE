@@ -1,18 +1,34 @@
 server:
-  http_listen_port: 9080 # Promtail 서버가 HTTP 요청을 수신하는 포트를 설정
-  grpc_listen_port: 0 # gRPC 포트를 비활성화 (0으로 설정하여 비활성화).
+  http_listen_port: 9080
+  grpc_listen_port: 0
 
 positions:
-  filename: /tmp/positions.yaml # 로그 수집 위치를 저장하는 파일을 정의 Promtail이 로그 파일의 어느 위치까지 읽었는지 기억
+  filename: /tmp/positions.yaml
 
 clients:
-  - url: http://loki:3100/loki/api/v1/push # Loki 서버의 URL을 정의. 이 URL로 로그를 전송
+  - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: postgres_log
+  - job_name: postgres_log_info
     static_configs:
       - targets:
           - localhost
         labels:
-          job: postgres
-          __path__: /var/log/postgresql/*.log
+          job: postgres_info
+          __path__: ./logs/postgres-log/info/*.log
+
+  - job_name: postgres_log_error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgres_error
+          __path__: ./logs/postgres-log/error/*.log
+
+  - job_name: postgres_log_debug
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: postgres_debug
+          __path__: ./logs/postgres-log/debug/*.log

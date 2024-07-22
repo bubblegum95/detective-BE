@@ -27,6 +27,8 @@ const typeOrmModuleOptions = {
     entities: [__dirname + '/**/*.entity{.ts,.js}'],
     synchronize: configService.get('POSTGRES_SYNC'),
     logging: ['query', 'error'], // row query 출력
+    retryAttempts: 5,
+    retryDelay: 3000,
   }),
   inject: [ConfigService],
 };
