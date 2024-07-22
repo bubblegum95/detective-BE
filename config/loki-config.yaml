@@ -1,0 +1,53 @@
+auth_enabled: false # 인증 비활성화
+
+server:
+  http_listen_port: 3100 # Loki 서버가 HTTP 요청을 수신하는 포트를 설정
+  http_listen_address: 0.0.0.0
+ingester:
+  wal:
+    enabled: true # Write Ahead Log(WAL)를 활성화 -> 로그 데이터의 내구성을 보장
+    dir: /loki/wal # WAL 데이터를 저장할 디렉터리를 설정
+  lifecycler:
+    address: localhost
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1 # 로그 데이터를 복제하는 인스턴스 수를 설정
+  chunk_idle_period: 3m # 청크가 비활성 상태로 간주되는 기간을 설정
+  chunk_retain_period: 1m # 청크가 삭제되기 전에 유지되는 기간을 설정
+  max_transfer_retries: 0 # 청크 전송 재시도 횟수를 설정
+#청크 : 로그 데이터를 저장하고 관리하는 기본 단위
+
+schema_config:
+  configs:
+    - from: 2020-06-28 # 스키마 적용 시작 날짜를 설정
+      store: boltdb-shipper # BoltDB Shipper 저장소를 사용
+      object_store: filesystem # 파일 시스템을 객체 저장소로 사용
+      schema: v11 # 스키마 버전을 설정
+      index:
+        prefix: index_ # 인덱스 테이블의 접두사를 설정
+        period: 24h # 인덱스 테이블의 기간을 설정
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index # 활성 인덱스가 저장되는 디렉터리를 설정
+    cache_location: /loki/cache # 캐시 데이터를 저장하는 위치를 설정
+    shared_store: filesystem # 공유 저장소로 파일 시스템을 사용
+  filesystem:
+    directory: /loki/chunks # 청크 데이터를 저장할 디렉터리를 설정
+
+limits_config:
+  enforce_metric_name: false # 메트릭 이름을 강제 여부
+  reject_old_samples: true # 오래된 샘플을 거부
+  reject_old_samples_max_age: 168h # 샘플이 오래된 것으로 간주되는 최대 연령을 설정
+
+chunk_store_config:
+  max_look_back_period: 0s # 최대 조회 기간을 설정
+
+compactor:
+  working_directory: /loki/boltdb-shipper-compactor
+  shared_store: filesystem
+
+table_manager:
+  retention_deletes_enabled: true # 보존 정책에 따라 데이터 삭제를 활성화
+  retention_period: 168h # 데이터 보존 기간을 설정
