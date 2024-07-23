@@ -30,6 +30,8 @@ services:
       - ./logs:/logs
       - ./logs/postgres-log:/var/log/postgresql
     restart: always
+    depends_on:
+      - prometheus
     networks:
       - loki
 
@@ -63,22 +65,16 @@ services:
     networks:
       - loki
 
-  # prometheus:
-  #   container_name: prometheus
-  #   image: prom/prometheus:latest
-  #   command:
-  #     - '--config.file=/etc/prometheus/prometheus.yaml'
-  #   volumes:
-  #     - ./config/prometheus-config.yaml:/etc/prometheus/prometheus-config.yaml
-  #     - ./prometheus-data:/prometheus
-  #   ports:
-  #     - '9090:9090'
-  #   restart: always
-  #   networks:
-  #     - loki
-
-volumes:
-  postgres-data:
-  loki:
-  grafana-data:
-  # prometheus-data:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yaml'
+    volumes:
+      - ./config/prometheus-config.yaml:/etc/prometheus/prometheus.yaml
+      - ./prometheus-data:/prometheus
+    ports:
+      - '9090:9090'
+    restart: always
+    networks:
+      - loki
