@@ -12,6 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 
 @Module({
   controllers: [AuthController],
@@ -21,7 +22,7 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
     S3Module,
     HttpModule,
     PassportModule,
-    TypeOrmModule.forFeature([User, Detective, File]),
+    TypeOrmModule.forFeature([User, Detective, File, DetectiveOffice]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

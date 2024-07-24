@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Detective } from 'src/user/entities/detective.entity';
-import { Like, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { DetectiveOffice } from './entities/detective-office.entity';
-import { CreateDetectiveOfficeDto } from './dto/create-office.dto';
 import { OfficeRelationship } from './entities/office-relationship.entity';
-import { RelationshipDto } from './dto/create-relationship.dto';
 import { UserService } from 'src/user/user.service';
 import { EmailService } from 'src/mail/email.service';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class DetectiveofficeService {
   constructor(
+    @Inject('REDIS_SERVICE') private client: ClientProxy,
     @InjectRepository(Detective)
     private detectiveRepo: Repository<Detective>,
     @InjectRepository(DetectiveOffice)
@@ -24,14 +24,12 @@ export class DetectiveofficeService {
 
   async findOfficeByKeyword(key: string) {
     const offices = await this.officeRepo.find({ where: { name: key } });
-    console.log('1office name:', offices);
     return offices;
   }
 
   // 오피스 등록 요청
   async requestRegistration(key: string, userId: number) {
     const office = await this.findOfficeByKeyword(key);
-    console.log('2office name:', office);
 
     if (office.length === 0) {
       return { message: '해당 키워드로 오피스를 찾을 수 없습니다.' };

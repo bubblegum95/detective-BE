@@ -15,6 +15,7 @@ import { AuthModule } from '../auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 import { JwtModule } from '@nestjs/jwt';
+import { File } from 'src/s3/entities/s3.entity';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { JwtModule } from '@nestjs/jwt';
       Detective,
       JwtModule,
       DetectiveOffice,
+      File,
     ]),
   ],
   controllers: [PostController],

@@ -12,8 +12,8 @@ export class Message extends Document {
   @Prop({ required: true })
   room: string;
 
-  @Prop({ default: Date.now })
-  timestamp: Date;
+  @Prop({ default: Date.now() })
+  timestamp: string;
 }
 
 export const MessageSchema = SchemaFactory.createForClass(Message);

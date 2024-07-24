@@ -51,7 +51,6 @@ export class AuthController {
       const detective = await this.authService.createDetectiveWithNoFile(
         createDetectiveEmployeeAuthDto,
       );
-      console.log('detective', detective);
 
       if (!detective) {
         throw new Error('계정을 생성할 수 없습니다');
@@ -119,8 +118,6 @@ export class AuthController {
     try {
       const token = await this.authService.signIn(signInDto);
 
-      if (!token) throw new UnauthorizedException('로그인에 실패하였습니다.');
-
       return res
         .cookie('authorization', `Bearer ${token}`, {
           maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -129,7 +126,7 @@ export class AuthController {
           sameSite: 'None',
         })
         .status(HttpStatus.OK)
-        .json({ message: '성공적으로 로그인하였습니다.' });
+        .json({ message: '로그인하였습니다.' });
     } catch (error) {
       return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
     }

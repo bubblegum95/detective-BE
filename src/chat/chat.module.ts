@@ -8,16 +8,31 @@ import { User } from 'src/user/entities/user.entity';
 import { Room } from './entities/room.entity';
 import { UserModule } from 'src/user/user.module';
 import { UserService } from 'src/user/user.service';
+import { ChatService } from './chat.service';
+import { RedisModule } from 'src/redis/redis.module';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisController } from 'src/redis/redis.controller';
 
 @Module({
   imports: [
-    JwtModule, 
+    RedisModule,
+    JwtModule,
     UserModule,
-    MongooseModule.
-    forFeature([{ name: Message.name, schema: MessageSchema }]),
+    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
     TypeOrmModule.forFeature([User, Room]),
+    ClientsModule.register([
+      {
+        name: 'REDIS_SERVICE',
+        transport: Transport.REDIS,
+        options: {
+          host: 'localhost',
+          port: 6379,
+        },
+      },
+    ]),
   ],
-  providers: [ChatGateway, JwtService, UserService],
+  controllers: [RedisController],
+  providers: [ChatGateway, ChatService, JwtService, UserService],
   exports: [ChatGateway],
 })
 export class ChatModule {}

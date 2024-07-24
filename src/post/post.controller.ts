@@ -65,7 +65,7 @@ export class PostController {
     @UserInfo() user: User,
   ) {
     const fileId = await this.postService.uploadFile(file);
-    console.log(file);
+    console.log('fileId:', fileId);
     createPostDto.file = fileId;
     return this.postService.createProfile(createPostDto, user.id);
   }
