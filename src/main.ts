@@ -6,13 +6,11 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser, { signedCookie } from 'cookie-parser';
 import { Server } from 'socket.io';
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import { RedisIoAdapter } from './redis/redis-io-adapter';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { RedisIoAdapter } from './redis/redis-io.adapter';
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: false, // 기본 로거를 비활성화! winston으로 사용할거임
-  });
+  const app = await NestFactory.create(AppModule);
   const winstonLogger = app.get(WINSTON_MODULE_NEST_PROVIDER);
   app.useLogger(winstonLogger);
 
