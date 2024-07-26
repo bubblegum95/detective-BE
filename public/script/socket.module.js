@@ -89,7 +89,21 @@ export default class SocketModule {
 
   creatNotificationItems(data) {
     const item = document.createElement('div');
-    item.innerHTML = `<a href="알림 타입에 따라서 화면 전환" onclick="" id="${data.id}" class="${data.type}">${data.type}:${data.content}:${data.timestamp}:${data.read}</a>`;
+
+    switch (data.type) {
+      case 'message':
+        item.innerHTML = `<a href="./my.chat.html" onclick="readNotification()" id="${data.id}" class="${data.type}">${data.type}:${data.content}:${data.timestamp}:${data.read}</a>`;
+        break;
+
+      case 'onboarding':
+        item.innerHTML = `<a href="알림 타입에 따라서 화면 전환" onclick="readNotification()" id="${data.id}" class="${data.type}">${data.type}:${data.content}:${data.timestamp}:${data.read}</a>`;
+        break;
+
+      default:
+        item.innerHTML = `<a href="알림 타입에 따라서 화면 전환" onclick="readNotification()" id="${data.id}" class="${data.type}">${data.type}:${data.content}:${data.timestamp}:${data.read}</a>`;
+        break;
+    }
+
     document.getElementById('notifications').appendChild(item);
   }
 

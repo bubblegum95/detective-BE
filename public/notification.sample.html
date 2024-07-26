@@ -18,6 +18,10 @@
 
       const socket = new SocketModule();
       socket.connectWebSocket();
+
+      function readNotification(notificationId) {
+        socket.readNotification(notificationId);
+      }
     </script>
   </body>
 </html>
