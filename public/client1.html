@@ -118,7 +118,6 @@
       function sendMessage() {
         const message = document.getElementById('messageInput').value;
         const room = document.getElementById('roomNameInput').value;
-        let data;
 
         if (message) {
           io.emit('message', { message, room });

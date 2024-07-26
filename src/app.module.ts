@@ -16,6 +16,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { NotificationModule } from './notification/notification.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -67,6 +68,7 @@ const typeOrmModuleOptions = {
         },
       },
     ]),
+    NotificationModule,
   ],
   providers: [AppService],
   controllers: [AppController],

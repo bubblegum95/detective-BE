@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RedisIoAdapter } from './redis-io.adapter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisController } from './redis.controller';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       },
     ]),
   ],
+  controllers: [RedisController],
   providers: [RedisIoAdapter],
   exports: [RedisIoAdapter],
 })

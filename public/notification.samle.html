@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <title>숨진사람(알림)</title>
+  </head>
+  <body>
+    <header></header>
+    <main>
+      <h2>Notifications</h2>
+      <div id="notifications"></div>
+    </main>
+    <footer></footer>
+    <script type="module">
+      import SocketModule from './script/socket.module.js';
+
+      const socket = new SocketModule();
+      socket.connectWebSocket();
+    </script>
+  </body>
+</html>

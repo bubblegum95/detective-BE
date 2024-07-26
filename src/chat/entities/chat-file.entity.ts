@@ -4,12 +4,9 @@ import { Document, Types } from 'mongoose';
 export const FileSchema = SchemaFactory.createForClass(File);
 
 @Schema()
-export class Message extends Document {
-  @Prop({})
-  content: string;
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'File' }] })
-  files: Types.ObjectId[];
+export class ChatFile extends Document {
+  @Prop({ required: true })
+  files: string[];
 
   @Prop({ required: true })
   sender: number;
@@ -21,4 +18,4 @@ export class Message extends Document {
   timestamp: string;
 }
 
-export const MessageSchema = SchemaFactory.createForClass(Message);
+export const ChatFileSchema = SchemaFactory.createForClass(ChatFile);

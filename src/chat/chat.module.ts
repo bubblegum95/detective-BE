@@ -12,13 +12,21 @@ import { ChatService } from './chat.service';
 import { RedisModule } from 'src/redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisController } from 'src/redis/redis.controller';
+import { S3Module } from '../s3/s3.module';
+import { ChatFile, ChatFileSchema } from './entities/chat-file.entity';
+import { Notification, NotificationSchema } from './entities/notification.entity';
 
 @Module({
   imports: [
+    S3Module,
     RedisModule,
     JwtModule,
     UserModule,
-    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
+    MongooseModule.forFeature([
+      { name: Message.name, schema: MessageSchema },
+      { name: ChatFile.name, schema: ChatFileSchema },
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
     TypeOrmModule.forFeature([User, Room]),
     ClientsModule.register([
       {

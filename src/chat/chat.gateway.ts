@@ -8,13 +8,16 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
-import { Inject, Logger, UseGuards } from '@nestjs/common';
+import { Inject, Logger, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { ChatService } from './chat.service';
 import { ClientProxy } from '@nestjs/microservices';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { S3Service } from '../s3/s3.service';
+import { NotificationType } from './type/notification.type';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway()
@@ -25,18 +28,17 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   constructor(
     private readonly chatService: ChatService,
-    @Inject('REDIS_SERVICE') private readonly client: ClientProxy,
-  ) {
-    // this.receiveMessages('message');
-  }
+    private readonly s3Service: S3Service,
+    @Inject('REDIS_SERVICE') private readonly redisClient: ClientProxy,
+  ) {}
 
   async onModuleInit() {
-    await this.client.connect();
+    await this.redisClient.connect();
     this.logger.log('Redis Server initialized');
   }
 
   async onApplicationBootstrap() {
-    await this.client.connect();
+    await this.redisClient.connect();
     this.logger.log('Nest Application Boot');
   }
 
@@ -78,24 +80,17 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('message')
   async handleMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { room: string; message: string },
+    @MessageBody() data: { room: string; message?: string },
     @UserInfo() user: User,
   ) {
-    // message 생성
-    const message = await this.chatService.saveMassage(client, data, user);
-    // Redis로 전송
-    this.client.send({ cmd: 'chat_message' }, message).subscribe({
-      next: (response) => {
-        // Redis Microservice에서 받은 메시지를 클라이언트로 전송
-        const { sender, content, timestamp, room } = response;
-        this.server.to(room).emit('getMessage', { sender, content, timestamp, room });
-        this.logger.log('Message sent to clients');
-      },
-      error: (err) => {
-        this.logger.error('Error sending message to clients', err);
-      },
-    });
-    this.logger.log('send message to Redis');
+    try {
+      const { room, message } = data;
+      console.log(message);
+      const savedmessage = await this.chatService.saveMassage(user, room, message);
+      this.publishMessage(savedmessage, user.id);
+    } catch (error) {
+      this.logger.log(error.message);
+    }
   }
 
   @SubscribeMessage('handlejoinRoomMessages')
@@ -109,5 +104,50 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     client.emit('joinRoomMessages', messages);
     this.logger.log('handle join room messages');
+  }
+
+  async publishMessage(message, userId: number) {
+    console.log(message);
+    // Redis로 전송
+    this.redisClient.send({ cmd: 'chat_message' }, message).subscribe({
+      next: async (response) => {
+        // Redis 서버에서 채놀을 통해 받은 메시지를 소켓 클라이언트로 전송
+        const { sender, content, timestamp, room } = response;
+        this.server.to(room).emit('getMessage', { sender, content, timestamp, room });
+        // 채팅 알림 소켓 클라이언트로 전송
+        const receivers = await this.chatService.findMessageReceiver(room, userId);
+        for (const receiver of receivers) {
+          const data = {
+            type: NotificationType.Message,
+            sender: sender,
+            receiver: receiver,
+            content: `${sender} 님이 메시지를 보내셨습니다.`,
+          };
+
+          const notification = await this.chatService.saveNotification(data);
+          this.server.to(room).emit('notification', notification);
+        }
+        this.logger.log('Message sent to clients');
+      },
+      error: (err) => {
+        this.logger.error('Error sending message to clients', err);
+      },
+    });
+    this.logger.log('send message to Redis');
+  }
+
+  @SubscribeMessage('readNotNotifications')
+  async readNotNotifications(@ConnectedSocket() client: Socket, @UserInfo() user: User) {
+    const data = await this.chatService.getNotReadNotification(user);
+    client.emit('isNotReadNotifications', data);
+  }
+
+  @SubscribeMessage('isRead') // 읽은 알림 처리하기
+  async isRead(
+    @ConnectedSocket() client: Socket,
+    @UserInfo() user: User,
+    @MessageBody() id: string,
+  ) {
+    const data = await this.chatService.isReadNotification(id);
   }
 }
