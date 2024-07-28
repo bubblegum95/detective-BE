@@ -30,7 +30,7 @@
     <footer></footer>
 
     <script type="module">
-      import AuthModule from './script/auth.module.js';
+      import Auth from './script/auth.module.js';
 
       document.getElementById('signin_form').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -40,7 +40,7 @@
           password: document.getElementById('password').value,
         };
 
-        const user = new AuthModule();
+        const user = new Auth();
         user.signIn(formData);
       });
     </script>

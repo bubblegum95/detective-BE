@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export const FileSchema = SchemaFactory.createForClass(File);
 
@@ -7,9 +7,6 @@ export const FileSchema = SchemaFactory.createForClass(File);
 export class Message extends Document {
   @Prop({})
   content: string;
-
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'File' }] })
-  files: Types.ObjectId[];
 
   @Prop({ required: true })
   sender: number;

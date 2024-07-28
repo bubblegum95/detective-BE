@@ -271,10 +271,10 @@
 
     <footer></footer>
     <script type="module">
-      import AuthModule from './script/auth.module.js';
+      import Auth from './script/auth.module.js';
       import navBarTemplate from './script/navbar.template.js';
 
-      const detective = new AuthModule();
+      const detective = new Auth();
 
       document.getElementById('employeeBtn').addEventListener('click', () => {
         document.getElementById('employeeSignupForm').style.display = 'block';

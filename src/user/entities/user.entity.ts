@@ -7,7 +7,6 @@ import {
   Index,
   OneToMany,
   OneToOne,
-  JoinTable,
   ManyToMany,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
@@ -15,6 +14,7 @@ import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
 import { Room } from '../../chat/entities/room.entity';
+import { Participant } from './participant.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -49,8 +49,8 @@ export class User {
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];
 
-  @ManyToMany(() => Room, (room) => room.user) //many to many로 관계설정 변경
-  room: Room[];
+  @OneToMany(() => Participant, (participant) => participant.user)
+  participants: Participant[];
 
   @OneToMany(() => Review, (review) => review.consumer)
   review: Review[];

@@ -1,15 +1,14 @@
 // authModule.js
-import FetchModule from './fetch.module.js';
-import connectWebSocket from './socket.module.js';
+import Fetch from './fetch.module.js';
+import connectWebSocket from './chat-socket.module.js';
 
-export default class AuthModule extends FetchModule {
+export default class Auth extends Fetch {
   async consumerSignUp(formData) {
-    const method = 'POST';
     const contentData = 'application/json';
     const url = 'http://localhost:3000/auth/signup/consumer';
 
     try {
-      const response = await super.fetchMethod(method, url, contentData, formData);
+      const response = await super.fetch(url, contentData, formData);
       const data = await response.json();
 
       if (data.success === true) {
@@ -26,12 +25,11 @@ export default class AuthModule extends FetchModule {
   }
 
   async employeeSignUp(formData) {
-    const method = 'POST';
-    const contentData = 'multipart/form-data';
+    const contentData = 'application/json';
     const url = 'http://localhost:3000/auth/signup/employee';
 
     try {
-      const response = super.fetchMethod(method, contentData, url, formData);
+      const response = super.fetch(url, contentData, formData);
       const data = await response.json();
 
       if (data.success === true) {
@@ -48,12 +46,11 @@ export default class AuthModule extends FetchModule {
   }
 
   async employerSignUP(formData) {
-    const method = 'POST';
     const contentData = 'multipart/form-data';
     const url = 'http://localhost:3000/auth/signup/employer';
 
     try {
-      const response = super.fetchMethod(method, contentData, url, formData);
+      const response = super.post(url, contentData, formData);
       const data = await response.json();
 
       if (data.success === true) {
@@ -71,7 +68,9 @@ export default class AuthModule extends FetchModule {
 
   async signIn(formData) {
     try {
-      const response = await super.fetchMethod(method, url, contentData, formData);
+      const url = 'http://localhost:3000/auth/signin';
+      const contentData = 'application/json';
+      const response = await super.post(url, contentData, formData);
       const data = await response.json();
 
       if (data.success === true) {

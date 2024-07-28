@@ -1,4 +1,4 @@
-export default class FetchModule {
+export default class Fetch {
   async post(url, contentData, formData) {
     const options = {
       method: 'POST',

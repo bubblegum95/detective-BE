@@ -29,7 +29,7 @@ export class S3Controller {
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '채팅 파일 전송', description: '채팅 파일 전송' })
-  @ApiBody({ type: FileUploadDto, description: '채팅 파일과 룸 이름을 포함하는 요청' })
+  @ApiBody({ type: FileUploadDto, description: '채팅 파일 전송 및 반환' })
   @Post('chatfile')
   async chatFileUpload(
     @UserInfo() user: User,
@@ -39,9 +39,10 @@ export class S3Controller {
     try {
       console.log(dto.room, files);
       const uploadedFiles = await this.s3Service.uploadChatFiles(user, dto.room, files);
+
       return {
         success: true,
-        message: '파일을 성공적으로 업로드하였습니다.',
+        message: '파일을 전송하였습니다.',
       };
     } catch (error) {
       return {

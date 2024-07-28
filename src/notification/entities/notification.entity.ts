@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { NotificationType } from '../type/notification.type';
 
 export const FileSchema = SchemaFactory.createForClass(File);
@@ -9,7 +9,7 @@ export class Notification extends Document {
   @Prop({ required: true })
   type: NotificationType;
 
-  @Prop({})
+  @Prop({ required: true })
   receiver: number;
 
   @Prop({ required: true })

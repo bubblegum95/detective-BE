@@ -12,7 +12,6 @@ import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
-import { JwtModule } from '@nestjs/jwt';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -50,14 +49,6 @@ const typeOrmModuleOptions = {
     ReviewModule,
     ChatModule,
     RedisModule,
-    // JwtModule.registerAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: async (configService: ConfigService) => ({
-    //     secret: configService.get<string>('ACCESS_SECRET'),
-    //     signOptions: { expiresIn: '7d' },
-    //   }),
-    // }),
     ClientsModule.register([
       {
         name: 'REDIS_SERVICE',

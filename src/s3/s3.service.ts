@@ -70,7 +70,8 @@ export class S3Service {
         const command = new PutObjectCommand(params);
         await this.s3Client.send(command);
 
-        fileArr.push(fileKey);
+        const path = `https://${this.bucketName}.s3.amazonaws.com/${fileKey}`;
+        fileArr.push(path);
       }
 
       const uploadedFile = await this.chatFileModel.create({
@@ -87,7 +88,16 @@ export class S3Service {
   }
 
   async downloadChatFiles(room: string) {
-    const foundFiles = await this.chatFileModel.find({ where: { room } });
+    try {
+      const foundFiles = await this.chatFileModel.findOne({
+        where: { room },
+        select: { files: true },
+      });
+      const data = await this.downloadFiles(foundFiles.files);
+      return data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   // S3 파일 다운로드 받기

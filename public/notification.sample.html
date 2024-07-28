@@ -14,9 +14,9 @@
     </main>
     <footer></footer>
     <script type="module">
-      import SocketModule from './script/socket.module.js';
+      import NotificationSocket from './script/notification-socket.module.js';
 
-      const socket = new SocketModule();
+      const socket = new NotificationSocket();
       socket.connectWebSocket();
 
       function readNotification(notificationId) {

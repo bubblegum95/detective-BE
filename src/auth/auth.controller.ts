@@ -22,7 +22,7 @@ import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.
 import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { String } from 'aws-sdk/clients/appstream';
-import { NotificationType } from '../chat/type/notification.type';
+import { NotificationType } from '../notification/type/notification.type';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')

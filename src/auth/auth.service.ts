@@ -19,7 +19,7 @@ import { DetectiveOffice } from '../office/entities/detective-office.entity';
 import { Location } from '../office/entities/location.entity';
 import { UserService } from '../user/user.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
-import { NotificationType } from '../chat/type/notification.type';
+import { NotificationType } from '../notification/type/notification.type';
 import { Room } from '../chat/entities/room.entity';
 
 @Injectable()
@@ -413,26 +413,26 @@ export class AuthService {
   }
 
   // 테스트
-  async saveNotification(data: any, room: string) {
-    if (data.type === NotificationType.Message) {
-      const roomMembers = await this.dataSource
-        .getRepository(Room)
-        .createQueryBuilder('room')
-        .select(['room.name', 'user.id'])
-        .leftJoin('room.user', 'user')
-        .where('room.name = :roomName', { roomName: 'd9b383f3-53ca-45db-a806-c3aabfd78fb3' }) // 변수 사용
-        .getOne(); // findOne()과 유사한 메서드
+  // async saveNotification(data: any, room: string) {
+  //   if (data.type === NotificationType.Message) {
+  //     const roomMembers = await this.dataSource
+  //       .getRepository(Room)
+  //       .createQueryBuilder('room')
+  //       .select(['room.name', 'user.id'])
+  //       .leftJoin('room.user', 'user')
+  //       .where('room.name = :roomName', { roomName: 'd9b383f3-53ca-45db-a806-c3aabfd78fb3' }) // 변수 사용
+  //       .getOne(); // findOne()과 유사한 메서드
 
-      const members = roomMembers.user;
-      const memberList: number[] = [];
+  //     const members = roomMembers.users;
+  //     const memberList: number[] = [];
 
-      for (const member of members) {
-        memberList.push(Number(member.id));
-      }
-      console.log(memberList);
+  //     for (const member of members) {
+  //       memberList.push(Number(member.id));
+  //     }
+  //     console.log(memberList);
 
-      return memberList;
-    } else if (data.type === NotificationType.Onboarding) {
-    }
-  }
+  //     return memberList;
+  //   } else if (data.type === NotificationType.Onboarding) {
+  //   }
+  // }
 }

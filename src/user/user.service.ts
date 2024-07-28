@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { Room } from '../chat/entities/room.entity';
+import { Participant } from './entities/participant.entity';
 
 @Injectable()
 export class UserService {
@@ -11,8 +12,12 @@ export class UserService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Room)
     private readonly roomRepository: Repository<Room>,
+    @InjectRepository(Participant)
+    private readonly participantRepository: Repository<Participant>,
     private readonly dataSource: DataSource,
   ) {}
+
+  logger: Logger;
 
   async findUserbyId(userId: number) {
     try {
@@ -68,20 +73,44 @@ export class UserService {
     try {
       const rooms = await this.dataSource
         .getRepository(Room)
-        .createQueryBuilder()
-        .select(['room.id', 'room.name', 'room.createdAt', 'user.nickname'])
-        .from(Room, 'room')
-        .leftJoin('room.user', 'user')
-        .where('user.id != :userId', { userId })
+        .createQueryBuilder('room')
+        .leftJoinAndSelect('room.participants', 'participant')
+        .leftJoinAndSelect('participant.user', 'user')
+        .where((qb) => {
+          const subQuery = qb
+            .subQuery()
+            .select('p.roomId')
+            .from(Participant, 'p')
+            .where('p.userId = :userId')
+            .getQuery();
+          return 'room.id IN ' + subQuery;
+        })
+        .setParameter('userId', userId)
         .getMany();
 
-      console.log(rooms);
+      console.log('rooms', rooms);
+      const roomLists = [];
+      const participantLists = [];
+      rooms.map((room) => {
+        room.participants.map((participant) => {
+          participantLists.push(participant.user.nickname);
+        });
 
-      return rooms;
+        const roomlist = {
+          id: room.id.toString(),
+          name: room.name,
+          createdAt: room.createdAt,
+          participants: participantLists,
+        };
+
+        roomLists.push(roomlist);
+      });
+
+      console.log('roomList: ', roomLists);
+
+      return roomLists;
     } catch (error) {
       throw error;
     }
   }
-
-  async getOutOfRoom(user: User, roomId: number) {}
 }
