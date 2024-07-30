@@ -10,11 +10,9 @@ import { Equipment } from './entities/equipment.entity';
 import { Category } from './entities/category.entity';
 import { EquipmentEnum } from './type/equipment.type';
 import { CategoryEnum } from './type/category.type';
-import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
-import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 import * as AWS from 'aws-sdk';
 import { File } from 'src/s3/entities/s3.entity';
 

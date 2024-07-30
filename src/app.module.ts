@@ -15,6 +15,7 @@ import { ChatModule } from './chat/chat.module';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { NewsModule } from './news/news.module';
 import { NotificationModule } from './notification/notification.module';
 
 const typeOrmModuleOptions = {
@@ -51,6 +52,7 @@ const typeOrmModuleOptions = {
     ReviewModule,
     ChatModule,
     RedisModule,
+    NewsModule,
     ClientsModule.register([
       {
         name: 'REDIS_SERVICE',
