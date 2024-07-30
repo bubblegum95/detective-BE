@@ -20,7 +20,7 @@ export class RedisController {
     @Ctx() context: RedisContext,
   ) {
     this.logger.log(`Channel: ${context.getChannel()}`);
-    const webhookUrl = 'https://localhost:3000/notification';
+    const webhookUrl = 'https://localhost:8080/notification';
     try {
       await axios.post(webhookUrl, { channel: 'chat_message', data });
       console.log('Webhook called successfully');

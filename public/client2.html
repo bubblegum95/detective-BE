@@ -40,7 +40,7 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        fetch('http://localhost:3000/auth/signin', {
+        fetch('http://localhost:8080/auth/signin', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -51,7 +51,7 @@
           .then((response) => response.json())
           .then((data) => {
             console.log('data: ', data);
-            if (data.message === '성공적으로 로그인하였습니다.') {
+            if (data.message === '로그인하였습니다.') {
               document.getElementById('loginForm').style.display = 'none';
               document.getElementById('chatForm').style.display = 'block';
               connectWebSocket();
@@ -62,7 +62,7 @@
       }
 
       async function connectWebSocket() {
-        io = await io('http://localhost:3000', {
+        io = await io('http://localhost:8080', {
           withCredentials: true,
         });
 
@@ -159,7 +159,7 @@
       async function acceptRegistration() {
         // officeId 다른 데서 받기
         // email도
-        const response = await fetch(`http://localhost:3000/offices/approve/${officeId}`, {
+        const response = await fetch(`http://localhost:8080/offices/approve/${officeId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
