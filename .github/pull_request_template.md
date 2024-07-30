@@ -1,10 +1,8 @@
 ## 개요
 
-ex) detective_post 관련 entity 생성
+- ex. detective_post 관련 entity 생성
 
 ## PR 유형
-
-어떤 변경 사항이 있나요?
 
 - [ ] 새로운 기능 추가
 - [ ] 버그 수정

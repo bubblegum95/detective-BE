@@ -1,14 +1,23 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+import { Room } from '../chat/entities/room.entity';
+import { Participant } from './entities/participant.entity';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Room)
+    private readonly roomRepository: Repository<Room>,
+    @InjectRepository(Participant)
+    private readonly participantRepository: Repository<Participant>,
+    private readonly dataSource: DataSource,
   ) {}
+
+  logger: Logger;
 
   async findUserbyId(userId: number) {
     try {
@@ -57,5 +66,51 @@ export class UserService {
       select: { nickname: true },
     });
     return userName.nickname;
+  }
+
+  async getAllChatRooms(user: User) {
+    const userId = user.id;
+    try {
+      const rooms = await this.dataSource
+        .getRepository(Room)
+        .createQueryBuilder('room')
+        .leftJoinAndSelect('room.participants', 'participant')
+        .leftJoinAndSelect('participant.user', 'user')
+        .where((qb) => {
+          const subQuery = qb
+            .subQuery()
+            .select('p.roomId')
+            .from(Participant, 'p')
+            .where('p.userId = :userId')
+            .getQuery();
+          return 'room.id IN ' + subQuery;
+        })
+        .setParameter('userId', userId)
+        .getMany();
+
+      console.log('rooms', rooms);
+      const roomLists = [];
+      const participantLists = [];
+      rooms.map((room) => {
+        room.participants.map((participant) => {
+          participantLists.push(participant.user.nickname);
+        });
+
+        const roomlist = {
+          id: room.id.toString(),
+          name: room.name,
+          createdAt: room.createdAt,
+          participants: participantLists,
+        };
+
+        roomLists.push(roomlist);
+      });
+
+      console.log('roomList: ', roomLists);
+
+      return roomLists;
+    } catch (error) {
+      throw error;
+    }
   }
 }

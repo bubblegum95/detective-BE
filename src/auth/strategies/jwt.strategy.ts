@@ -38,7 +38,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         const [tokenType, token] = authorization.split(' ');
         if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
         if (token) {
-          console.log(token);
           return token;
         }
       }

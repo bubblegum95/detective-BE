@@ -12,10 +12,11 @@ import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
-import { JwtModule } from '@nestjs/jwt';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { NewsModule } from './news/news.module';
+import { NotificationModule } from './notification/notification.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'config/winston.config';
 
@@ -54,14 +55,7 @@ const typeOrmModuleOptions = {
     ReviewModule,
     ChatModule,
     RedisModule,
-    // JwtModule.registerAsync({
-    //   imports: [ConfigModule],
-    //   inject: [ConfigService],
-    //   useFactory: async (configService: ConfigService) => ({
-    //     secret: configService.get<string>('ACCESS_SECRET'),
-    //     signOptions: { expiresIn: '7d' },
-    //   }),
-    // }),
+    NewsModule,
     ClientsModule.register([
       {
         name: 'REDIS_SERVICE',
@@ -72,6 +66,7 @@ const typeOrmModuleOptions = {
         },
       },
     ]),
+    NotificationModule,
   ],
   providers: [AppService],
   controllers: [AppController],

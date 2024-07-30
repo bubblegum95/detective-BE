@@ -1,9 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
+export const FileSchema = SchemaFactory.createForClass(File);
+
 @Schema()
 export class Message extends Document {
-  @Prop({ required: true })
+  @Prop({})
   content: string;
 
   @Prop({ required: true })

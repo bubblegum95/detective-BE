@@ -7,7 +7,6 @@ import {
   UseGuards,
   Param,
   Query,
-  Delete,
   ValidationPipe,
   UseInterceptors,
 } from '@nestjs/common';
@@ -19,7 +18,6 @@ import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { DetectivePost } from './entities/detective-post.entity';
 
 @ApiTags('Post')
 @Controller('posts')

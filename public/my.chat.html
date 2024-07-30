@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>숨진사람(내 채팅)</title>
+    <style>
+      /* 모달 스타일 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
+      }
+
+      .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+    </style>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <h1>chatting lists</h1>
+      <div>
+        <form id="createRoomForm">
+          <label for="receiver">초대할 사람</label>
+          <input type="text" id="recipientId" />
+          <input type="submit" id="submitBtn" value="Create Room" />
+        </form>
+      </div>
+    </header>
+    <main>
+      <div id="chatList"></div>
+    </main>
+
+    <footer></footer>
+
+    <!-- 모달 폼 -->
+    <div id="myModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div id="modalContent"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      import ChatRoom from './script/chat-room.module.js';
+      import ChatSocket from './script/chat-socket.module.js';
+
+      const chatList = document.getElementById('chatList');
+      const rooms = new ChatRoom();
+      rooms.getRooms(chatList);
+
+      const socket = new ChatSocket();
+      socket.connectWebSocket();
+
+      function createRoom(event) {
+        event.preventDefault();
+        const recipientId = document.getElementById('recipientId').value;
+        console.log('socket: ', socket);
+        socket.createRoom(recipientId);
+
+        document.getElementById('recipientId').value = '';
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        // 해당 폼에서 'submit' 이벤트 발생시 'createRoom' 함수 트리거
+        const createRoomForm = document.getElementById('createRoomForm');
+        createRoomForm.addEventListener('submit', createRoom);
+
+        const modal = document.getElementById('myModal');
+        const span = document.getElementsByClassName('close')[0];
+        const modalContent = document.getElementById('modalContent');
+
+        // x 클릭 시 모달 닫기
+        span.onclick = function () {
+          modal.style.display = 'none';
+        };
+
+        // 모달 외부 클릭 시 모달 닫기
+        window.onclick = function (event) {
+          if (event.target === modal) {
+            modal.style.display = 'none';
+          }
+        };
+
+        // 모달을 여는 함수
+        window.openModal = function openModals(roomId, roomName) {
+          modalContent.innerHTML = `
+          <ul id="messages"></ul>
+          <input id='fileUpload' type="file" multiple />
+          <input id="messageInput" type="text" placeholder="Enter message" />
+          <button onclick="sendMessage(${roomId}, '${roomName}')">Send Message</button>
+          `;
+
+          // 룸 메시지 호출
+          handleRoomMessage(roomId, roomName);
+          modal.style.display = 'block';
+        };
+
+        window.handleRoomMessage = function (roomId, roomName) {
+          socket.handleJoinRoomMessages(roomId, roomName);
+        };
+
+        window.sendMessage = function (roomId, roomName) {
+          const message = document.getElementById('messageInput').value;
+          const fileInput = document.getElementById('fileUpload');
+
+          if (message) {
+            socket.sendMessage(roomId, roomName, message);
+          }
+
+          if (fileInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('room', roomId);
+
+            for (const file of fileInput.files) {
+              formData.append('files', file);
+            }
+
+            rooms.upload(formData);
+          }
+
+          document.getElementById('messageInput').value = '';
+          document.getElementById('fileUpload').value = '';
+        };
+      });
+    </script>
+  </body>
+</html>
