@@ -19,6 +19,8 @@ import { DetectiveOffice } from '../office/entities/detective-office.entity';
 import { Location } from '../office/entities/location.entity';
 import { UserService } from '../user/user.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
+import { NotificationType } from '../notification/type/notification.type';
+import { Room } from '../chat/entities/room.entity';
 
 @Injectable()
 export class AuthService {
@@ -374,22 +376,14 @@ export class AuthService {
       const response = fetch(url, option)
         .then((a) => a.json())
         .then((data) => {
-          const validationMsg = data.data[0].valid_msg;
-          const result = data.data[0].request_param;
+          const validation = data.data[0].valid;
 
-          console.log(data);
-          console.log('valMsg: ', validationMsg);
-          console.log('status_code: ', data.status_code);
-          console.log('request_param: ', result);
-
-          if (validationMsg === '확인할 수 없습니다.') {
-            return false;
+          if (validation === '02') {
+            throw new Error('등록되지 않은 사업자번호입니다.');
           }
-
-          return result;
         });
 
-      console.log(response);
+      console.log('사업자등록진위여부결과: ', response);
       return true;
     } catch (error) {
       throw error;
@@ -417,4 +411,28 @@ export class AuthService {
       throw error;
     }
   }
+
+  // 테스트
+  // async saveNotification(data: any, room: string) {
+  //   if (data.type === NotificationType.Message) {
+  //     const roomMembers = await this.dataSource
+  //       .getRepository(Room)
+  //       .createQueryBuilder('room')
+  //       .select(['room.name', 'user.id'])
+  //       .leftJoin('room.user', 'user')
+  //       .where('room.name = :roomName', { roomName: 'd9b383f3-53ca-45db-a806-c3aabfd78fb3' }) // 변수 사용
+  //       .getOne(); // findOne()과 유사한 메서드
+
+  //     const members = roomMembers.users;
+  //     const memberList: number[] = [];
+
+  //     for (const member of members) {
+  //       memberList.push(Number(member.id));
+  //     }
+  //     console.log(memberList);
+
+  //     return memberList;
+  //   } else if (data.type === NotificationType.Onboarding) {
+  //   }
+  // }
 }
