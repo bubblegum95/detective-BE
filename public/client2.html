@@ -1,0 +1,180 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Client</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+  </head>
+  <body>
+    <h1>WebSocket Client 2</h1>
+
+    <!-- 로그인 폼 -->
+    <div id="loginForm">
+      <input id="email" type="email" placeholder="email" />
+      <input id="password" type="password" placeholder="password" />
+      <button onclick="login()">Login</button>
+    </div>
+
+    <!-- 방 참여 및 메시지 전송 폼 -->
+    <div id="chatForm" style="display: none">
+      <input id="recipientIdInput" type="text" placeholder="recipient id" />
+      <button onclick="createRoom()">Create Room</button>
+      <br /><br />
+      <input id="roomInput" type="text" placeholder="Enter room" />
+      <button onclick="handleJoinRoomMessages()">Get all messages in room</button>
+      <br /><br />
+      <input id="messageInput" type="text" placeholder="Enter message" />
+      <input id="roomNameInput" type="text" placeholder="room name" />
+      <button onclick="sendMessage()">Send Message</button>
+
+      <ul id="messages"></ul>
+    </div>
+    <h2>알림</h2>
+    <div id="notification">
+      <button onclick="acceptRegistration()">수락</button>
+    </div>
+
+    <script>
+      let socket;
+
+      function login() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        fetch('http://localhost:3000/auth/signin', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log('data: ', data);
+            if (data.message === '성공적으로 로그인하였습니다.') {
+              document.getElementById('loginForm').style.display = 'none';
+              document.getElementById('chatForm').style.display = 'block';
+              connectWebSocket();
+            } else {
+              console.error('로그인 실패:', data.message);
+            }
+          });
+      }
+
+      async function connectWebSocket() {
+        io = await io('http://localhost:3000', {
+          withCredentials: true,
+        });
+
+        io.on('connect', () => {
+          console.log('WebSocket 연결 성공');
+          joinRooms(); // 소켓 연결 시 모든 룸과 연결하기
+          getMessages(); // 연결된 룸에 메시지 받기
+        });
+
+        io.on('disconnect', () => {
+          console.log('WebSocket 연결 끊김');
+        });
+
+        io.on('notification', () => {
+          console.log('오피스 등록 요청 알람');
+          recievedNotification();
+        });
+      }
+
+      function recievedNotification(data) {
+        console.log('Received notification:', data);
+        const { type, message, senderId } = data;
+        if (type === 'registration_request') {
+          const notifications = document.getElementById('notification');
+          const notificationElement = document.createElement('div');
+          notificationElement.innerText = message;
+          const acceptButton = document.createElement('button');
+          acceptButton.innerText = '수락';
+          acceptButton.onclick = () => acceptRegistration(senderId);
+          notificationElement.appendChild(acceptButton);
+          notifications.appendChild(notificationElement);
+        }
+      }
+
+      function getMessages() {
+        console.log('get messages');
+        // 'getMessage' 이벤트를 수신하여 메시지를 화면에 추가
+        io.on('getMessage', (data) => {
+          makeSpeechBubble(data);
+        });
+      }
+
+      function handleJoinRoomMessages() {
+        console.log('get all messages');
+        const roomId = document.getElementById('roomInput').value;
+
+        io.emit('handlejoinRoomMessages', roomId);
+
+        io.on('joinRoomMessages', (data) => {
+          console.log('data: ', data);
+          for (let i = 0; i < data.length; i++) {
+            makeSpeechBubble(data[i]);
+          }
+        });
+      }
+
+      function createRoom() {
+        console.log('create room');
+        const recipientId = document.getElementById('recipientIdInput').value;
+
+        io.emit('createRoom', recipientId);
+        document.getElementById('recipientIdInput').value = '';
+        io.on('createdRoom', (room) => {
+          console.log(`Created room: ${room}`);
+        });
+      }
+
+      function joinRooms() {
+        io.emit('joinRooms');
+        console.log('join room');
+        io.on('joinedRooms', (room) => {
+          console.log(`Joined room: ${room}`);
+        });
+      }
+
+      function sendMessage() {
+        const message = document.getElementById('messageInput').value;
+        const room = document.getElementById('roomNameInput').value;
+        let data;
+
+        if (message) {
+          io.emit('message', { message, room });
+          document.getElementById('messageInput').value = '';
+        }
+      }
+
+      function makeSpeechBubble(data) {
+        console.log(data);
+        const item = document.createElement('li');
+        item.textContent = `${data.timestamp}: ${data.sender}: ${data.content}`;
+        document.getElementById('messages').appendChild(item);
+      }
+
+      async function acceptRegistration() {
+        // officeId 다른 데서 받기
+        // email도
+        const response = await fetch(`http://localhost:3000/offices/approve/${officeId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, userId }),
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log(result.message);
+        } else {
+          console.error('등록 요청 수락에 실패했습니다.');
+        }
+      }
+    </script>
+  </body>
+</html>

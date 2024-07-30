@@ -25,7 +25,7 @@ export class User {
   name: string;
 
   @Index('user_email_index')
-  @Column({ type: 'varchar', length: 40, nullable: false })
+  @Column({ type: 'varchar', length: 40, nullable: false, unique: true })
   email: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })

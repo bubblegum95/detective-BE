@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { ChatService } from './chat.service';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientNats, ClientProxy } from '@nestjs/microservices';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway({ namespace: '/chat' })
@@ -200,5 +200,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       this.logger.error(`Unexpected error from client ${client.id}: ${error.message}`);
       client.emit('errorToClient', { message: 'An unexpected error occurred' });
     }
+  }
+
+  @SubscribeMessage('notification')
+  async handleNotification(
+    @MessageBody() data: { type: string; message: string; senderId: number },
+    @ConnectedSocket() client: Socket,
+  ) {
+    this.chatService.handleNotification(data);
+    this.server.emit('notification', data);
   }
 }

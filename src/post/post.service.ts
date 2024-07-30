@@ -1,6 +1,5 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
 import { DetectivePost } from './entities/detective-post.entity';
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
@@ -15,32 +14,95 @@ import { User } from '../user/entities/user.entity';
 import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
+import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
+import * as AWS from 'aws-sdk';
+import { File } from 'src/s3/entities/s3.entity';
 
 @Injectable()
 export class PostService {
+  private lambda: AWS.Lambda;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
     private detectivePostRepo: Repository<DetectivePost>,
+
     @InjectRepository(Region)
     private regionRepo: Repository<Region>,
     private userService: UserService,
     private readonly s3Service: S3Service,
-  ) {}
 
-  // 지역별 조회
-  filterPostsByRegion(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { regionId: id },
-    });
-    return posts;
+    @InjectRepository(File)
+    private readonly fileRepo: Repository<File>,
+  ) {
+    this.lambda = new AWS.Lambda();
   }
 
-  filterPostsByCategory(id: number): Promise<DetectivePost[]> {
-    const posts = this.detectivePostRepo.find({
-      where: { categoryId: id },
-    });
-    return posts;
+  //! 출력값 타입 손 봐야함
+
+  // 지역별 조회
+  async filterPostsByRegion(
+    id: number,
+    page: number,
+  ): Promise<{ posts: Partial<DetectivePost>[]; totalCount: number }> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+    const [posts, totalCount] = await Promise.all([
+      this.detectivePostRepo
+        .createQueryBuilder('detectivePost')
+        .leftJoin('detectivePost.detective', 'detective')
+        .leftJoin('detective.user', 'user')
+        .select([
+          'detectivePost.id',
+          'detectivePost.categoryId',
+          'detectivePost.regionId',
+          'user.name',
+        ])
+        .where('detectivePost.regionId = :id', { id })
+        .skip(skip)
+        .take(pageSize)
+        .getMany(),
+      this.detectivePostRepo.count({
+        where: {
+          regionId: id,
+        },
+      }),
+    ]);
+    // const [posts, totalCount] = await this.detectivePostRepo
+    //   .createQueryBuilder('detectivePost')
+    //   .leftJoin('detectivePost.detective', 'detective')
+    //   .leftJoin('detective.user', 'user')
+    //   .select([
+    //     'detectivePost.id',
+    //     'detectivePost.categoryId',
+    //     'detectivePost.regionId',
+    //     'user.name',
+    //   ])
+    //   .where('detectivePost.regionId = :id', { id })
+    //   .skip(skip)
+    //   .take(pageSize)
+    //   .getManyAndCount();
+
+    return { posts, totalCount };
+  }
+
+  async filterPostsByCategory(
+    id: number,
+    page: number,
+  ): Promise<{ posts: Partial<DetectivePost>[]; totalCount: number }> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+    const [posts, totalCount] = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name', 'office.name'])
+      .where('detectivePost.categoryId = :id', { id })
+      .skip(skip)
+      .take(pageSize)
+      .getManyAndCount();
+
+    return { posts, totalCount };
   }
 
   async findPostsByKeyword(key: string): Promise<any> {
@@ -48,25 +110,35 @@ export class PostService {
       .createQueryBuilder('detectivePost')
       .leftJoinAndSelect('detectivePost.detective', 'detective')
       .leftJoinAndSelect('detective.user', 'user')
+      .select(['detectivePost.categoryId', 'detectivePost.regionId', 'user.name'])
       .where('user.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
+      .getRawMany();
 
-    const offices = await this.detectivePostRepo
-      .createQueryBuilder('detectivePost')
-      .leftJoinAndSelect('detectivePost.detective', 'detective')
-      .leftJoinAndSelect('detective.detectiveOffice', 'detectiveOffice')
-      .where('detectiveOffice.name ILIKE :key', { key: `%${key}%` })
-      .getMany();
-
-    return { detectives, offices };
+    return detectives;
   }
 
   async uploadFile(file: Express.Multer.File): Promise<number> {
+    const params = {
+      FunctionName: 'file-compression',
+      Payload: JSON.stringify({
+        fileContent: file.buffer.toString('base64'),
+        fileName: file.originalname,
+      }),
+    };
+
     try {
-      console.log('파일 업로드 서비스 시작');
-      const fileId = await this.s3Service.uploadRegistrationFile(file);
-      console.log('파일 업로드 성공, 파일 ID:', fileId);
-      return fileId;
+      const result = await this.lambda.invoke(params).promise();
+      const payload = JSON.parse(result.Payload as string);
+      const body = JSON.parse(payload.body);
+      const path = body.fileId;
+      console.log('path', path);
+      if (result.StatusCode === 200) {
+        const file = await this.fileRepo.save({ path: path });
+        return file.id;
+      } else {
+        console.error('람다 함수 호출 실패:', body.error);
+        throw new Error(body.error);
+      }
     } catch (err) {
       console.error('파일 업로드 실패:', err);
       throw err;
