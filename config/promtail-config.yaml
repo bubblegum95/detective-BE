@@ -16,27 +16,17 @@ scrape_configs:
         labels:
           job: postgres
           __path__: ./logs/postgres-log/*.log
-
-  # - job_name: postgres_log_info
-  #   static_configs:
-  #     - targets:
-  #         - localhost
-  #       labels:
-  #         job: postgres_info
-  #         __path__: ./logs/postgres-log/info/*.log
-
-  # - job_name: postgres_log_error
-  #   static_configs:
-  #     - targets:
-  #         - localhost
-  #       labels:
-  #         job: postgres_error
-  #         __path__: ./logs/postgres-log/error/*.log
-
-  # - job_name: postgres_log_debug
-  #   static_configs:
-  #     - targets:
-  #         - localhost
-  #       labels:
-  #         job: postgres_debug
-  #         __path__: ./logs/postgres-log/debug/*.log
+  - job_name: app_info_log
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: winston
+          __path__: ./logs/app-log/info/*.log
+  - job_name: app_error_log
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: winston
+          __path__: ./logs/app-log/error/*.log

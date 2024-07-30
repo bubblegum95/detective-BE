@@ -17,7 +17,7 @@ import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { WinstonModule } from 'nest-winston';
-import { winstonConfig } from 'config/logger.config';
+import { winstonConfig } from 'config/winston.config';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
