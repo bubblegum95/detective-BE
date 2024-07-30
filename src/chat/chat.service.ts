@@ -10,156 +10,239 @@ import { Message } from './entities/message.entity';
 import { Room } from './entities/room.entity';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
+import { WsException } from '@nestjs/websockets';
+import { Participant } from '../user/entities/participant.entity';
 
 @Injectable()
 export class ChatService {
   constructor(
     @InjectModel('Message') private readonly messageModel: Model<Message>,
     @InjectRepository(Room) private readonly roomRepository: Repository<Room>,
+    @InjectRepository(Participant) private readonly participantRepository: Repository<Participant>,
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
   ) {}
   private readonly logger = new Logger(ChatService.name);
 
   async createRoom(client: Socket, user: User, recipientId: number): Promise<string | string[]> {
-    let roomName: string;
-    user = await this.userService.findUserbyId(user.id);
-    const recipient = await this.userService.findUserbyId(recipientId);
-    const foundRoom = await this.findExistRoom(user.id, recipientId);
-
-    if (!foundRoom) {
-      this.logger.log('didnt find room');
-
-      const name = uuidv4();
-      this.logger.log(`name: ${name}`);
-
-      const room = await this.roomRepository.save({ name }); // Room 생성
-      room.user = [user, recipient]; // 관계 설정 추가
-
-      await this.roomRepository.save(room); // 설정 추가 후 저장
-      roomName = room.name;
-    } else if (foundRoom) {
-      this.logger.log(`found room : ${foundRoom}`);
-
-      roomName = foundRoom;
-    }
-
-    return roomName;
-  }
-
-  async joinRoom(client: Socket, user: User): Promise<string | string[] | null> {
-    const userId = user.id;
-    const foundRooms: string[] | null = await this.findRoomsUserBelongsTo(userId);
-    console.log();
-    return foundRooms;
-  }
-
-  async findRoomMessages(client: Socket, roomId: string, user: User): Promise<object[]> {
-    const userId = user.id;
-    const existInRoom = await this.existClientInRoom(userId, roomId);
     try {
-      if (!existInRoom) {
-        this.logger.log('User is not in this room');
-        throw new Error('User is not in this room');
-      } else {
-        this.logger.log('get all messages in this room');
-        let messages: Message[] = await this.messageModel
-          .find({ room: roomId })
-          .sort({ timestamp: -1 })
-          .limit(50)
-          .exec();
+      const foundUser = await this.userService.findUserbyId(user.id);
+      const recipient = await this.userService.findUserbyId(recipientId);
 
-        const foundUserNickname: string = await this.userService.findUserNameById(userId);
-
-        const chanegUserName: object[] = messages.map((message) => {
-          const chaneMessage = {
-            sender: foundUserNickname,
-            content: message.content,
-            timestamp: message.timestamp,
-          };
-
-          return chaneMessage;
-        });
-
-        return chanegUserName;
+      if (!foundUser || !recipient) {
+        throw new WsException('사용자가 존재하지 않습니다.');
       }
+      console.log('<------------hear------------->');
+      const foundRoom = await this.findExistRoom(user.id, recipientId);
+      console.log('found Room: ', foundRoom);
+
+      let roomName: string;
+
+      if (!foundRoom) {
+        const name = uuidv4();
+        this.logger.log(`name: ${name}`);
+
+        const room = await this.roomRepository.save({ name });
+        console.log('creat room: ', room);
+
+        await this.createParticipant(room.id, user.id);
+        await this.createParticipant(room.id, recipientId);
+
+        roomName = room.name;
+      } else if (foundRoom) {
+        this.logger.log(`found room : ${foundRoom}`);
+        roomName = foundRoom;
+      }
+
+      if (!roomName) {
+        throw new WsException('룸을 생성할 수 없습니다.');
+      }
+
+      return roomName;
     } catch (error) {
       throw error;
     }
   }
 
-  async saveMassage(client: Socket, data: { room: string; message: string }, user: User) {
-    const room = data.room;
-    const userId = user.id;
-    const existInRoom = await this.existClientInRoom(userId, room);
+  async createParticipant(roomId: number, userId: number) {
+    try {
+      console.log('room and user: ', roomId, userId);
+      if (!roomId || !userId) {
+        throw new WsException('룸 또는 사용자가 없습니다.');
+      }
 
-    if (!existInRoom) {
-      this.logger.log('User is not in this room');
-      return;
+      const participant = await this.participantRepository.save({
+        roomId,
+        userId,
+      });
+
+      if (!participant) {
+        throw new WsException('해당 룸에 사용자를 추가할 수 없습니다.');
+      }
+
+      return participant;
+    } catch (error) {
+      throw error;
     }
-
-    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-
-    const messageInfo = await this.messageModel.create({
-      sender: userId,
-      content: data.message,
-      room: data.room,
-      timestamp: timestamp,
-    });
-
-    const foundUserNickname = await this.userService.findUserNameById(userId);
-
-    return {
-      sender: foundUserNickname,
-      content: messageInfo.content,
-      timestamp: messageInfo.timestamp,
-      room: room,
-    };
   }
 
-  async existClientInRoom(userId: number, roomName: string): Promise<Room | undefined> {
-    const foundRoom = await this.dataSource
-      .getRepository(Room)
-      .createQueryBuilder('room')
-      .leftJoinAndSelect('room.user', 'user')
-      .where('room.name = :roomName', { roomName })
-      .andWhere('user.id = :userId', { userId })
-      .getOne();
+  async joinRoom(client: Socket, user: User): Promise<string | string[] | null> {
+    try {
+      const userId = user.id;
+      const foundRooms: string[] | null = await this.findRoomsUserBelongsTo(userId);
 
-    console.log('found room: ', foundRoom);
-    return foundRoom;
+      return foundRooms;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async findRoomMessages(roomName: string, roomId: number, user: User): Promise<object[]> {
+    try {
+      const userId = user.id;
+
+      if (!roomName || !roomId || !user) {
+        console.log(roomName, roomId, user);
+        throw new WsException('해당 룸 정보가 없습니다.');
+      }
+
+      const room = await this.existClientInRoom(roomId, userId);
+
+      if (!room) {
+        throw new WsException('User is not in this room');
+      }
+
+      const messages: Message[] = await this.messageModel
+        .find({ room: roomName })
+        .sort({ timestamp: -1 })
+        .limit(50)
+        .exec();
+
+      if (!messages) {
+        throw new WsException('메시지가 없습니다.');
+      }
+
+      const newList = [];
+
+      for (let i = 0; i < messages.length; i++) {
+        const user: string = await this.userService.findUserNameById(messages[i].sender);
+
+        const reUndefinedMessage = {
+          sender: user,
+          content: messages[i].content,
+          timestamp: messages[i].timestamp,
+        };
+
+        newList.push(reUndefinedMessage);
+      }
+
+      console.log('newList', newList);
+      this.logger.log('get all messages in this room');
+
+      return newList;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async saveMassage(user: User, roomId: number, roomName: string, message: string) {
+    try {
+      const userId = user.id;
+      const room = await this.existClientInRoom(roomId, userId);
+
+      if (!room) {
+        this.logger.log('User is not in this room');
+        return;
+      }
+
+      const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
+      const messageInfo = await this.messageModel.create({
+        sender: userId,
+        content: message,
+        room: roomName,
+        timestamp: timestamp,
+      });
+
+      if (!messageInfo) {
+        throw new WsException('메시지 생성에 실패했습니다.');
+      }
+
+      const foundUserNickname = await this.userService.findUserNameById(userId);
+
+      if (!foundUserNickname) {
+        throw new WsException('해당 사용자의 정보를 가져올 수 없습니다.');
+      }
+
+      return {
+        sender: foundUserNickname,
+        content: messageInfo.content,
+        timestamp: messageInfo.timestamp,
+        room: roomName,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async existClientInRoom(roomId: number, userId: number) {
+    try {
+      const result = await this.participantRepository.findOne({ where: { roomId, userId } });
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findRoomsUserBelongsTo(userId: number): Promise<string[] | null> {
-    const foundRooms = await this.dataSource
-      .getRepository(Room)
-      .createQueryBuilder('room')
-      .leftJoin('room.user', 'user')
-      .where('user.id = :userId', { userId })
-      .getMany();
+    try {
+      const foundRooms = await this.dataSource
+        .getRepository(Room)
+        .createQueryBuilder('room')
+        .select(['room.name'])
+        .leftJoin('room.participants', 'participants')
+        .where('participants.userId = :userId', { userId })
+        .getMany();
 
-    let roomArr = [];
+      console.log('found rooms: ', foundRooms);
+      let roomArr = [];
 
-    foundRooms.filter((room) => {
-      const rooms = room.name;
-      roomArr.push(rooms);
-    });
+      foundRooms.filter((room) => {
+        const rooms = room.name;
+        roomArr.push(rooms);
+      });
+      console.log('room array: ', roomArr);
 
-    return roomArr;
+      return roomArr;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async findExistRoom(userId: number, recipientId: number): Promise<string | null> {
-    const room = await this.roomRepository
-      .createQueryBuilder('room')
-      .innerJoin('room.user', 'user1', 'user1.id = :userId', { userId })
-      .innerJoin('room.user', 'user2', 'user2.id = :recipientId', { recipientId })
-      .getOne();
+    try {
+      const room = await this.participantRepository
+        .createQueryBuilder('p1')
+        .innerJoin('participant', 'p2', 'p1.roomId = p2.roomId')
+        .where('p1.userId = :userId', { userId })
+        .andWhere('p2.userId = :recipientId', { recipientId })
+        .select('p1.roomId')
+        .getOne();
 
-    console.log('room: ', room);
-    if (room) {
-      return room.name;
-    } else if (!room) {
-      return null;
+      if (room) {
+        const foundRoom = await this.roomRepository.findOne({
+          where: { id: room.id },
+          select: { name: true },
+        });
+
+        console.log('found room name: ', foundRoom.name);
+        return foundRoom.name;
+      } else if (!room) {
+        return null;
+      }
+    } catch (error) {
+      throw error;
     }
   }
 

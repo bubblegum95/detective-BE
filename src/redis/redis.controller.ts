@@ -1,7 +1,6 @@
 // src/redis/redis.service.ts
 import { Controller, Inject, Injectable, Logger } from '@nestjs/common';
 import { MessagePattern, Payload, Ctx, RedisContext, ClientProxy } from '@nestjs/microservices';
-import axios from 'axios';
 
 @Controller()
 export class RedisController {
@@ -20,11 +19,7 @@ export class RedisController {
     @Ctx() context: RedisContext,
   ) {
     this.logger.log(`Channel: ${context.getChannel()}`);
-    const webhookUrl = 'https://localhost:8080/notification';
     try {
-      await axios.post(webhookUrl, { channel: 'chat_message', data });
-      console.log('Webhook called successfully');
-
       return {
         sender: data.sender,
         content: data.content,
@@ -32,7 +27,7 @@ export class RedisController {
         room: data.room,
       };
     } catch (error) {
-      console.error('Error calling webhook:', error);
+      console.error(error.message);
       throw error;
     }
   }

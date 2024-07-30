@@ -2,11 +2,11 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  JoinTable,
   ManyToMany,
   CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
-import { User } from '../../user/entities/user.entity';
+import { Participant } from '../../user/entities/participant.entity';
 
 @Entity({ name: 'room' })
 export class Room {
@@ -19,17 +19,6 @@ export class Room {
   @CreateDateColumn({ type: 'date', nullable: false })
   createdAt: Date;
 
-  @ManyToMany(() => User, (user) => user.room)
-  @JoinTable({
-    name: 'room_users', // 테이블 이름
-    joinColumn: {
-      name: 'room_id', // Room 엔티티의 컬럼 이름
-      referencedColumnName: 'id', // User 엔티티의 실제 PK 컬럼 이름
-    },
-    inverseJoinColumn: {
-      name: 'user_id', // User 엔티티의 컬럼 이름
-      referencedColumnName: 'id', // Room 엔티티의 실제 PK 컬럼 이름
-    },
-  })
-  user: User[];
+  @OneToMany(() => Participant, (participant) => participant.room)
+  participants: Participant[];
 }

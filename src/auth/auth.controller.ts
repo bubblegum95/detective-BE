@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Res,
   UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
@@ -18,6 +19,11 @@ import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nes
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
+import { UserInfo } from '../utils/decorator';
+import { User } from '../user/entities/user.entity';
+import { String } from 'aws-sdk/clients/appstream';
+import { NotificationType } from '../notification/type/notification.type';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')
 @ApiCookieAuth('JWT')
@@ -105,7 +111,11 @@ export class AuthController {
         message: '회원가입이 완료되었습니다',
       };
     } catch (error) {
-      return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
+      console.error(error.message);
+      return {
+        success: false,
+        message: error.message,
+      };
     }
   }
 
@@ -128,14 +138,22 @@ export class AuthController {
         .status(HttpStatus.OK)
         .json({ message: '로그인하였습니다.' });
     } catch (error) {
-      return res.status(HttpStatus.UNAUTHORIZED).json({ message: error.message });
+      console.error(error.message);
+      return res.json({
+        success: false,
+        message: error.message,
+      });
     }
   }
 
   @Post('logout')
   @ApiOperation({ summary: '로그아웃', description: '로그아웃' })
   signOut(@Res() res) {
-    res.clearCookie('authorization');
-    res.send('로그아웃하였습니다.');
+    try {
+      res.clearCookie('authorization');
+      res.send('로그아웃하였습니다.');
+    } catch (error) {
+      return res.send('로그아웃할 수 없습니다.');
+    }
   }
 }

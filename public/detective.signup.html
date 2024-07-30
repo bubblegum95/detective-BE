@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      function goPopup() {
+        var pop = window.open(
+          'popup.html',
+          'pop',
+          'width=570,height=420,scrollbars=yes,resizable=yes',
+        );
+      }
+
+      function jusoCallBack(
+        roadFullAddr,
+        roadAddrPart1,
+        addrDetail,
+        roadAddrPart2,
+        engAddr,
+        jibunAddr,
+        zipNo,
+        admCd,
+        rnMgtSn,
+        bdMgtSn,
+        detBdNmList,
+        bdNm,
+        bdKdcd,
+        siNm,
+        sggNm,
+        emdNm,
+        liNm,
+        rn,
+        udrtYn,
+        buldMnnm,
+        buldSlno,
+        mtYn,
+        lnbrMnnm,
+        lnbrSlno,
+        emdNo,
+      ) {
+        document.getElementById('roadAddrPart1').value = roadAddrPart1;
+        document.getElementById('roadAddrPart2').value = roadAddrPart2;
+        document.getElementById('addrDetail').value = addrDetail;
+        document.getElementById('zipNo').value = zipNo;
+      }
+    </script>
+    <title>숨진사람(탐정 회원가입)</title>
+  </head>
+  <body>
+    <header></header>
+
+    <main>
+      <button id="employeeBtn" type="button">직원</button>
+      <button id="employerBtn" type="button">사업가</button>
+      <form action="/auth/signup/employee" method="post" id="employeeSignupForm">
+        <h3>직원</h3>
+        <ul>
+          <li>
+            <label for="employeeName">이름</label>
+            <input
+              type="text"
+              id="employeeName"
+              name="name"
+              required
+              placeholder="name"
+              autofocus
+            />
+          </li>
+          <li>
+            <label for="employeeEmail">이메일</label>
+            <input type="email" id="employeeEmail" name="email" required placeholder="email" />
+          </li>
+          <li>
+            <label for="employeePassword">비밀번호</label>
+            <input
+              type="password"
+              id="employeePassword"
+              min="8"
+              max="16"
+              required
+              placeholder="password"
+              name="password"
+            />
+          </li>
+          <li>
+            <label for="employeePasswordConfirm">비밀번호 재입력</label>
+            <input
+              type="password"
+              id="employeePasswordConfirm"
+              min="8"
+              max="16"
+              required
+              placeholder="password confirm"
+              name="passwordConfirm"
+            />
+          </li>
+          <li>
+            <label for="employeeNickname">닉네임</label>
+            <input
+              type="text"
+              id="employeeNickname"
+              min="2"
+              max="8"
+              required
+              placeholder="nickname"
+              name="nickname"
+            />
+          </li>
+          <li>
+            <label for="employeePhoneNumber">휴대폰 번호</label>
+            <input
+              type="text"
+              id="employeePhoneNumber"
+              min="10"
+              max="11"
+              required
+              placeholder="phone number"
+              name="phoneNumber"
+            />
+          </li>
+          <li>
+            <label for="employeeMale">남자</label>
+            <input type="radio" id="employeeMale" name="employeeGender" value="male" />
+          </li>
+          <li>
+            <label for="employeeFemale">여자</label>
+            <input type="radio" id="employeeFemale" name="employeeGender" value="female" />
+          </li>
+          <li>
+            <button type="submit" value="save">제출하기</button>
+          </li>
+        </ul>
+      </form>
+
+      <form
+        action="/auth/signup/employer"
+        method="post"
+        id="employerSignupForm"
+        style="display: none"
+      >
+        <h3>사장님</h3>
+        <ul>
+          <li>
+            <label for="employerName">이름</label>
+            <input
+              type="text"
+              id="employerName"
+              name="name"
+              required
+              placeholder="name"
+              autofocus
+            />
+          </li>
+          <li>
+            <label for="employerEmail">이메일</label>
+            <input type="email" id="employerEmail" name="email" required placeholder="email" />
+          </li>
+          <li>
+            <label for="employerPassword">비밀번호</label>
+            <input
+              type="password"
+              id="employerPassword"
+              min="8"
+              max="16"
+              required
+              placeholder="password"
+              name="password"
+            />
+          </li>
+          <li>
+            <label for="employerPasswordConfirm">비밀번호 재입력</label>
+            <input
+              type="password"
+              id="employerPasswordConfirm"
+              min="8"
+              max="16"
+              required
+              placeholder="password confirm"
+              name="passwordConfirm"
+            />
+          </li>
+          <li>
+            <label for="employerNickname">닉네임</label>
+            <input
+              type="text"
+              id="employerNickname"
+              min="2"
+              max="8"
+              required
+              placeholder="nickname"
+              name="nickname"
+            />
+          </li>
+          <li>
+            <label for="employerPhoneNumber">휴대폰 번호</label>
+            <input
+              type="text"
+              id="employerPhoneNumber"
+              min="10"
+              max="11"
+              required
+              placeholder="phone number"
+              name="phoneNumber"
+            />
+          </li>
+          <li>
+            <label for="employerMale">남자</label>
+            <input type="radio" id="employerMale" name="employerGender" value="male" />
+          </li>
+          <li>
+            <label for="employerFemale">여자</label>
+            <input type="radio" id="employerFemale" name="employerGender" value="female" />
+          </li>
+
+          <li>
+            <label for="businessNumber">사업자등록번호</label>
+            <input
+              type="text"
+              id="businessNumber"
+              name="businessNumber"
+              placeholder="business number"
+              min="10"
+              max="10"
+            />
+          </li>
+          <li>
+            <label for="founded">설립일자</label>
+            <input type="date" id="founded" name="founded" />
+          </li>
+          <li>
+            <label for="company">상호명</label>
+            <input type="text" id="company" name="company" placeholder="상호명" />
+          </li>
+          <li>
+            <label for="file">사업자등록증 이미지 파일</label>
+            <input type="file" id="file" />
+          </li>
+          <li>
+            <label for="address">사업장 주소</label>
+            <!-- <input type="text" id="address" name="address" placeholder="address" /> -->
+          </li>
+          <table>
+            <tr>
+              <th>우편번호</th>
+              <td>
+                <input type="hidden" id="confmKey" name="confmKey" value="" />
+                <input type="text" id="zipNo" name="zipNo" readonly style="width: 100px" />
+                <input type="button" value="주소검색" onclick="goPopup();" />
+              </td>
+            </tr>
+            <tr>
+              <th>도로명주소</th>
+              <td><input type="text" id="roadAddrPart1" style="width: 85%" /></td>
+            </tr>
+            <tr>
+              <th>상세주소</th>
+              <td>
+                <input type="text" id="addrDetail" style="width: 40%" value="" />
+                <input type="text" id="roadAddrPart2" style="width: 40%" value="" />
+              </td>
+            </tr>
+          </table>
+
+          <li>
+            <button type="submit" value="save">제출하기</button>
+          </li>
+        </ul>
+      </form>
+    </main>
+
+    <footer></footer>
+    <script type="module">
+      import Auth from './script/auth.module.js';
+      import navBarTemplate from './script/navbar.template.js';
+
+      const detective = new Auth();
+
+      document.getElementById('employeeBtn').addEventListener('click', () => {
+        document.getElementById('employeeSignupForm').style.display = 'block';
+        document.getElementById('employerSignupForm').style.display = 'none';
+      });
+
+      document.getElementById('employerBtn').addEventListener('click', () => {
+        document.getElementById('employeeSignupForm').style.display = 'none';
+        document.getElementById('employerSignupForm').style.display = 'block';
+      });
+
+      const headerElement = document.querySelector('header');
+      headerElement.innerHTML = navBarTemplate();
+
+      document.getElementById('employeeSignupForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = {
+          name: document.getElementById('employeeName').value,
+          email: document.getElementById('employeeEmail').value,
+          password: document.getElementById('employeePassword').value,
+          passwordConfirm: document.getElementById('employeePasswordConfirm').value,
+          nickname: document.getElementById('employeeNickname').value,
+          phoneNumber: document.getElementById('employeePhoneNumber').value,
+          gender: document.querySelector('input[name="employeeGender"]:checked').value,
+        };
+
+        detective.employeeSignUp(formData);
+      });
+
+      document.getElementById('employerSignupForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const roadAddrPart1 = document.getElementById('roadAddrPart1').value;
+        const roadAddrPart2 = document.getElementById('roadAddrPart2').value;
+        const addrDetail = document.getElementById('addrDetail').value;
+        const zipNo = document.getElementById('zipNo').value;
+        const fullAddress = roadAddrPart1 + roadAddrPart2 + addrDetail + zipNo;
+
+        const formData = {
+          name: document.getElementById('employerName').value,
+          email: document.getElementById('employerEmail').value,
+          password: document.getElementById('employerPassword').value,
+          passwordConfirm: document.getElementById('employerPasswordConfirm').value,
+          nickname: document.getElementById('employerNickname').value,
+          phoneNumber: document.getElementById('employerPhoneNumber').value,
+          gender: document.querySelector('input[name="employerGender"]:checked').value,
+          address: fullAddress,
+          businessNumber: document.getElementById('businessNumber').value,
+          founded: document.getElementById('founded').value,
+          company: document.getElementById('company').value,
+          file: document.getElementById('file').value,
+        };
+
+        detective.employerSignUp(formData);
+      });
+    </script>
+  </body>
+</html>

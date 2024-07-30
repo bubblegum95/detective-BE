@@ -12,7 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
+import { DetectiveOffice } from '../office/entities/detective-office.entity';
 
 @Module({
   controllers: [AuthController],
