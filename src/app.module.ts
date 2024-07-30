@@ -17,6 +17,8 @@ import { RedisModule } from './redis/redis.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { NewsModule } from './news/news.module';
 import { NotificationModule } from './notification/notification.module';
+import { WinstonModule } from 'nest-winston';
+import { winstonConfig } from 'config/winston.config';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -37,6 +39,7 @@ const typeOrmModuleOptions = {
 };
 @Module({
   imports: [
+    WinstonModule.forRoot(winstonConfig),
     MongooseModule.forRoot('mongodb://localhost/detective-office'),
     ConfigModule.forRoot({
       isGlobal: true,
