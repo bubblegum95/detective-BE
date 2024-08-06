@@ -14,7 +14,7 @@ import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
 import * as AWS from 'aws-sdk';
-import { File } from 'src/s3/entities/s3.entity';
+import { File } from '../s3/entities/s3.entity';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 

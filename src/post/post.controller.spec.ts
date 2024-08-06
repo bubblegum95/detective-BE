@@ -65,7 +65,7 @@ describe('PostController', () => {
 
       const posts = await postService.filterPostsByRegion(regionId, page);
 
-      expect(postService.filterPostsByRegion).toHaveBeenCalledWith(regionId);
+      expect(postService.filterPostsByRegion).toHaveBeenCalledWith(regionId, page);
       expect(postService.filterPostsByRegion).toHaveReturnedTimes(1);
       expect(posts).toEqual(mockPosts);
     });
@@ -73,13 +73,13 @@ describe('PostController', () => {
     test('region별 조회 성공 - 데이터가 존재하지 않을 때', async () => {
       const regionId = 2;
       const page = 1;
-      const mockPosts = [];
+      const mockPosts = { posts: [], totalCount: 0 };
 
-      // jest.spyOn(postService, 'filterPostsByRegion').mockResolvedValue(mockPosts);
+      jest.spyOn(postService, 'filterPostsByRegion').mockResolvedValue(mockPosts);
 
       const posts = await postService.filterPostsByRegion(regionId, page);
 
-      expect(postService.filterPostsByRegion).toHaveBeenCalledWith(regionId);
+      expect(postService.filterPostsByRegion).toHaveBeenCalledWith(regionId, page);
       expect(postService.filterPostsByRegion).toHaveReturnedTimes(1);
       expect(posts).toEqual(mockPosts);
     });
@@ -107,7 +107,7 @@ describe('PostController', () => {
       (postService.filterPostsByCategory as jest.Mock).mockResolvedValue(mockPosts);
       const posts = await postService.filterPostsByCategory(categoryId, page);
 
-      expect(postService.filterPostsByCategory).toHaveBeenCalledWith(categoryId);
+      expect(postService.filterPostsByCategory).toHaveBeenCalledWith(categoryId, page);
       expect(postService.filterPostsByCategory).toHaveReturnedTimes(1);
       expect(posts).toEqual(mockPosts);
     });

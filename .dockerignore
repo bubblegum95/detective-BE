@@ -1,0 +1,51 @@
+# 버전 컨트롤 시스템
+.git
+.gitignore
+.gitattributes
+
+# 노드 모듈 및 로그
+node_modules
+npm-debug.log
+
+# 개발 및 빌드 파일
+*.log
+*.md
+*.sh
+
+# 테스트 관련 파일
+test
+coverage
+
+# 개발 환경 설정 파일
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE 관련 파일
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# OS 생성 파일
+.DS_Store
+Thumbs.db
+
+# 빌드 산출물
+dist
+build
+
+# 임시 파일
+tmp
+temp
+
+# Docker 관련 파일
+Dockerfile
+docker-compose.yaml
+.dockerignore
+
+# 기타 불필요한 파일
+README.md
+LICENSE

@@ -1,0 +1,49 @@
+name: NEST CI # 워크플로우의 이름
+run-name: ${{ github.actor }} is learning GitHub Actions # 워크플로우 실행 시 표시될 이름
+
+on: # 워크플로우 트리거 조건
+  pull_request:
+    branches: [dev] # dev 브랜치로의 PR에서 실행
+  push:
+    branches: ['**'] # 모든 브랜치에 대한 push에서 실행
+
+jobs:
+  unit-test: # job의 이름
+    name: Unit Test # GitHub UI에 표시될 job 이름
+    runs-on: ubuntu-latest # 실행 환경 (최신 Ubuntu)
+
+    steps:
+      - name: Checkout # 저장소 코드 체크아웃
+        uses: actions/checkout@v4 # 공식 checkout 액션 사용
+      - name: Create .env file
+        run: |
+          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
+          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
+          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
+          echo "SERVER_PORT=${{ secrets.SERVER_PORT }}" >> .env
+          echo "GF_USER=${{ secrets.GF_USER }}" >> .env
+          echo "GF_PASSWORD=${{ secrets.GF_PASSWORD }}" >> .env
+      - name: Start Docker containers # Docker 컨테이너 시작
+        run: docker compose up -d # 백그라운드에서 Docker Compose 실행
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          GF_USER: ${{ secrets.GF_USER }}
+          GF_PASSWORD: ${{ secrets.GF_PASSWORD }}
+
+      - name: Install Node.js # Node.js 설치
+        uses: actions/setup-node@v4 # 공식 Node.js 설치 액션 사용
+        with:
+          node-version: '20' # Node.js 버전 20 사용
+
+      - name: Install packages # 의존성 패키지 설치
+        run: npm ci # CI 환경에 적합한 설치 명령 사용
+
+      - name: Run tests # 테스트 실행
+        run: npm test # package.json에 정의된 테스트 스크립트 실행
+
+      - name: Stop containers # Docker 컨테이너 정지
+        if: always() # 이전 단계의 성공/실패와 관계없이 항상 실행
+        run: docker compose down # Docker Compose로 실행된 컨테이너 중지 및 제거
