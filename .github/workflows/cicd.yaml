@@ -2,8 +2,6 @@ name: NEST CI # 워크플로우의 이름
 run-name: ${{ github.actor }} is learning GitHub Actions # 워크플로우 실행 시 표시될 이름
 
 on: # 워크플로우 트리거 조건
-  pull_request:
-    branches: [dev] # dev 브랜치로의 PR에서 실행
   push:
     branches: ['**'] # 모든 브랜치에 대한 push에서 실행
 
