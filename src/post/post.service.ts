@@ -1,7 +1,7 @@
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreatePostDto } from './dto/create-post.dto';
 import { DetectivePost } from './entities/detective-post.entity';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Region } from './entities/region.entity';
 import { Career } from './entities/career.entity';
@@ -14,7 +14,9 @@ import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
 import * as AWS from 'aws-sdk';
-import { File } from 'src/s3/entities/s3.entity';
+import { File } from '../s3/entities/s3.entity';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PostService {
@@ -31,10 +33,66 @@ export class PostService {
 
     @InjectRepository(File)
     private readonly fileRepo: Repository<File>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     this.lambda = new AWS.Lambda();
   }
+  async posts() {
+    const posts = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select([
+        'detectivePost.id',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+        'office.name',
+      ])
+      .getRawMany();
 
+    return posts;
+  }
+  async optimizedPosts(
+    page: number,
+  ): Promise<{ posts: Partial<DetectivePost>[]; totalCount: number }> {
+    const pageSize = 20;
+    const skip = (page - 1) * pageSize;
+    const cacheKey = `posts_page_${page}`;
+
+    // 캐시에서 데이터 가져오기
+    const cachedData = await this.cacheManager.get<{
+      posts: Partial<DetectivePost>[];
+      totalCount: number;
+    }>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    // 캐시가 없으면 데이터베이스에서 가져오기
+    const [posts, totalCount] = await this.detectivePostRepo
+      .createQueryBuilder('detectivePost')
+      .leftJoinAndSelect('detectivePost.detective', 'detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.detectiveOffice', 'office')
+      .select([
+        'detectivePost.id',
+        'detectivePost.categoryId',
+        'detectivePost.regionId',
+        'user.name',
+        'office.name',
+      ])
+      .skip(skip)
+      .take(pageSize)
+      .getManyAndCount();
+
+    // 캐시에 데이터 저장
+    const result = { posts, totalCount };
+    await this.cacheManager.set(cacheKey, result); // 1시간 동안 캐시 유지
+
+    return result;
+  }
   //! 출력값 타입 손 봐야함
 
   // 지역별 조회

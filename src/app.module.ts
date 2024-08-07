@@ -56,16 +56,6 @@ const typeOrmModuleOptions = {
     ChatModule,
     RedisModule,
     NewsModule,
-    ClientsModule.register([
-      {
-        name: 'REDIS_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          host: 'localhost',
-          port: 6379,
-        },
-      },
-    ]),
     NotificationModule,
   ],
   providers: [AppService],

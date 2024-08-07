@@ -9,6 +9,7 @@ import {
   Query,
   ValidationPipe,
   UseInterceptors,
+  Inject,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -26,7 +27,19 @@ export class PostController {
     private readonly postService: PostService,
     private readonly s3Service: S3Service,
   ) {}
+  @Get('/test')
+  async search(@Query('page') page: number = 1) {
+    // const posts = await this.postService.posts(page);
+    const posts = await this.postService.posts();
 
+    return posts;
+  }
+  @Get('/optimized-test')
+  async optimizedSearch(@Query('page') page: number = 1) {
+    const posts = await this.postService.optimizedPosts(page);
+
+    return posts;
+  }
   // region별 조회
   @Get('/region/:regionId')
   @ApiParam({ type: 'number', name: 'regionId', example: 1 })

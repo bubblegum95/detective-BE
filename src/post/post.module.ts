@@ -16,12 +16,14 @@ import { UserModule } from 'src/user/user.module';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
 import { JwtModule } from '@nestjs/jwt';
 import { File } from 'src/s3/entities/s3.entity';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   imports: [
     S3Module,
     AuthModule,
     UserModule,
+    RedisModule,
     TypeOrmModule.forFeature([
       DetectivePost,
       Region,

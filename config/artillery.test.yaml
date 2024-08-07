@@ -1,0 +1,36 @@
+# config:
+#   target: 'http://localhost:8080'
+#   phases:
+#     - duration: 60
+#       arrivalRate: 10
+#     - duration: 120
+#       arrivalRate: 20
+#     - duration: 180
+#       arrivalRate: 30
+
+# scenarios:
+#   - flow:
+#       - get:
+#           url: '/posts/test'
+#           qs:
+#             page: '{{ $randomNumber(1,5) }}'
+#           headers:
+#             Accept: 'application/json'
+config:
+  target: 'http://localhost:8080'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+    - duration: 120
+      arrivalRate: 20
+    - duration: 180
+      arrivalRate: 30
+
+scenarios:
+  - flow:
+      - get:
+          url: '/posts/optimized-test' # 최적화된 엔드포인트
+          qs:
+            page: '{{ $randomNumber(1,5) }}'
+          headers:
+            Accept: 'application/json'
