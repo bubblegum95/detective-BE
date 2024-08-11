@@ -126,3 +126,14 @@ services:
       # - redis
     volumes:
       - ./src:/app/src
+
+  mongo:
+    image: mongo:latest
+    container_name: my_mongo_db
+    ports:
+      - '27017:27017' # 호스트와 컨테이너 간 포트 매핑
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root # 초기 관리자 사용자 이름
+      MONGO_INITDB_ROOT_PASSWORD: example # 초기 관리자 비밀번호
+    volumes:
+      - mongo_data:/data/db # 데이터를 호스트의 볼륨에 저장
