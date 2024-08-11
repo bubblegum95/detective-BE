@@ -21,7 +21,6 @@ import { AuthService } from './auth.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
 import { UserInfo } from '../utils/decorator';
 import { User } from '../user/entities/user.entity';
-import { String } from 'aws-sdk/clients/appstream';
 import { NotificationType } from '../notification/type/notification.type';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 

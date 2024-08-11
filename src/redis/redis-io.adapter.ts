@@ -5,11 +5,18 @@ import { createClient } from 'redis';
 import { Logger } from '@nestjs/common';
 
 export class RedisIoAdapter extends IoAdapter {
+  constructor(
+    private readonly app: any,
+    private readonly socketPort: number,
+  ) {
+    super(app);
+  }
+
   private adapterConstructor: ReturnType<typeof createAdapter>;
   private readonly logger = new Logger(RedisIoAdapter.name);
 
-  async connectToRedis(): Promise<void> {
-    const publisher = createClient({ url: `redis://localhost:6379` });
+  async connectToRedis(host: string, port: number): Promise<void> {
+    const publisher = createClient({ url: `redis://${host}:${port}` });
     const subscriber = publisher.duplicate();
 
     await Promise.all([publisher.connect(), subscriber.connect()]);
@@ -18,19 +25,21 @@ export class RedisIoAdapter extends IoAdapter {
     this.logger.log('connect to Redis');
   }
 
+  // socket.io 서버 생성
   createIOServer(port: number, options?: ServerOptions): any {
     options = {
       ...options,
       cors: {
-        origin: 'http://127.0.0.1:3001',
+        origin: `http://127.0.0.1:5500`, // client port
         methods: ['GET', 'POST'],
         credentials: true,
       },
     };
 
-    const server = super.createIOServer(port, options);
+    const server = super.createIOServer(this.socketPort, options);
     server.adapter(this.adapterConstructor);
-    this.logger.log(`create io server on port ${port}`);
+
+    this.logger.log(`create io server on port ${this.socketPort}`);
     return server;
   }
 }

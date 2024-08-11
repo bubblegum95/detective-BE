@@ -145,7 +145,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   async publishMessage(message) {
     try {
-      console.log(message);
+      // console.log(message);
 
       if (!message) {
         throw new WsException('보내실 메시지가 없습니다.');
@@ -153,14 +153,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       // Redis로 전송
       this.redisClient.send({ cmd: 'chat_message' }, message).subscribe({
         next: async (response) => {
-          // Redis 서버에서 채놀을 통해 받은 메시지를 소켓 클라이언트로 전송
-          console.log('response: ', response);
+          // Redis 서버에서 채널을 통해 받은 메시지를 소켓 클라이언트로 전송
+          // console.log('response: ', response);
 
-          const { sender, content, timestamp, room } = response;
-          this.server.to(room).emit('getMessage', { sender, content, timestamp });
-          console.log('send message complete');
+          const { sender, type, content, timestamp, room } = response;
+          this.server.to(room).emit('getMessage', { sender, type, content, timestamp });
           // 채팅 알림 소켓 클라이언트로 전송하기. 네임스페이스 'notification'
           this.notification.emit('findMessageReceivers', { sender, room });
+          console.log('send message complete');
         },
         error: (err) => {
           this.logger.error('Error sending message to clients', err);

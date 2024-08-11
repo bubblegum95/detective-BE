@@ -3,7 +3,7 @@ import Fatch from './fetch.module.js';
 export default class ChatRoom extends Fatch {
   async getRooms(chatList) {
     try {
-      const url = 'http://localhost:3000/user/chatrooms';
+      const url = `http://localhost:3001/user/chatrooms`;
       const response = await super.get(url);
       const data = await response.json();
 
@@ -14,6 +14,7 @@ export default class ChatRoom extends Fatch {
         chatList.innerHTML = '';
 
         data.data.forEach((room) => {
+          // 룸 리스트 랜더링
           const roomElement = document.createElement('div');
 
           roomElement.innerHTML = `
@@ -26,6 +27,7 @@ export default class ChatRoom extends Fatch {
               </div>
             </a>
           `;
+
           chatList.appendChild(roomElement);
         });
       } else if (data.success === false) {
@@ -38,7 +40,7 @@ export default class ChatRoom extends Fatch {
 
   async upload(formData) {
     try {
-      const url = 'http://localhost:3000/s3/chatfile';
+      const url = 'http://localhost:3001/chat/chatfile';
       const contentData = 'multipart/form-data';
       const response = super.post(url, contentData, formData);
 

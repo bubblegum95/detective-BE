@@ -14,7 +14,6 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { NotificationModule } from './notification/notification.module';
 
 const typeOrmModuleOptions = {
@@ -51,16 +50,6 @@ const typeOrmModuleOptions = {
     ReviewModule,
     ChatModule,
     RedisModule,
-    ClientsModule.register([
-      {
-        name: 'REDIS_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          host: 'localhost',
-          port: 6379,
-        },
-      },
-    ]),
     NotificationModule,
   ],
   providers: [AppService],

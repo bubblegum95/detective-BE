@@ -11,7 +11,6 @@ async function bootstrap() {
   const logger = new Logger(bootstrap.name);
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const port = configService.get<number>('SERVER_PORT');
   const option = {
     swaggerOptions: {
       persistAuthorization: true,
@@ -35,9 +34,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, option);
-
+  const clientPort = configService.get<number>('CLIENT_PORT');
   app.enableCors({
-    origin: 'http://127.0.0.1:3001',
+    origin: `http://127.0.0.1:${clientPort}`,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -53,19 +52,23 @@ async function bootstrap() {
   );
 
   // websocket adapter 설정
-  const redisIoAdapter = new RedisIoAdapter(app);
-  await redisIoAdapter.connectToRedis();
+  const socketPort = configService.get<number>('SOCKET_PORT');
+  const redisIoAdapter = new RedisIoAdapter(app, socketPort);
+  const redisHost = configService.get<string>('REDIS_HOST');
+  const redisPort = configService.get<number>('REDIS_PORT');
+  await redisIoAdapter.connectToRedis(redisHost, redisPort);
   app.useWebSocketAdapter(redisIoAdapter);
 
   //Http 서버 시작
+  const port = configService.get<number>('SERVER_PORT');
   await app.listen(port);
 
   // 마이크로서비스 설정
   const microservice = app.connectMicroservice<MicroserviceOptions>({
     transport: Transport.REDIS,
     options: {
-      host: 'localhost',
-      port: 6379,
+      host: redisHost,
+      port: redisPort,
     },
   });
 

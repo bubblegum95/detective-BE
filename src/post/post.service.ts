@@ -15,12 +15,12 @@ import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import { RegionEnum } from './type/region.type';
 import { DetectiveOffice } from 'src/office/entities/detective-office.entity';
-import * as AWS from 'aws-sdk';
+import { Lambda } from 'aws-sdk';
 import { File } from 'src/s3/entities/s3.entity';
 
 @Injectable()
 export class PostService {
-  private lambda: AWS.Lambda;
+  private lambda: Lambda;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
@@ -34,7 +34,7 @@ export class PostService {
     @InjectRepository(File)
     private readonly fileRepo: Repository<File>,
   ) {
-    this.lambda = new AWS.Lambda();
+    this.lambda = new Lambda();
   }
 
   //! 출력값 타입 손 봐야함
@@ -117,33 +117,33 @@ export class PostService {
     return detectives;
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<number> {
-    const params = {
-      FunctionName: 'file-compression',
-      Payload: JSON.stringify({
-        fileContent: file.buffer.toString('base64'),
-        fileName: file.originalname,
-      }),
-    };
+  // async uploadFile(file: Express.Multer.File): Promise<number> {
+  //   const params = {
+  //     FunctionName: 'file-compression',
+  //     Payload: JSON.stringify({
+  //       fileContent: file.buffer.toString('base64'),
+  //       fileName: file.originalname,
+  //     }),
+  //   };
 
-    try {
-      const result = await this.lambda.invoke(params).promise();
-      const payload = JSON.parse(result.Payload as string);
-      const body = JSON.parse(payload.body);
-      const path = body.fileId;
-      console.log('path', path);
-      if (result.StatusCode === 200) {
-        const file = await this.fileRepo.save({ path: path });
-        return file.id;
-      } else {
-        console.error('람다 함수 호출 실패:', body.error);
-        throw new Error(body.error);
-      }
-    } catch (err) {
-      console.error('파일 업로드 실패:', err);
-      throw err;
-    }
-  }
+  //   try {
+  //     const result = await this.lambda.invoke(params);
+  //     const payload = JSON.parse(result.Payload as string);
+  //     const body = JSON.parse(payload.body);
+  //     const path = body.fileId;
+  //     console.log('path', path);
+  //     if (result.StatusCode === 200) {
+  //       const file = await this.fileRepo.save({ path: path });
+  //       return file.id;
+  //     } else {
+  //       console.error('람다 함수 호출 실패:', body.error);
+  //       throw new Error(body.error);
+  //     }
+  //   } catch (err) {
+  //     console.error('파일 업로드 실패:', err);
+  //     throw err;
+  //   }
+  // }
 
   // 탐정 프로필 생성
   async createProfile(createPostDto: CreatePostDto, userId: number) {

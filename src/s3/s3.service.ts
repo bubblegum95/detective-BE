@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,20 +7,19 @@ import { File } from './entities/s3.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Readable } from 'typeorm/platform/PlatformTools';
 import { ContentType } from './type/content-type.type';
-import { User } from '../user/entities/user.entity';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { ChatFile } from '../chat/entities/chat-file.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class S3Service {
   private s3Client: S3Client;
   private bucketName: string;
-  @InjectRepository(File)
-  private readonly fileRepository: Repository<File>;
-  @InjectModel('ChatFile') private readonly chatFileModel: Model<ChatFile>;
+  private readonly logger = new Logger(S3Service.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(File)
+    private readonly fileRepository: Repository<File>,
+  ) {
     this.s3Client = new S3Client({
       region: this.configService.get<string>('AWS_REGION'),
       credentials: {
@@ -32,6 +31,7 @@ export class S3Service {
   }
 
   async uploadRegistrationFile(file: Express.Multer.File): Promise<number> {
+    this.logger.log('upload registration file');
     const fileKey = `registration/${uuidv4()}-${file.originalname}`;
 
     const params = {
@@ -53,8 +53,9 @@ export class S3Service {
   }
 
   // 채팅 파일 업로드
-  async uploadChatFiles(user: User, room: string, files: Express.Multer.File[]) {
+  async uploadChatFiles(files: Express.Multer.File[]) {
     try {
+      this.logger.log('upload chat files to S3');
       const fileArr = [];
 
       for (const file of files) {
@@ -74,31 +75,25 @@ export class S3Service {
         fileArr.push(path);
       }
 
-      const uploadedFile = await this.chatFileModel.create({
-        files: fileArr,
-        sender: user.id,
-        room: room,
-      });
-
-      return uploadedFile;
+      return fileArr;
     } catch (error) {
       console.log('fail upload files: ', error.message);
       throw error;
     }
   }
 
-  async downloadChatFiles(room: string) {
-    try {
-      const foundFiles = await this.chatFileModel.findOne({
-        where: { room },
-        select: { files: true },
-      });
-      const data = await this.downloadFiles(foundFiles.files);
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  }
+  // async downloadChatFiles(room: string) {
+  //   try {
+  //     const foundFiles = await this.chatFileModel.findOne({
+  //       where: { room },
+  //       select: { files: true },
+  //     });
+  //     const data = await this.downloadFiles(foundFiles.files);
+  //     return data;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
 
   // S3 파일 다운로드 받기
   async downloadFiles(filekeys: string[]): Promise<(Buffer | string)[]> {

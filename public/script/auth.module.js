@@ -5,7 +5,7 @@ import connectWebSocket from './chat-socket.module.js';
 export default class Auth extends Fetch {
   async consumerSignUp(formData) {
     const contentData = 'application/json';
-    const url = 'http://localhost:3000/auth/signup/consumer';
+    const url = `http://localhost:3001/auth/signup/consumer`;
 
     try {
       const response = await super.fetch(url, contentData, formData);
@@ -26,7 +26,7 @@ export default class Auth extends Fetch {
 
   async employeeSignUp(formData) {
     const contentData = 'application/json';
-    const url = 'http://localhost:3000/auth/signup/employee';
+    const url = `http://localhost:3001/auth/signup/employee`;
 
     try {
       const response = super.fetch(url, contentData, formData);
@@ -47,7 +47,7 @@ export default class Auth extends Fetch {
 
   async employerSignUP(formData) {
     const contentData = 'multipart/form-data';
-    const url = 'http://localhost:3000/auth/signup/employer';
+    const url = `http://localhost:3001/auth/signup/employer`;
 
     try {
       const response = super.post(url, contentData, formData);
@@ -68,7 +68,7 @@ export default class Auth extends Fetch {
 
   async signIn(formData) {
     try {
-      const url = 'http://localhost:3000/auth/signin';
+      const url = `http://localhost:3001/auth/signin`;
       const contentData = 'application/json';
       const response = await super.post(url, contentData, formData);
       const data = await response.json();

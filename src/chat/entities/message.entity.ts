@@ -1,12 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, SchemaTypes } from 'mongoose';
+import { MessageType } from '../type/message.type';
 
 export const FileSchema = SchemaFactory.createForClass(File);
 
 @Schema()
 export class Message extends Document {
-  @Prop({})
-  content: string;
+  @Prop({ required: true, enum: MessageType })
+  type: MessageType;
+
+  @Prop({ required: true, type: SchemaTypes.Mixed })
+  content: string | string[];
 
   @Prop({ required: true })
   sender: number;

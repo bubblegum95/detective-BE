@@ -10,10 +10,6 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    @InjectRepository(Room)
-    private readonly roomRepository: Repository<Room>,
-    @InjectRepository(Participant)
-    private readonly participantRepository: Repository<Participant>,
     private readonly dataSource: DataSource,
   ) {}
 
