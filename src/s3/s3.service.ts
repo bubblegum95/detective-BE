@@ -7,7 +7,6 @@ import { File } from './entities/s3.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Readable } from 'typeorm/platform/PlatformTools';
 import { ContentType } from './type/content-type.type';
-import { UserService } from '../user/user.service';
 
 @Injectable()
 export class S3Service {

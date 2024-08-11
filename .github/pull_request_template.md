@@ -1,17 +1,20 @@
-## 개요
+## PR flow
 
-- ex. detective_post 관련 entity 생성
+ex) feat/sign-up -> dev
 
-## PR 유형
+## 변경 사항
 
-- [ ] 새로운 기능 추가
-- [ ] 버그 수정
-- [ ] CSS 등 사용자 UI 디자인 변경
-- [ ] 코드에 영향을 주지 않는 변경사항(오타 수정, 탭 사이즈 변경, 변수명 변경)
-- [ ] 코드 리팩토링
-- [ ] 주석 추가 및 수정
-- [ ] 문서 수정
-- [ ] 테스트 추가, 테스트 리팩토링
-- [ ] 빌드 부분 혹은 패키지 매니저 수정
-- [ ] 파일 혹은 폴더명 수정
-- [ ] 파일 혹은 폴더 삭제
+ex) User 회원가입 및 로그인, passportStrategy를 통한 인증/ custom Guard를 사용하여
+인가를 구현하였습니다. 또한 JwtStrategy에서 사용되는 findOne은 cache-manager를 적용하여
+ttl 시간인 5분동안 캐싱이 되게끔 해두었습니다.
+
+## 테스트 코드 여부
+
+Unit : 작성완료 / 테스트 성공
+e2e : x
+
+## api 및 메서드 테스트 결과
+
+## Postman / Insomnia / Thunder Client 중 택 1
+
+Insomnia 테스트 결과 이상 없음

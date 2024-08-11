@@ -21,7 +21,7 @@ export class User {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'varchar', length: 8, nullable: false })
+  @Column({ type: 'varchar', length: 15, nullable: false })
   name: string;
 
   @Index('user_email_index')

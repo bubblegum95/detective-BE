@@ -3,13 +3,19 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import cookieParser from 'cookie-parser';
-import { RedisIoAdapter } from './redis/redis-io.adapter';
+import cookieParser, { signedCookie } from 'cookie-parser';
+import { Server } from 'socket.io';
+import { IoAdapter } from '@nestjs/platform-socket.io';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-
+import { RedisIoAdapter } from './redis/redis-io.adapter';
 async function bootstrap() {
-  const logger = new Logger(bootstrap.name);
   const app = await NestFactory.create(AppModule);
+  const winstonLogger = app.get(WINSTON_MODULE_NEST_PROVIDER);
+  app.useLogger(winstonLogger);
+
+  const logger = new Logger(bootstrap.name);
+
   const configService = app.get(ConfigService);
   const option = {
     swaggerOptions: {
@@ -62,6 +68,7 @@ async function bootstrap() {
   //Http 서버 시작
   const port = configService.get<number>('SERVER_PORT');
   await app.listen(port);
+  winstonLogger.log(`Application is running on: ${await app.getUrl()}`, 'Bootstrap');
 
   // 마이크로서비스 설정
   const microservice = app.connectMicroservice<MicroserviceOptions>({
