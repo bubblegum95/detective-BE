@@ -3,12 +3,11 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import cookieParser, { signedCookie } from 'cookie-parser';
-import { Server } from 'socket.io';
-import { IoAdapter } from '@nestjs/platform-socket.io';
+import cookieParser from 'cookie-parser';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { RedisIoAdapter } from './redis/redis-io.adapter';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const winstonLogger = app.get(WINSTON_MODULE_NEST_PROVIDER);

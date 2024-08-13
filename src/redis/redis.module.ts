@@ -21,7 +21,7 @@ import { RedisClientOptions } from 'redis';
       }),
       isGlobal: true,
     }),
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
         name: 'REDIS_SERVICE',
         imports: [ConfigModule],

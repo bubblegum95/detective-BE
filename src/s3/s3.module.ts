@@ -4,7 +4,6 @@ import { S3Controller } from './s3.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { File } from './entities/s3.entity';
 import { UserModule } from '../user/user.module';
-import { ChatModule } from '../chat/chat.module';
 
 @Module({
   controllers: [S3Controller],

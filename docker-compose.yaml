@@ -137,3 +137,6 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: example # 초기 관리자 비밀번호
     volumes:
       - mongo_data:/data/db # 데이터를 호스트의 볼륨에 저장
+
+volumes:
+  mongo_data:

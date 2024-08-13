@@ -20,7 +20,7 @@ import { Cache } from 'cache-manager';
 
 @Injectable()
 export class PostService {
-  private lambda: Lambda;
+  private lambda: AWS.Lambda;
   constructor(
     private readonly dataSource: DataSource,
     @InjectRepository(DetectivePost)
