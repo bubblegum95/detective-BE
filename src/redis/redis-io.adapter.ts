@@ -7,7 +7,7 @@ import { Logger } from '@nestjs/common';
 export class RedisIoAdapter extends IoAdapter {
   constructor(
     private readonly app: any,
-    private readonly socketPort: number,
+    private readonly clientPort: number,
   ) {
     super(app);
   }
@@ -30,16 +30,16 @@ export class RedisIoAdapter extends IoAdapter {
     options = {
       ...options,
       cors: {
-        origin: `http://127.0.0.1:5500`, // client port
+        origin: `http://127.0.0.1:${port}`, // client port
         methods: ['GET', 'POST'],
         credentials: true,
       },
     };
 
-    const server = super.createIOServer(this.socketPort, options);
+    const server = super.createIOServer(this.clientPort, options);
     server.adapter(this.adapterConstructor);
 
-    this.logger.log(`create io server on port ${this.socketPort}`);
+    this.logger.log(`create io server on port ${this.clientPort}`);
     return server;
   }
 }

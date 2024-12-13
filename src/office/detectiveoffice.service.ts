@@ -11,7 +11,7 @@ import { ClientProxy } from '@nestjs/microservices';
 @Injectable()
 export class DetectiveofficeService {
   constructor(
-    @Inject('REDIS_SERVICE') private client: ClientProxy,
+    @Inject('REDIS_SERVICE') private redisService: ClientProxy,
     @InjectRepository(Detective)
     private detectiveRepo: Repository<Detective>,
     @InjectRepository(DetectiveOffice)

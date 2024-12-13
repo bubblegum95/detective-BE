@@ -7,17 +7,14 @@ WORKDIR /app
 # 환경 변수 설정
 ENV NODE_ENV=production
 
-# package.json과 package-lock.json 복사
-COPY package*.json ./
+# 소스 코드 복사
+COPY . .
 
 # 모든 종속성 설치 (개발 종속성 포함)
 RUN npm ci
 
 # NestJS CLI 전역 설치
 RUN npm install -g @nestjs/cli
-
-# 소스 코드 복사
-COPY . .
 
 # 애플리케이션 빌드
 RUN npm run build
@@ -29,4 +26,4 @@ RUN npm prune --production
 EXPOSE ${SERVER_PORT}
 
 # 애플리케이션 실행
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]

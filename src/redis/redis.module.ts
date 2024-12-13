@@ -15,8 +15,8 @@ import { RedisClientOptions } from 'redis';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: redisStore as unknown as CacheStore,
-        host: configService.get<string>('REDIS_HOST'),
+        store: redisStore,
+        host: configService.get<number>('REDIS_HOST'),
         port: configService.get<number>('REDIS_PORT'),
       }),
       isGlobal: true,

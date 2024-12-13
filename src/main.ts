@@ -57,12 +57,13 @@ async function bootstrap() {
   );
 
   // websocket adapter 설정
-  const socketPort = configService.get<number>('SOCKET_PORT');
-  const redisIoAdapter = new RedisIoAdapter(app, socketPort);
+  console.log('redis adaptor 설정중');
+  const redisIoAdapter = new RedisIoAdapter(app, clientPort); // socket.io와 연결
   const redisHost = configService.get<string>('REDIS_HOST');
   const redisPort = configService.get<number>('REDIS_PORT');
   await redisIoAdapter.connectToRedis(redisHost, redisPort);
   app.useWebSocketAdapter(redisIoAdapter);
+  console.log('redis adaptor 설정 완료');
 
   //Http 서버 시작
   const port = configService.get<number>('SERVER_PORT');

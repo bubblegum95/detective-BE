@@ -6,7 +6,6 @@ import { MessageType } from '../chat/type/message.type';
 @Controller()
 export class RedisController {
   private readonly logger = new Logger(RedisController.name);
-  constructor(@Inject('REDIS_SERVICE') private readonly client: ClientProxy) {}
 
   @MessagePattern({ cmd: 'chat_message' })
   async handleMessage(

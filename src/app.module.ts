@@ -10,11 +10,10 @@ import { AuthModule } from './auth/auth.module';
 import { S3Module } from './s3/s3.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
-import { MongooseModule } from '@nestjs/mongoose';
+import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
 import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { NewsModule } from './news/news.module';
 import { NotificationModule } from './notification/notification.module';
 import { WinstonModule } from 'nest-winston';
@@ -37,10 +36,18 @@ const typeOrmModuleOptions = {
   }),
   inject: [ConfigService],
 };
+
+const MongooseModuleAsyncOptions = {
+  useFactory: async (configService: ConfigService): Promise<MongooseModuleOptions> => ({
+    uri: configService.get('MONGO_HOST'),
+  }),
+  inject: [ConfigService],
+};
+
 @Module({
   imports: [
     WinstonModule.forRoot(winstonConfig),
-    MongooseModule.forRoot('mongodb://localhost/detective-office'),
+    MongooseModule.forRootAsync(MongooseModuleAsyncOptions),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

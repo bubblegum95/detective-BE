@@ -54,7 +54,7 @@ services:
     container_name: grafana
     image: grafana/grafana:latest
     ports:
-      - '3000:3000'
+      - '3002:3000'
     volumes:
       - ./grafana-data:/var/lib/grafana
     restart: always
@@ -111,32 +111,63 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nestjs
+    container_name: app
     environment:
       SERVER_PORT: ${SERVER_PORT}
+      SOCKET_PORT: ${SOCKET_PORT}
+      CLIENT_PORT: ${CLIENT_PORT}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_SYNC: ${POSTGRES_SYNC}
       GF_USER: ${GF_USER}
       GF_PASSWORD: ${GF_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      AWS_S3_ACCESS_KEY: ${AWS_S3_ACCESS_KEY}
+      AWS_S3_SECRET_KEY: ${AWS_S3_SECRET_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      BUSINESS_REGISTRATION_SERVICEKEY: ${BUSINESS_REGISTRATION_SERVICEKEY}
+      ACCESS_SECRET: ${ACCESS_SECRET}
+      ADDRESS_SECRET: ${ADDRESS_SECRET}
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
     ports:
       - '${SERVER_PORT}:${SERVER_PORT}'
+      - '${SOCKET_PORT}:${SOCKET_PORT}'
+      - '${CLIENT_PORT}:${CLIENT_PORT}'
     depends_on:
       - postgres
       # - redis
+      - mongo
     volumes:
       - ./src:/app/src
+    networks:
+      - loki
 
   mongo:
     image: mongo:latest
-    container_name: my_mongo_db
+    container_name: mongo
     ports:
-      - '27017:27017' # 호스트와 컨테이너 간 포트 매핑
+      - '${MONGO_PORT}:${MONGO_PORT}' # 호스트와 컨테이너 간 포트 매핑
     environment:
       MONGO_INITDB_ROOT_USERNAME: root # 초기 관리자 사용자 이름
       MONGO_INITDB_ROOT_PASSWORD: example # 초기 관리자 비밀번호
     volumes:
-      - mongo_data:/data/db # 데이터를 호스트의 볼륨에 저장
+      - mongo-data:/data/db # 데이터를 호스트의 볼륨에 저장
+    networks:
+      - loki
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - '6380:${REDIS_PORT}'
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
+    networks:
+      - loki
 
 volumes:
-  mongo_data:
+  mongo-data:

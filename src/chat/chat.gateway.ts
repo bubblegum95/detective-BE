@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { ChatService } from './chat.service';
-import { ClientNats, ClientProxy } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway({ namespace: '/chat' })
@@ -33,17 +33,25 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   constructor(
     private readonly chatService: ChatService,
-    @Inject('REDIS_SERVICE') private readonly redisClient: ClientProxy,
+    @Inject('REDIS_SERVICE') private readonly redisAdpator: ClientProxy,
   ) {}
 
   async onModuleInit() {
-    await this.redisClient.connect();
-    this.logger.log('Redis Server initialized');
+    try {
+      await this.redisAdpator.connect();
+      this.logger.log('Redis Server initialized');
+    } catch (error) {
+      this.logger.error('Redis connection failed during onModuleInit:', error);
+    }
   }
 
   async onApplicationBootstrap() {
-    await this.redisClient.connect();
-    this.logger.log('Nest Application Boot');
+    try {
+      await this.redisAdpator.connect();
+      this.logger.log('Nest Application Boot');
+    } catch (error) {
+      this.logger.error('Redis connection failed during onApplicationBootstrap:', error);
+    }
   }
 
   async afterInit() {
@@ -151,7 +159,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         throw new WsException('보내실 메시지가 없습니다.');
       }
       // Redis로 전송
-      this.redisClient.send({ cmd: 'chat_message' }, message).subscribe({
+      this.redisAdpator.send({ cmd: 'chat_message' }, message).subscribe({
         next: async (response) => {
           // Redis 서버에서 채널을 통해 받은 메시지를 소켓 클라이언트로 전송
           // console.log('response: ', response);
@@ -178,7 +186,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     try {
       console.log(data);
 
-      this.redisClient.send({ cmd: 'chat_files' }, data).subscribe({
+      this.redisAdpator.send({ cmd: 'chat_files' }, data).subscribe({
         next: async (response) => {
           console.log(response);
           this.server.to(room).emit('getMessage', response);

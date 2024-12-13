@@ -13,6 +13,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { DetectiveOffice } from '../office/entities/detective-office.entity';
+import { File } from '../s3/entities/s3.entity';
 
 @Module({
   controllers: [AuthController],
