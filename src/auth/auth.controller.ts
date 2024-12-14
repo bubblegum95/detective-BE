@@ -9,8 +9,6 @@ import {
   ValidationPipe,
   HttpStatus,
   Res,
-  UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
@@ -19,10 +17,6 @@ import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nes
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
-import { UserInfo } from '../utils/decorator';
-import { User } from '../user/entities/user.entity';
-import { NotificationType } from '../notification/type/notification.type';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')
 @ApiCookieAuth('JWT')

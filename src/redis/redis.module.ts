@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { RedisIoAdapter } from './redis-io.adapter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisController } from './redis.controller';
-import { CacheModule, CacheStore } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';

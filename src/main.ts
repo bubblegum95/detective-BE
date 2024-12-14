@@ -24,7 +24,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Detective Project')
-    .setDescription('Detective Brokerage Platform Service')
+    .setDescription('Detective Office Brokerage Platform Service')
     .setVersion('1.0')
     .addBearerAuth(
       {
@@ -42,7 +42,7 @@ async function bootstrap() {
   const clientHost = configService.get<string>('CLIENT_HOST');
   const clientPort = configService.get<number>('CLIENT_PORT');
   app.enableCors({
-    origin: `http://${clientHost}:${clientPort}`,
+    origin: [`http://${clientHost}:${clientPort}`, `http://127.0.0.1:${clientPort}`],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
