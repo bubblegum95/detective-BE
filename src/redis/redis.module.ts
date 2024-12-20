@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { RedisIoAdapter } from './redis-io.adapter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisController } from './redis.controller';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -10,14 +9,13 @@ import { RedisClientOptions } from 'redis';
 @Module({
   imports: [
     ConfigModule,
-    RedisIoAdapter,
     CacheModule.registerAsync<RedisClientOptions>({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: redisStore,
-        host: configService.get<number>('REDIS_HOST'),
-        port: configService.get<number>('REDIS_PORT'),
+        store: await redisStore({ url: `redis://${configService.get<string>('REDIS_HOST')}:6379` }),
+        host: configService.get<string>('REDIS_HOST'),
+        port: configService.get<string>('REDIS_PORT'),
       }),
       isGlobal: true,
     }),
@@ -37,7 +35,7 @@ import { RedisClientOptions } from 'redis';
     ]),
   ],
   controllers: [RedisController],
-  providers: [RedisIoAdapter],
-  exports: [RedisIoAdapter, ClientsModule, CacheModule],
+  providers: [],
+  exports: [ClientsModule],
 })
 export class RedisModule {}

@@ -1,6 +1,6 @@
 // src/redis/redis.service.ts
-import { Controller, Inject, Injectable, Logger } from '@nestjs/common';
-import { MessagePattern, Payload, Ctx, RedisContext, ClientProxy } from '@nestjs/microservices';
+import { Controller, Logger } from '@nestjs/common';
+import { MessagePattern, Payload, Ctx, RedisContext } from '@nestjs/microservices';
 import { MessageType } from '../chat/type/message.type';
 
 @Controller()

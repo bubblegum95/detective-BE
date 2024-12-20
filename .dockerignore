@@ -49,3 +49,9 @@ docker-compose.yaml
 # 기타 불필요한 파일
 README.md
 LICENSE
+run.sh
+.github
+.vscode
+logs
+loki
+.gitmessage.txt
