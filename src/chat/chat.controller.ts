@@ -12,9 +12,9 @@ import {
 import { ChatService } from './chat.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiBody, ApiCookieAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { FileUploadDto } from '../s3/dto/file-upload.dto';
-import { UserInfo } from '../utils/user-info.decorator';
+import { UserInfo } from '../utils/decorators/user-info.decorator';
 import { S3Service } from '../s3/s3.service';
 import { ChatGateway } from './chat.gateway';
 import { User } from '../user/entities/user.entity';

@@ -11,8 +11,8 @@ import {
 } from '@nestjs/websockets';
 import { Inject, Logger, UseGuards } from '@nestjs/common';
 import { Namespace, Server, Socket } from 'socket.io';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { UserInfo } from '../utils/user-info.decorator';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
+import { UserInfo } from '../utils/decorators/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { ChatService } from './chat.service';
 import { ClientProxy } from '@nestjs/microservices';

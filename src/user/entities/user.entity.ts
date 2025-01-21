@@ -13,7 +13,6 @@ import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
-import { Room } from '../../chat/entities/room.entity';
 import { Participant } from './participant.entity';
 
 @Entity({ name: 'user' })
@@ -28,7 +27,7 @@ export class User {
   @Column({ type: 'varchar', length: 40, nullable: false, unique: true })
   email: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 8, nullable: false })
   nickname: string;
 
   @Column({ type: 'varchar', nullable: false })

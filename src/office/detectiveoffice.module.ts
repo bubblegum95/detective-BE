@@ -5,7 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Detective } from 'src/user/entities/detective.entity';
 import { DetectiveOffice } from './entities/detective-office.entity';
 import { OfficeRelationship } from './entities/office-relationship.entity';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/utils/guards/jwt-auth.guard';
 import { AuthModule } from 'src/auth/auth.module';
 import { EmailModule } from 'src/mail/email.module';
 import { UserModule } from 'src/user/user.module';

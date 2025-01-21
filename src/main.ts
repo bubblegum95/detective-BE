@@ -40,12 +40,15 @@ async function bootstrap() {
     SwaggerModule.setup('api', app, document, option);
     const CLIENT_HOST = configService.get<string>('CLIENT_HOST');
     const CLIENT_PORT = configService.get<number>('CLIENT_PORT');
+
     app.enableCors({
       origin: [`http://${CLIENT_HOST}:${CLIENT_PORT}`, `http://127.0.0.1:${CLIENT_PORT}`],
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
       credentials: true,
-      allowedHeaders: ['Content-Type', 'Authorization'],
+      allowedHeaders: ['Content-Type', 'authorization'],
     });
+
+    console.log(`cors 설정: ${CLIENT_HOST}, ${CLIENT_PORT}`);
 
     app.use(cookieParser());
     app.useGlobalPipes(
@@ -57,7 +60,6 @@ async function bootstrap() {
     );
 
     // websocket adapter 설정
-    const SOCKET_PORT = configService.get<number>('SOCKET_PORT');
     const REDIS_HOST = configService.get<string>('REDIS_HOST');
     const REDIS_PORT = configService.get<number>('REDIS_PORT');
 

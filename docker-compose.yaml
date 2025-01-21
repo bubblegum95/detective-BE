@@ -11,10 +11,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: detective_office
+    container_name: app-server
     environment:
       SERVER_PORT: ${SERVER_PORT}
-      SOCKET_PORT: ${SOCKET_PORT}
+      CLIENT_HOST: ${CLIENT_HOST}
       CLIENT_PORT: ${CLIENT_PORT}
       POSTGRES_HOST: 'postgres_db'
       POSTGRES_PORT: 5432
@@ -36,8 +36,6 @@ services:
       ADDRESS_SECRET: ${ADDRESS_SECRET}
     ports:
       - '${SERVER_PORT}:${SERVER_PORT}'
-      - '${SOCKET_PORT}:${SOCKET_PORT}'
-      - '${CLIENT_PORT}:${CLIENT_PORT}'
     depends_on:
       - postgres_db
       - redis

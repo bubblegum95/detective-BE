@@ -19,8 +19,6 @@ import { DetectiveOffice } from '../office/entities/detective-office.entity';
 import { Location } from '../office/entities/location.entity';
 import { UserService } from '../user/user.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
-import { NotificationType } from '../notification/type/notification.type';
-import { Room } from '../chat/entities/room.entity';
 
 @Injectable()
 export class AuthService {
@@ -394,9 +392,8 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     try {
       const user = await this.validateUser(signInDto);
-
       if (!user) {
-        throw new UnauthorizedException('일치하는 회원 정보가 없습니다');
+        throw new UnauthorizedException('토큰을 발급할 수 없습니다.');
       }
 
       const payload = { id: user.id };

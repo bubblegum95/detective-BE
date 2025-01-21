@@ -52,8 +52,18 @@ export class UserService {
     }
   }
 
-  async findOneById(id: number): Promise<User> {
-    return this.userRepository.findOne({ where: { id }, relations: ['detective'] });
+  async findOneById(id: number) {
+    const data = await this.userRepository.findOne({ where: { id }, relations: ['detective'] });
+    console.log(data);
+
+    return {
+      name: data.name,
+      email: data.email,
+      nickname: data.nickname,
+      phoneNumber: data.phoneNumber,
+      createdAt: data.createdAt,
+      detective: data.detective,
+    };
   }
 
   async findUserNameById(id: number): Promise<string> {

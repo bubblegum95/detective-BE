@@ -15,9 +15,9 @@ import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { S3Service } from '../s3/s3.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { UserInfo } from '../utils/decorator';
+import { UserInfo } from '../utils/decorators/decorator';
 import { User } from '../user/entities/user.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Post')
