@@ -13,7 +13,7 @@ import {
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
@@ -21,7 +21,6 @@ import { FoundEmailDto } from './dto/found-email.dto';
 import { Response } from 'express';
 
 @ApiTags('Auth')
-@ApiCookieAuth('JWT')
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {

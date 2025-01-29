@@ -46,7 +46,7 @@ export class ChatController {
     @Body() dto: FileUploadDto,
   ) {
     try {
-      const uploadedFiles = await this.s3Service.uploadChatFiles(files);
+      const uploadedFiles = (await this.s3Service.uploadFilesToS3('chat', files)) as string[];
       const uploadedFile = await this.chatService.createChat(
         user.id,
         MessageType.File,
@@ -56,7 +56,6 @@ export class ChatController {
       console.log('uploaded file: ', uploadedFile);
 
       const foundUserNickname = await this.userService.findUserNameById(user.id);
-
       const message = {
         sender: foundUserNickname,
         type: uploadedFile.type,

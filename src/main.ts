@@ -30,7 +30,7 @@ async function bootstrap() {
           type: 'http',
           scheme: 'bearer',
           name: 'JWT',
-          in: 'cookies',
+          in: 'header',
         },
         'authorization',
       )

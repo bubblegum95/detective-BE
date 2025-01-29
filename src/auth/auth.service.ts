@@ -300,14 +300,13 @@ export class AuthService {
       };
 
       const office = await this.createOfficeInfo(officeInfo);
-
       if (!office) {
         throw new BadRequestException('office create error: 회원가입 정보를 다시 입력해주세요.');
       }
 
-      const fileId = await this.s3Service.uploadRegistrationFile(file);
-
-      if (!fileId) {
+      const path = await this.s3Service.uploadFileToS3('registration', file);
+      const savedFile = await this.s3Service.savePath(path);
+      if (!savedFile) {
         throw new BadRequestException('등록된 사업자등록증 이미지 파일이 존재하지 않습니다.');
       }
 
@@ -318,7 +317,7 @@ export class AuthService {
         officeId: office.id,
         gender: gender,
         position: Position.Employer,
-        business_registration_file_id: fileId,
+        business_registration_file_id: savedFile,
       };
 
       const detectiveInfo = await this.createDetectiveInfo(detectiveDto);

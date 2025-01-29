@@ -7,13 +7,14 @@ import {
   Index,
   OneToMany,
   OneToOne,
-  ManyToMany,
+  JoinColumn,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
 import { Participant } from './participant.entity';
+import { File } from '../../s3/entities/s3.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -30,7 +31,7 @@ export class User {
   @Column({ type: 'varchar', length: 8, nullable: false })
   nickname: string;
 
-  @Column({ type: 'varchar', nullable: false })
+  @Column({ type: 'varchar', nullable: false, unique: true })
   phoneNumber: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
@@ -44,6 +45,9 @@ export class User {
 
   @OneToOne(() => Detective, (detective) => detective.user)
   detective: Detective;
+
+  @OneToOne(() => File, (file) => file.user)
+  file: File;
 
   @OneToMany(() => WishList, (wishList) => wishList.consumer)
   wishList: WishList[];

@@ -41,8 +41,8 @@ services:
       - redis
       - mongo
     # restart: always
-    # volumes:
-    #   - ./src:/app/src
+    volumes:
+      - ./public:/app/public
     networks:
       - nest
 
@@ -56,6 +56,8 @@ services:
       POSTGRESQL_USER: 'postgres'
       POSTGRESQL_PASSWORD: 'postgres'
       POSTGRESQL_DATABASE: 'detective'
+    volumes:
+      - ./data/postgres:/bitnami/postgresql
     networks:
       - nest
 
@@ -68,7 +70,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root # 초기 관리자 사용자 이름
       MONGO_INITDB_ROOT_PASSWORD: example # 초기 관리자 비밀번호
     volumes:
-      - mongo-data:/data/db # 데이터를 호스트의 볼륨에 저장
+      - ./data/mongo:/data/db # 데이터를 호스트의 볼륨에 저장
     networks:
       - nest
 
@@ -121,7 +123,7 @@ services:
     ports:
       - '3002:3000'
     volumes:
-      - ./grafana-data:/var/lib/grafana
+      - ./data/grafana:/var/lib/grafana
     restart: always
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_USER}
@@ -136,7 +138,7 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yaml'
     volumes:
       - ./config/prometheus-config.yaml:/etc/prometheus/prometheus.yaml
-      - ./prometheus-data:/prometheus
+      - ./data/prometheus:/prometheus
     ports:
       - '9090:9090'
     restart: always

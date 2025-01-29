@@ -5,7 +5,7 @@ export class SignInDto {
   @IsEmail()
   @IsNotEmpty({ message: '이메일을 입력해주세요' })
   @ApiProperty({
-    example: 'example@gmail.com',
+    example: 'example@email.com',
     description: '이메일',
   })
   email: string;
@@ -13,7 +13,7 @@ export class SignInDto {
   @IsString()
   @IsNotEmpty({ message: '비밀번호를 입력해주세요' })
   @ApiProperty({
-    example: 'example1234@',
+    example: 'Example123!',
     description: '비밀번호',
   })
   password: string;

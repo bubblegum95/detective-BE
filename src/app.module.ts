@@ -18,6 +18,8 @@ import { NewsModule } from './news/news.module';
 import { NotificationModule } from './notification/notification.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'config/winston.config';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -52,6 +54,10 @@ const MongooseModuleAsyncOptions = {
       isGlobal: true,
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
+      serveRoot: '/public',
+    }),
     AuthModule,
     UserModule,
     S3Module,
