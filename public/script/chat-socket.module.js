@@ -1,6 +1,6 @@
 export default class ChatSocket {
   constructor() {
-    this.io = io('http://localhost:3000/chat', {
+    this.io = io(`http://localhost:3000/chat`, {
       withCredentials: true,
     });
   }
@@ -71,8 +71,37 @@ export default class ChatSocket {
   // 말풍선 생성
   makeSpeechBubble(data) {
     console.log('make speech bubble');
-    const item = document.createElement('li');
-    item.textContent = `${data.timestamp}: ${data.sender}: ${data.content}`;
-    document.getElementById('messages').appendChild(item);
+    try {
+      let item = document.createElement('li');
+
+      if (!data.type) {
+        throw new Error('지정된 타입이 없습니다.');
+      }
+      switch (data.type) {
+        case 'text':
+          item.innerHTML = `
+            <div class="speachBubble ${data.type}">
+              <li class="timestamp">${data.timestamp}</li>
+              <li class="sender">${data.sender}</li>
+              <li class="content">${data.content}</li>
+            </div>
+          `;
+          break;
+
+        case 'file':
+          item.innerHTML = `
+            <div class="speachBubble ${data.type}">
+              <li class="timestamp">${data.timestamp}</li>
+              <li class="sender">${data.sender}</li>
+              <img class="content" src="${data.content}" onclick="openImage(this.src)">
+            </div>
+          `;
+          break;
+      }
+
+      document.getElementById('messages').appendChild(item);
+    } catch (error) {
+      throw error;
+    }
   }
 }

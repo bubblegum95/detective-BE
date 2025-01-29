@@ -4,43 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>숨진사람(내 채팅)</title>
-    <style>
-      /* 모달 스타일 */
-      .modal {
-        display: none;
-        position: fixed;
-        z-index: 1;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        overflow: auto;
-        background-color: rgb(0, 0, 0);
-        background-color: rgba(0, 0, 0, 0.4);
-      }
-
-      .modal-content {
-        background-color: #fefefe;
-        margin: 15% auto;
-        padding: 20px;
-        border: 1px solid #888;
-        width: 80%;
-      }
-
-      .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-      }
-
-      .close:hover,
-      .close:focus {
-        color: black;
-        text-decoration: none;
-        cursor: pointer;
-      }
-    </style>
+    <link rel="stylesheet" href="./css/modal.css"></link>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   </head>
   <body>
@@ -63,22 +27,26 @@
     <!-- 모달 폼 -->
     <div id="myModal" class="modal">
       <div class="modal-content">
-        <span class="close">&times;</span>
+        <span class="close" onclick="closeModal()">&times;</span>
         <div id="modalContent"></div>
       </div>
     </div>
+    <!-- 모달 폼 -->
 
     <script type="module">
       import ChatRoom from './script/chat-room.module.js';
       import ChatSocket from './script/chat-socket.module.js';
 
+      // 채팅 리스트 가져오기
       const chatList = document.getElementById('chatList');
       const rooms = new ChatRoom();
       rooms.getRooms(chatList);
 
+      // 소켓 커넥팅
       const socket = new ChatSocket();
       socket.connectWebSocket();
 
+      // 채팅 룸 생성하기
       function createRoom(event) {
         event.preventDefault();
         const recipientId = document.getElementById('recipientId').value;
@@ -89,33 +57,36 @@
       }
 
       document.addEventListener('DOMContentLoaded', () => {
-        // 해당 폼에서 'submit' 이벤트 발생시 'createRoom' 함수 트리거
         const createRoomForm = document.getElementById('createRoomForm');
+        const modal = document.getElementById('myModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        const modalContent = document.getElementById('modalContent');
+        const imagePopup = document.getElementById('imagePopup');
+        const popupImage = document.getElementById('popupImage');
+        const innerModal = document.getElementById('innerModule');
+        const closePopup = document.getElementsByClassName('close')[1];
+
+        // 해당 폼에서 'submit' 이벤트 발생시 'createRoom' 함수 트리거
         createRoomForm.addEventListener('submit', createRoom);
 
-        const modal = document.getElementById('myModal');
-        const span = document.getElementsByClassName('close')[0];
-        const modalContent = document.getElementById('modalContent');
-
         // x 클릭 시 모달 닫기
-        span.onclick = function () {
+        closeBtn.onclick = function closeModal() {
           modal.style.display = 'none';
         };
 
-        // 모달 외부 클릭 시 모달 닫기
-        window.onclick = function (event) {
-          if (event.target === modal) {
-            modal.style.display = 'none';
-          }
-        };
-
-        // 모달을 여는 함수
-        window.openModal = function openModals(roomId, roomName) {
+        // 채팅 모달을 여는 함수 표현식 -> 호출 chat-room.module.js 이벤트 onclick
+        window.openModal = function (roomId, roomName) {
+          console.log('open modal')
           modalContent.innerHTML = `
           <ul id="messages"></ul>
           <input id='fileUpload' type="file" multiple />
           <input id="messageInput" type="text" placeholder="Enter message" />
           <button onclick="sendMessage(${roomId}, '${roomName}')">Send Message</button>
+
+          <!-- 팝업 -->
+          <div id="innerModal" class="popup"></div>
+          <!-- 팝업 -->
+          
           `;
 
           // 룸 메시지 호출
@@ -123,10 +94,12 @@
           modal.style.display = 'block';
         };
 
+        // 룸 메시지 모두 가져오기
         window.handleRoomMessage = function (roomId, roomName) {
           socket.handleJoinRoomMessages(roomId, roomName);
         };
 
+        // 룸 메시지 보내기
         window.sendMessage = function (roomId, roomName) {
           const message = document.getElementById('messageInput').value;
           const fileInput = document.getElementById('fileUpload');
@@ -137,7 +110,7 @@
 
           if (fileInput.files.length > 0) {
             const formData = new FormData();
-            formData.append('room', roomId);
+            formData.append('room', roomName);
 
             for (const file of fileInput.files) {
               formData.append('files', file);
@@ -149,7 +122,24 @@
           document.getElementById('messageInput').value = '';
           document.getElementById('fileUpload').value = '';
         };
+
+        // --------- image modal ---------------
+        // 이미지 모달 여는 함수 표현식 -> 호출: chat-socket.module.js 이벤트: onclick
+        window.openImage = function (url) {
+          innerModal.innerHTML = `
+            <div id="imagePopup" class="popup">
+              <span id="imageClose" class="close popup" onclick="closePopup()">&times;</span>
+              <img id="popupImage" src="${url}" alt="">
+            </div>
+          `;
+          innerModal.style.display = 'block';
+        };
       });
+
+      function closePopup() {
+        const popup = document.getElementById('imagePopup');
+        popup.style.display = 'none';
+      }
     </script>
   </body>
 </html>

@@ -1,8 +1,8 @@
 import { Body, Controller, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { DetectiveofficeService } from './detectiveoffice.service';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/utils/guards/jwt-auth.guard';
 import { ApiOperation } from '@nestjs/swagger';
-import { UserInfo } from 'src/utils/decorator';
+import { UserInfo } from 'src/utils/decorators/decorator';
 import { User } from 'src/user/entities/user.entity';
 
 @Controller('offices')

@@ -173,33 +173,33 @@ export class PostService {
     return detectives;
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<number> {
-    const params = {
-      FunctionName: 'file-compression',
-      Payload: JSON.stringify({
-        fileContent: file.buffer.toString('base64'),
-        fileName: file.originalname,
-      }),
-    };
+  // async uploadFile(file: Express.Multer.File): Promise<number> {
+  //   const params = {
+  //     FunctionName: 'file-compression',
+  //     Payload: JSON.stringify({
+  //       fileContent: file.buffer.toString('base64'),
+  //       fileName: file.originalname,
+  //     }),
+  //   };
 
-    try {
-      const result = await this.lambda.invoke(params).promise();
-      const payload = JSON.parse(result.Payload as string);
-      const body = JSON.parse(payload.body);
-      const path = body.fileId;
-      console.log('path', path);
-      if (result.StatusCode === 200) {
-        const file = await this.fileRepo.save({ path: path });
-        return file.id;
-      } else {
-        console.error('람다 함수 호출 실패:', body.error);
-        throw new Error(body.error);
-      }
-    } catch (err) {
-      console.error('파일 업로드 실패:', err);
-      throw err;
-    }
-  }
+  //   try {
+  //     const result = await this.lambda.invoke(params);
+  //     const payload = JSON.parse(result.Payload as string);
+  //     const body = JSON.parse(payload.body);
+  //     const path = body.fileId;
+  //     console.log('path', path);
+  //     if (result.StatusCode === 200) {
+  //       const file = await this.fileRepo.save({ path: path });
+  //       return file.id;
+  //     } else {
+  //       console.error('람다 함수 호출 실패:', body.error);
+  //       throw new Error(body.error);
+  //     }
+  //   } catch (err) {
+  //     console.error('파일 업로드 실패:', err);
+  //     throw err;
+  //   }
+  // }
 
   // 탐정 프로필 생성
   async createProfile(createPostDto: CreatePostDto, userId: number) {

@@ -20,28 +20,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   private static extractJWT(req: Request | any): string | null {
-    if (req.cookies) {
-      // HTTP 요청의 경우
-      const { authorization } = req.cookies;
-      if (authorization) {
-        const [tokenType, token] = authorization.split(' ');
-        if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
-        if (token) {
-          return token;
-        }
-      }
-    } else if (req.handshake && req.handshake.headers.cookie) {
-      // WebSocket 요청의 경우
-      const cookies = cookie.parse(req.handshake.headers.cookie || '');
-      const authorization = cookies['authorization'];
-      if (authorization) {
-        const [tokenType, token] = authorization.split(' ');
-        if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
-        if (token) {
-          return token;
-        }
+    // HTTP 요청의 경우
+    const authorization = req.headers['authorization'];
+    if (authorization) {
+      const [tokenType, token] = authorization.split(' ');
+      if (tokenType !== 'Bearer') throw new BadRequestException('토큰 타입이 일치하지 않습니다.');
+      if (token) {
+        return token;
       }
     }
+
     return null;
   }
 

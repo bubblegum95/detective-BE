@@ -12,6 +12,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 loki
+data
 
 # OS
 .DS_Store
@@ -59,3 +60,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 postgres-data
 grafana-data
 prometheus-data
+
+public

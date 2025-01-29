@@ -14,22 +14,23 @@ export class NotificationService {
     private readonly notificationModel: Model<Notification>,
     private readonly dataSource: DataSource,
   ) {}
-
+  // 메시지 수신자 찾기
   async findMessageReceiver(roomId: number, userId: number): Promise<number[]> {
     const participants: Participant[] = await this.dataSource
       .getRepository(Participant)
       .find({ where: { roomId }, select: { userId: true } });
 
     console.log('participants list: ', participants);
-    // const receiver = participants.userId
-    // const memberList: number[] = [];
+    const memberList: number[] = [];
 
-    // for (const member of members) {
-    //   memberList.push(Number(member.id));
-    // }
-    // console.log('member list:', memberList);
+    for (const participant of participants) {
+      if (participant.userId !== userId) {
+        memberList.push(Number(participant.userId));
+      }
+    }
+    console.log('member list:', memberList);
 
-    return;
+    return memberList;
   }
 
   async getNotReadNotification(receiver: number) {

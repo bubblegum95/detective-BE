@@ -1,8 +1,8 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { CreateReviewDTO } from './dto/create-review.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { UserInfo } from 'src/utils/decorator';
+import { JwtAuthGuard } from 'src/utils/guards/jwt-auth.guard';
+import { UserInfo } from 'src/utils/decorators/decorator';
 import { User } from 'src/user/entities/user.entity';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';

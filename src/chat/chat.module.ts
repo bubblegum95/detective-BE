@@ -10,36 +10,25 @@ import { UserModule } from 'src/user/user.module';
 import { UserService } from 'src/user/user.service';
 import { ChatService } from './chat.service';
 import { RedisModule } from 'src/redis/redis.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisController } from 'src/redis/redis.controller';
 import { S3Module } from '../s3/s3.module';
-import { ChatFile, ChatFileSchema } from './entities/chat-file.entity';
 import { Participant } from '../user/entities/participant.entity';
+import { ChatController } from './chat.controller';
+import { S3Service } from '../s3/s3.service';
+import { File } from '../s3/entities/s3.entity';
 
 @Module({
   imports: [
+    UserModule,
     S3Module,
     RedisModule,
     JwtModule,
     UserModule,
-    MongooseModule.forFeature([
-      { name: Message.name, schema: MessageSchema },
-      { name: ChatFile.name, schema: ChatFileSchema },
-    ]),
-    TypeOrmModule.forFeature([User, Room, Participant]),
-    ClientsModule.register([
-      {
-        name: 'REDIS_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          host: 'localhost',
-          port: 6379,
-        },
-      },
-    ]),
+    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
+    TypeOrmModule.forFeature([User, Room, Participant, File]),
   ],
-  controllers: [RedisController],
-  providers: [ChatGateway, ChatService, JwtService, UserService],
+  controllers: [RedisController, ChatController],
+  providers: [ChatGateway, ChatService, JwtService, UserService, S3Service],
   exports: [ChatGateway],
 })
 export class ChatModule {}

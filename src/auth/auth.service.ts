@@ -19,8 +19,6 @@ import { DetectiveOffice } from '../office/entities/detective-office.entity';
 import { Location } from '../office/entities/location.entity';
 import { UserService } from '../user/user.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
-import { NotificationType } from '../notification/type/notification.type';
-import { Room } from '../chat/entities/room.entity';
 
 @Injectable()
 export class AuthService {
@@ -302,14 +300,13 @@ export class AuthService {
       };
 
       const office = await this.createOfficeInfo(officeInfo);
-
       if (!office) {
         throw new BadRequestException('office create error: 회원가입 정보를 다시 입력해주세요.');
       }
 
-      const fileId = await this.s3Service.uploadRegistrationFile(file);
-
-      if (!fileId) {
+      const path = await this.s3Service.uploadFileToS3('registration', file);
+      const savedFile = await this.s3Service.savePath(path);
+      if (!savedFile) {
         throw new BadRequestException('등록된 사업자등록증 이미지 파일이 존재하지 않습니다.');
       }
 
@@ -320,7 +317,7 @@ export class AuthService {
         officeId: office.id,
         gender: gender,
         position: Position.Employer,
-        business_registration_file_id: fileId,
+        business_registration_file_id: savedFile,
       };
 
       const detectiveInfo = await this.createDetectiveInfo(detectiveDto);
@@ -394,9 +391,8 @@ export class AuthService {
   async signIn(signInDto: SignInDto) {
     try {
       const user = await this.validateUser(signInDto);
-
       if (!user) {
-        throw new UnauthorizedException('일치하는 회원 정보가 없습니다');
+        throw new UnauthorizedException('토큰을 발급할 수 없습니다.');
       }
 
       const payload = { id: user.id };

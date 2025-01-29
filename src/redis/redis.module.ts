@@ -1,38 +1,41 @@
 import { Module } from '@nestjs/common';
-import { RedisIoAdapter } from './redis-io.adapter';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisController } from './redis.controller';
-import { CacheModule, CacheStore } from '@nestjs/cache-manager';
+import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
 
 @Module({
   imports: [
-    RedisIoAdapter,
+    ConfigModule,
     CacheModule.registerAsync<RedisClientOptions>({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: redisStore as unknown as CacheStore,
+        store: await redisStore({ url: `redis://${configService.get<string>('REDIS_HOST')}:6379` }),
         host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<number>('REDIS_PORT'),
+        port: configService.get<string>('REDIS_PORT'),
       }),
       isGlobal: true,
     }),
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
         name: 'REDIS_SERVICE',
-        transport: Transport.REDIS,
-        options: {
-          host: 'localhost',
-          port: 6379,
-        },
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: async (configService: ConfigService) => ({
+          transport: Transport.REDIS,
+          options: {
+            host: configService.get<string>('REDIS_HOST'),
+            port: configService.get<number>('REDIS_PORT'),
+          },
+        }),
       },
     ]),
   ],
   controllers: [RedisController],
-  providers: [RedisIoAdapter],
-  exports: [RedisIoAdapter, ClientsModule, CacheModule],
+  providers: [],
+  exports: [ClientsModule],
 })
 export class RedisModule {}

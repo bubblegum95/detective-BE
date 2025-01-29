@@ -15,9 +15,9 @@ import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { S3Service } from '../s3/s3.service';
 import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { UserInfo } from '../utils/decorator';
+import { UserInfo } from '../utils/decorators/decorator';
 import { User } from '../user/entities/user.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Post')
@@ -75,9 +75,9 @@ export class PostController {
     @Body(new ValidationPipe()) createPostDto: CreatePostDto,
     @UserInfo() user: User,
   ) {
-    const fileId = await this.postService.uploadFile(file);
-    console.log('fileId:', fileId);
-    createPostDto.file = fileId;
-    return this.postService.createProfile(createPostDto, user.id);
+    // const fileId = await this.postService.uploadFile(file);
+    // console.log('fileId:', fileId);
+    // createPostDto.file = fileId;
+    // return this.postService.createProfile(createPostDto, user.id);
   }
 }

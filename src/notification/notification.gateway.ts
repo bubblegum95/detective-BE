@@ -7,11 +7,11 @@ import {
 } from '@nestjs/websockets';
 import { NotificationService } from './notification.service';
 import { Namespace, Server, Socket } from 'socket.io';
-import { UserInfo } from '../utils/decorator';
+import { UserInfo } from '../utils/decorators/decorator';
 import { NotificationType } from './type/notification.type';
 import { Logger, UseGuards } from '@nestjs/common';
 import { User } from '../user/entities/user.entity';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 
 @UseGuards(JwtAuthGuard)
 @WebSocketGateway({ namespace: '/notification' })

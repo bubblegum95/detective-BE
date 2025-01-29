@@ -9,28 +9,54 @@ import {
   ValidationPipe,
   HttpStatus,
   Res,
-  UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
 import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
-import { UserInfo } from '../utils/decorator';
-import { User } from '../user/entities/user.entity';
-import { String } from 'aws-sdk/clients/appstream';
-import { NotificationType } from '../notification/type/notification.type';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { FoundEmailDto } from './dto/found-email.dto';
+import { Response } from 'express';
 
 @ApiTags('Auth')
-@ApiCookieAuth('JWT')
 @UsePipes(new ValidationPipe({ transform: true }))
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  // 이메일 검증
+  @Post('found-email')
+  @ApiOperation({ summary: '이메일 찾기', description: '이메일 찾기' })
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBody({ type: FoundEmailDto })
+  async verifyEmail(@Body() dto: FoundEmailDto) {
+    try {
+      const existEmail = await this.authService.existedEmail(dto.email);
+
+      if (existEmail) {
+        return {
+          success: true,
+          existingEmail: true,
+          email: existEmail,
+          message: '해당 이메일이 존재합니다.',
+        };
+      } else {
+        return {
+          success: true,
+          existingEmail: false,
+          email: null,
+          message: '해당 이메일이 존재하지 않습니다.',
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: '이메일을 조회할 수 없습니다.',
+      };
+    }
+  }
 
   // consumer 회원가입
   @Post('signup/consumer')
@@ -82,7 +108,6 @@ export class AuthController {
   @ApiOperation({ summary: '탐정 업주 회원가입', description: '탐정 업주 회원가입' })
   @ApiBody({ type: CreateDetectiveAuthDto })
   async detectiveSignUp(
-    @Res() res,
     @Body() createDetectiveAuthDto: CreateDetectiveAuthDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -124,36 +149,22 @@ export class AuthController {
   @ApiOperation({ summary: '로그인', description: '로그인' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiBody({ type: SignInDto })
-  async signIn(@Res() res, @Body() signInDto: SignInDto) {
+  async signIn(@Res() res: Response, @Body() signInDto: SignInDto) {
     try {
       const token = await this.authService.signIn(signInDto);
+      if (!token) {
+        throw new Error('토큰을 발급할 수 없습니다.');
+      }
 
       return res
-        .cookie('authorization', `Bearer ${token}`, {
-          maxAge: 7 * 24 * 60 * 60 * 1000,
-          httpOnly: true,
-          secure: true,
-          sameSite: 'None',
-        })
         .status(HttpStatus.OK)
-        .json({ message: '로그인하였습니다.' });
+        .json({ success: true, message: '로그인하였습니다.', token: token });
     } catch (error) {
       console.error(error.message);
       return res.json({
         success: false,
         message: error.message,
       });
-    }
-  }
-
-  @Post('logout')
-  @ApiOperation({ summary: '로그아웃', description: '로그아웃' })
-  signOut(@Res() res) {
-    try {
-      res.clearCookie('authorization');
-      res.send('로그아웃하였습니다.');
-    } catch (error) {
-      return res.send('로그아웃할 수 없습니다.');
     }
   }
 }

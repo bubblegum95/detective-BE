@@ -4,6 +4,7 @@ export default class Fetch {
       method: 'POST',
       credentials: 'include',
     };
+    console.log('fetch post now');
 
     if (contentData === 'multipart/form-data') {
       // For multipart/form-data, set the FormData object directly as the body

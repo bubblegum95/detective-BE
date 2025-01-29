@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { WsException } from '@nestjs/websockets';
 import { Participant } from '../user/entities/participant.entity';
+import { MessageType } from './type/message.type';
 
 @Injectable()
 export class ChatService {
@@ -118,6 +119,7 @@ export class ChatService {
         .limit(50)
         .exec();
 
+      console.log('messages: ', messages);
       if (!messages) {
         throw new WsException('메시지가 없습니다.');
       }
@@ -129,6 +131,7 @@ export class ChatService {
 
         const reUndefinedMessage = {
           sender: user,
+          type: messages[i].type,
           content: messages[i].content,
           timestamp: messages[i].timestamp,
         };
@@ -136,7 +139,6 @@ export class ChatService {
         newList.push(reUndefinedMessage);
       }
 
-      console.log('newList', newList);
       this.logger.log('get all messages in this room');
 
       return newList;
@@ -155,16 +157,9 @@ export class ChatService {
         return;
       }
 
-      const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+      const createdChat = await this.createChat(userId, MessageType.Text, message, roomName);
 
-      const messageInfo = await this.messageModel.create({
-        sender: userId,
-        content: message,
-        room: roomName,
-        timestamp: timestamp,
-      });
-
-      if (!messageInfo) {
+      if (!createdChat) {
         throw new WsException('메시지 생성에 실패했습니다.');
       }
 
@@ -176,13 +171,33 @@ export class ChatService {
 
       return {
         sender: foundUserNickname,
-        content: messageInfo.content,
-        timestamp: messageInfo.timestamp,
+        type: createdChat.type,
+        content: createdChat.content,
+        timestamp: createdChat.timestamp,
         room: roomName,
       };
     } catch (error) {
       throw error;
     }
+  }
+
+  async createChat(sender: number, type: MessageType, content: string | string[], room: string) {
+    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
+    const messageInfo = await this.messageModel.create({
+      sender,
+      type,
+      content,
+      room,
+      timestamp,
+    });
+
+    if (!messageInfo) {
+      throw new WsException('채팅 메시지를 생성할 수 없습니다.');
+    }
+    console.log('message information', messageInfo);
+
+    return messageInfo;
   }
 
   async existClientInRoom(roomId: number, userId: number) {
