@@ -23,237 +23,192 @@ export class ChatService {
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
   ) {}
-  private readonly logger = new Logger(ChatService.name);
 
-  async createRoom(client: Socket, user: User, recipientId: number): Promise<string | string[]> {
+  async findUserById(userId: number) {
+    return await this.userService.findUserbyId(userId);
+  }
+
+  async findParticipant(roomId: number, userId: number): Promise<Participant> {
+    return await this.participantRepository.findOne({
+      where: { room: { id: roomId }, user: { id: userId } },
+    });
+  }
+
+  async findParticipantById(participantId: number) {
+    return await this.participantRepository.findOne({
+      where: { id: participantId },
+      relations: ['user'],
+    });
+  }
+
+  async saveRoom(name: string): Promise<Room> {
+    return await this.roomRepository.save({ name });
+  }
+
+  async findRoomById(roomId: number): Promise<Room> {
+    return await this.roomRepository.findOne({
+      where: { id: roomId },
+      relations: ['participants'],
+    });
+  }
+
+  async createParticipant(room: Room, user: User): Promise<Participant> {
+    return await this.participantRepository.save({
+      room,
+      user,
+    });
+  }
+
+  async findRoomsUserExisting(userId: number) {
+    return await this.dataSource
+      .getRepository(Room)
+      .createQueryBuilder('room')
+      .select(['room.name'])
+      .leftJoin('room.participants', 'participants')
+      .where('participants.userId = :userId', { userId })
+      .getMany();
+  }
+
+  async createRoom(client: Socket, recipientId: number) {
     try {
-      const foundUser = await this.userService.findUserbyId(user.id);
-      const recipient = await this.userService.findUserbyId(recipientId);
-
-      if (!foundUser || !recipient) {
+      const user = client.data.user;
+      const recipient = await this.findUserById(recipientId);
+      if (!recipient) {
         throw new WsException('사용자가 존재하지 않습니다.');
       }
-      console.log('<------------hear------------->');
+
       const foundRoom = await this.findExistRoom(user.id, recipientId);
-      console.log('found Room: ', foundRoom);
-
-      let roomName: string;
-
       if (!foundRoom) {
         const name = uuidv4();
-        this.logger.log(`name: ${name}`);
+        const room = await this.saveRoom(name);
 
-        const room = await this.roomRepository.save({ name });
-        console.log('creat room: ', room);
+        await this.createParticipant(room, user);
+        await this.createParticipant(room, recipient);
 
-        await this.createParticipant(room.id, user.id);
-        await this.createParticipant(room.id, recipientId);
-
-        roomName = room.name;
-      } else if (foundRoom) {
-        this.logger.log(`found room : ${foundRoom}`);
-        roomName = foundRoom;
+        return room;
+      } else {
+        return foundRoom;
       }
-
-      if (!roomName) {
-        throw new WsException('룸을 생성할 수 없습니다.');
-      }
-
-      return roomName;
     } catch (error) {
       throw error;
     }
   }
 
-  async createParticipant(roomId: number, userId: number) {
+  async findRoomsUserBelongsTo(userId: number): Promise<Room[]> {
     try {
-      console.log('room and user: ', roomId, userId);
-      if (!roomId || !userId) {
-        throw new WsException('룸 또는 사용자가 없습니다.');
-      }
-
-      const participant = await this.participantRepository.save({
-        roomId,
-        userId,
+      const rooms: Room[] = await this.findRoomsUserExisting(userId);
+      rooms.map((room) => {
+        room.name;
       });
 
-      if (!participant) {
-        throw new WsException('해당 룸에 사용자를 추가할 수 없습니다.');
-      }
-
-      return participant;
+      return rooms;
     } catch (error) {
       throw error;
     }
   }
 
-  async joinRoom(client: Socket, user: User): Promise<string | string[] | null> {
-    try {
-      const userId = user.id;
-      const foundRooms: string[] | null = await this.findRoomsUserBelongsTo(userId);
-
-      return foundRooms;
-    } catch (error) {
-      throw error;
-    }
+  async joinRoom(client: Socket): Promise<Array<Room['name']>> {
+    const user = client.data.user;
+    const rooms = await this.findRoomsUserBelongsTo(user.id);
+    return rooms.map(({ id, name, createdAt, participants }) => name);
   }
 
-  async findRoomMessages(roomName: string, roomId: number, user: User): Promise<object[]> {
+  async findMessages(roomId: number, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return await this.messageModel
+      .find({ id: roomId })
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit)
+      .exec();
+  }
+
+  async findRoomMessages(roomId: number, page: number, limit: number) {
     try {
-      const userId = user.id;
-
-      if (!roomName || !roomId || !user) {
-        console.log(roomName, roomId, user);
-        throw new WsException('해당 룸 정보가 없습니다.');
-      }
-
-      const room = await this.existClientInRoom(roomId, userId);
-
-      if (!room) {
-        throw new WsException('User is not in this room');
-      }
-
-      const messages: Message[] = await this.messageModel
-        .find({ room: roomName })
-        .sort({ timestamp: -1 })
-        .limit(50)
-        .exec();
-
-      console.log('messages: ', messages);
-      if (!messages) {
-        throw new WsException('메시지가 없습니다.');
-      }
-
-      const newList = [];
-
-      for (let i = 0; i < messages.length; i++) {
-        const user: string = await this.userService.findUserNameById(messages[i].sender);
-
-        const reUndefinedMessage = {
-          sender: user,
-          type: messages[i].type,
-          content: messages[i].content,
-          timestamp: messages[i].timestamp,
+      const messages = await this.findMessages(roomId, page, limit);
+      messages.map(async ({ type, content, sender, room, read, timestamp }) => {
+        const participant = await this.findParticipantById(sender);
+        const nickname = participant.user.nickname;
+        return {
+          type,
+          content,
+          sender: nickname,
+          room,
+          read: read.length,
+          timestamp,
         };
+      });
 
-        newList.push(reUndefinedMessage);
-      }
-
-      this.logger.log('get all messages in this room');
-
-      return newList;
+      return messages;
     } catch (error) {
       throw error;
     }
   }
 
-  async saveMassage(user: User, roomId: number, roomName: string, message: string) {
+  async createChat(meta: {
+    sender: number;
+    type: MessageType;
+    content: string | string[];
+    room: string;
+    read: number[];
+  }) {
+    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+    return await this.messageModel.create({
+      ...meta,
+      timestamp,
+    });
+  }
+
+  async saveMassage(user: User, roomId: number, content: string | string[]) {
     try {
       const userId = user.id;
-      const room = await this.existClientInRoom(roomId, userId);
-
-      if (!room) {
-        this.logger.log('User is not in this room');
-        return;
-      }
-
-      const createdChat = await this.createChat(userId, MessageType.Text, message, roomName);
-
-      if (!createdChat) {
-        throw new WsException('메시지 생성에 실패했습니다.');
-      }
-
-      const foundUserNickname = await this.userService.findUserNameById(userId);
-
-      if (!foundUserNickname) {
-        throw new WsException('해당 사용자의 정보를 가져올 수 없습니다.');
-      }
+      const userParticipant = await this.findParticipant(roomId, userId);
+      const room = await this.findRoomById(roomId);
+      const participants = room.participants.map(({ id, createdAt, room, user }) => id);
+      const readers = participants.filter((participant) => participant !== userParticipant.id);
+      const message = await this.createChat({
+        sender: userParticipant.id,
+        type: MessageType.Text,
+        content: content,
+        room: room.name,
+        read: readers,
+      });
+      const nickname = await this.userService.findUserNameById(userId);
 
       return {
-        sender: foundUserNickname,
-        type: createdChat.type,
-        content: createdChat.content,
-        timestamp: createdChat.timestamp,
-        room: roomName,
+        sender: nickname,
+        type: message.type,
+        content: message.content,
+        timestamp: message.timestamp,
+        room: message.room,
+        read: message.read.length,
       };
     } catch (error) {
       throw error;
     }
   }
 
-  async createChat(sender: number, type: MessageType, content: string | string[], room: string) {
-    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-
-    const messageInfo = await this.messageModel.create({
-      sender,
-      type,
-      content,
-      room,
-      timestamp,
-    });
-
-    if (!messageInfo) {
-      throw new WsException('채팅 메시지를 생성할 수 없습니다.');
-    }
-    console.log('message information', messageInfo);
-
-    return messageInfo;
+  async findRoom(userId: number, recipientId: number) {
+    return await this.participantRepository
+      .createQueryBuilder('p1')
+      .innerJoin('participant', 'p2', 'p1.roomId = p2.roomId')
+      .where('p1.userId = :userId', { userId })
+      .andWhere('p2.userId = :recipientId', { recipientId })
+      .select('p1.roomId')
+      .getOne();
   }
 
-  async existClientInRoom(roomId: number, userId: number) {
+  async findExistRoom(userId: number, recipientId: number): Promise<Room | null> {
     try {
-      const result = await this.participantRepository.findOne({ where: { roomId, userId } });
-
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async findRoomsUserBelongsTo(userId: number): Promise<string[] | null> {
-    try {
-      const foundRooms = await this.dataSource
-        .getRepository(Room)
-        .createQueryBuilder('room')
-        .select(['room.name'])
-        .leftJoin('room.participants', 'participants')
-        .where('participants.userId = :userId', { userId })
-        .getMany();
-
-      console.log('found rooms: ', foundRooms);
-      let roomArr = [];
-
-      foundRooms.filter((room) => {
-        const rooms = room.name;
-        roomArr.push(rooms);
-      });
-      console.log('room array: ', roomArr);
-
-      return roomArr;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async findExistRoom(userId: number, recipientId: number): Promise<string | null> {
-    try {
-      const room = await this.participantRepository
-        .createQueryBuilder('p1')
-        .innerJoin('participant', 'p2', 'p1.roomId = p2.roomId')
-        .where('p1.userId = :userId', { userId })
-        .andWhere('p2.userId = :recipientId', { recipientId })
-        .select('p1.roomId')
-        .getOne();
-
+      const room = await this.findRoom(userId, recipientId);
       if (room) {
         const foundRoom = await this.roomRepository.findOne({
           where: { id: room.id },
           select: { name: true },
         });
 
-        console.log('found room name: ', foundRoom.name);
-        return foundRoom.name;
-      } else if (!room) {
+        return foundRoom;
+      } else {
         return null;
       }
     } catch (error) {
@@ -267,5 +222,58 @@ export class ChatService {
 
   acceptRegistration(senderId: number) {
     console.log(`등록 수락: ${senderId}`);
+  }
+
+  // async getRooms(userId: number) {
+  //   return await this.dataSource
+  //     .getRepository(Room)
+  //     .createQueryBuilder('room')
+  //     .leftJoinAndSelect('room.participants', 'participant')
+  //     .leftJoinAndSelect('participant.user', 'user')
+  //     .where((qb) => {
+  //       const subQuery = qb
+  //         .subQuery()
+  //         .select('p.roomId')
+  //         .from(Participant, 'p')
+  //         .where('p.userId = :userId')
+  //         .getQuery();
+  //       return 'room.id IN ' + subQuery;
+  //     })
+  //     .setParameter('userId', userId)
+  //     .getMany();
+  // }
+
+  // async getAllChatRooms(user: User) {
+  //   const userId = user.id;
+  //   try {
+  //     const rooms = await this.getRooms(userId);
+  //     const roomLists = [];
+  //     const participantLists = [];
+
+  //     rooms.map((room) => {
+  //       room.participants.map((participant) => {
+  //         participantLists.push(participant.user.nickname);
+  //       });
+
+  //       const roomlist = {
+  //         id: room.id.toString(),
+  //         name: room.name,
+  //         createdAt: room.createdAt,
+  //         participants: participantLists,
+  //       };
+  //       roomLists.push(roomlist);
+  //     });
+
+  //     return roomLists;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
+  async findMessageReceiver(id: number) {
+    return await this.roomRepository.findOne({
+      where: { id },
+      relations: ['participants', 'participants.user'],
+    });
   }
 }

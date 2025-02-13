@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { User } from './user.entity';
 import { Room } from '../../chat/entities/room.entity';
 
@@ -7,18 +7,14 @@ export class Participant {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column({ type: 'bigint', nullable: false })
-  roomId: number;
-
-  @Column({ type: 'bigint', nullable: false })
-  userId: number;
-
   @CreateDateColumn()
   createdAt: Date;
 
   @ManyToOne(() => Room, (room) => room.participants)
+  @JoinColumn({ name: 'room_id' })
   room: Room;
 
   @ManyToOne(() => User, (user) => user.participants)
+  @JoinColumn({ name: 'user_id' })
   user: User;
 }

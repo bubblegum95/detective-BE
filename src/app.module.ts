@@ -20,6 +20,7 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'config/winston.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({

@@ -58,9 +58,11 @@ export class UserService {
 
   async findOneById(id: number) {
     try {
-      return await this.userRepository.findOne({ where: { id }, relations: ['detective', 'file'] });
+      return await this.userRepository.findOne({
+        where: { id },
+        relations: ['detective', 'file', 'participants', 'participants.room'],
+      });
     } catch (error) {
-      console.log(error);
       throw error;
     }
   }
@@ -99,17 +101,14 @@ export class UserService {
 
   async update(id: number, dto: { nickname?: string; password?: string; profile?: number }) {
     try {
-      console.log('start to generate user information');
       const result = await this.userRepository.update(
         { id },
         {
           ...dto,
         },
       );
-      console.log('generated map:', result.generatedMaps, 'affected:', result.affected);
       return result.affected;
     } catch (error) {
-      console.error('error message:', error);
       throw error;
     }
   }
@@ -126,6 +125,7 @@ export class UserService {
       createdAt: newCreated,
       detective: data.detective,
       profile: data.file,
+      participants: data.participants,
     };
   }
 
@@ -135,51 +135,5 @@ export class UserService {
       select: { nickname: true },
     });
     return userName.nickname;
-  }
-
-  async getAllChatRooms(user: User) {
-    const userId = user.id;
-    try {
-      const rooms = await this.dataSource
-        .getRepository(Room)
-        .createQueryBuilder('room')
-        .leftJoinAndSelect('room.participants', 'participant')
-        .leftJoinAndSelect('participant.user', 'user')
-        .where((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('p.roomId')
-            .from(Participant, 'p')
-            .where('p.userId = :userId')
-            .getQuery();
-          return 'room.id IN ' + subQuery;
-        })
-        .setParameter('userId', userId)
-        .getMany();
-
-      console.log('rooms', rooms);
-      const roomLists = [];
-      const participantLists = [];
-      rooms.map((room) => {
-        room.participants.map((participant) => {
-          participantLists.push(participant.user.nickname);
-        });
-
-        const roomlist = {
-          id: room.id.toString(),
-          name: room.name,
-          createdAt: room.createdAt,
-          participants: participantLists,
-        };
-
-        roomLists.push(roomlist);
-      });
-
-      console.log('roomList: ', roomLists);
-
-      return roomLists;
-    } catch (error) {
-      throw error;
-    }
   }
 }

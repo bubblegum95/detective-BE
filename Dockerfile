@@ -28,7 +28,7 @@ RUN npm run build
 RUN npm prune --production
 
 # 애플리케이션 실행을 위한 포트 노출
-EXPOSE ${SERVER_PORT}
+EXPOSE ${SERVER_PORT} ${SOCKET_PORT}
 
 # 애플리케이션 실행
 CMD ["npm", "run", "start"]

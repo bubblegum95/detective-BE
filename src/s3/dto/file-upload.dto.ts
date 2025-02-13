@@ -7,7 +7,7 @@ export class FileUploadDto {
     example: '채팅 룸 이름',
     description: '채팅 룸 이름',
   })
-  room: string;
+  roomId: number;
 
   @ApiProperty({ type: 'string', format: 'binary', description: '채팅 파일 업로드', isArray: true })
   files: any[];

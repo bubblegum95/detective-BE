@@ -5,7 +5,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { RedisIoAdapter } from './socket/redis-io-adapter';
 
 async function bootstrap() {
@@ -43,12 +42,10 @@ async function bootstrap() {
 
     app.enableCors({
       origin: [`http://${CLIENT_HOST}:${CLIENT_PORT}`, `http://127.0.0.1:${CLIENT_PORT}`],
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
       credentials: true,
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
       allowedHeaders: ['Content-Type', 'authorization'],
     });
-
-    console.log(`cors 설정: ${CLIENT_HOST}, ${CLIENT_PORT}`);
 
     app.use(cookieParser());
     app.useGlobalPipes(
@@ -59,31 +56,17 @@ async function bootstrap() {
       }),
     );
 
-    // websocket adapter 설정
+    // websocket / adapter 설정
     const REDIS_HOST = configService.get<string>('REDIS_HOST');
     const REDIS_PORT = configService.get<number>('REDIS_PORT');
 
-    const redisIoAdapter = new RedisIoAdapter(app);
-    await redisIoAdapter.connectToRedis(REDIS_HOST, REDIS_PORT);
+    const adapter = new RedisIoAdapter(app);
+    await adapter.connectToRedis(REDIS_HOST, REDIS_PORT);
+    app.useWebSocketAdapter(adapter);
 
-    app.useWebSocketAdapter(redisIoAdapter);
-
-    //Http 서버 시작
+    //Http 서버 포트
     const SERVER_PORT = configService.get<number>('SERVER_PORT');
     await app.listen(SERVER_PORT);
-
-    // 마이크로서비스 설정
-    app.connectMicroservice<MicroserviceOptions>({
-      transport: Transport.REDIS,
-      options: {
-        host: REDIS_HOST,
-        port: REDIS_PORT,
-        wildcards: true,
-      },
-    });
-
-    // 마이크로서비스 시작
-    await app.startAllMicroservices();
   } catch (error) {
     console.error('Unhandled error during application initialization:', error);
   }

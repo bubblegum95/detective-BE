@@ -16,6 +16,9 @@ export class Message extends Document {
   @Prop({ required: true })
   room: string;
 
+  @Prop({ required: true })
+  read: number[];
+
   @Prop({ default: Date.now() })
   timestamp: string;
 }

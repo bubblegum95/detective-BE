@@ -32,9 +32,8 @@ export class NotificationGateway {
   @SubscribeMessage('findMessageReceivers')
   async findMessageReceivers(roomId: number, sender: number) {
     this.logger.log('find messege receivers');
-    console.log('<--------------notifications here--------------->');
 
-    const receivers = await this.notificationService.findMessageReceiver(roomId, sender);
+    const receivers: User[] = await this.notificationService.findMessageReceiver(roomId);
     for (const receiver of receivers) {
       const data = {
         type: NotificationType.Message,

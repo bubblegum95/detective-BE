@@ -73,7 +73,7 @@ export class UserController {
           break;
 
         case 'password':
-          if (!dto.password || !dto.newPassword) {
+          if (!dto.password || !dto.newPassword || !dto.passwordConfirm) {
             throw new BadRequestException('기존의 비밀번호와 변경하실 비밀번호를 입력해주세요.');
           }
           const userInfo = await this.userService.findOneById(user.id);
@@ -81,6 +81,11 @@ export class UserController {
           if (!compared) {
             throw new BadRequestException(
               '입력하신 비밀번호와 기존의 비밀번호가 일치하지 않습니다.',
+            );
+          }
+          if (dto.newPassword !== dto.passwordConfirm) {
+            throw new BadRequestException(
+              '변경하실 비밀번호와 재확인 비밀번호가 일치하지 않습니다.',
             );
           }
           const hashedPassword = await hash(dto.newPassword, 10);
@@ -112,26 +117,6 @@ export class UserController {
       return res.status(HttpStatus.OK).json({
         success: false,
         message: error.message,
-      });
-    }
-  }
-
-  @Get('chatrooms')
-  @ApiOperation({ summary: '사용자 채팅 목록', description: '사용자 채팅목록 불러오기' })
-  @ApiConsumes('application/x-www-form-urlencoded')
-  async getRooms(@UserInfo() user: User, @Res() res: Response) {
-    try {
-      const rooms = await this.userService.getAllChatRooms(user);
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: '채팅 목록을 불러옵니다.',
-        data: rooms,
-      });
-    } catch (error) {
-      return res.status(HttpStatus.OK).json({
-        success: false,
-        message: error.message,
-        error,
       });
     }
   }

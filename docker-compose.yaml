@@ -13,7 +13,9 @@ services:
       dockerfile: Dockerfile
     container_name: app-server
     environment:
+      SERVER_HOST: ${SERVER_HOST}
       SERVER_PORT: ${SERVER_PORT}
+      SOCKET_PORT: ${SOCKET_PORT}
       CLIENT_HOST: ${CLIENT_HOST}
       CLIENT_PORT: ${CLIENT_PORT}
       POSTGRES_HOST: 'postgres_db'
@@ -36,6 +38,7 @@ services:
       ADDRESS_SECRET: ${ADDRESS_SECRET}
     ports:
       - '${SERVER_PORT}:${SERVER_PORT}'
+      - '${SOCKET_PORT}:${SOCKET_PORT}'
     depends_on:
       - postgres_db
       - redis

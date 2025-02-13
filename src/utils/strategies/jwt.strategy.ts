@@ -4,7 +4,6 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { UserService } from '../../user/user.service';
 import { Request } from 'express';
-import * as cookie from 'cookie';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
