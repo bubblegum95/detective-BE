@@ -1,53 +1,49 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator';
 
-export class CreateReviewDTO {
+export class CreateReviewDto {
   @IsString()
-  // @IsEmpty({ message: '댓글을 입력해주세요.' })
+  @IsNotEmpty()
   @ApiProperty({
     example: '이 탐정 믿을만하다.',
     description: '리뷰 내용',
   })
   comment: string;
 
-  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(1)
   @Max(5)
   @ApiProperty({
     example: 1,
-    description: '평점',
+    description: '신뢰도',
   })
   reliability: number;
 
-  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(1)
   @Max(5)
   @ApiProperty({
     example: 1,
-    description: '평점',
+    description: '속도',
   })
   speed: number;
 
-  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(1)
   @Max(5)
   @ApiProperty({
     example: 1,
-    description: '평점',
+    description: '정확도',
   })
   accuracy: number;
 
-  @Transform(({ value }) => parseFloat(value))
   @IsNumber()
   @Min(1)
   @Max(5)
   @ApiProperty({
     example: 1,
-    description: '평점',
+    description: '완성도',
   })
   completion: number;
 }

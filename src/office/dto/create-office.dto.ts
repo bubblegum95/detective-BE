@@ -1,34 +1,46 @@
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, ValidateNested } from 'class-validator';
-import { LocationDto } from './create-location.dto';
+import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateDetectiveOfficeDto {
+export class CreateOfficeDto {
+  @IsString()
   @IsNotEmpty()
-  @IsNumber()
-  userId: number;
+  @ApiProperty({
+    example: '서울특별시 중구난방1길 30',
+    description: '사업장 주소',
+  })
+  address: string;
 
   @IsString()
-  @ApiProperty({ example: 'ㅎㅇ', description: '설명' })
-  description?: string;
-
   @IsNotEmpty()
-  @IsString()
-  @ApiProperty({ example: '오다은', description: '이름' })
-  name?: string;
+  @ApiProperty({
+    example: '하온빌딩 2층 201호',
+    description: '사업장 상세 주소',
+  })
+  addressDetail: string;
 
-  @IsNotEmpty()
   @IsString()
-  @ApiProperty({ example: '설립일', description: '3005년 4월 11일' })
+  @MaxLength(10)
+  @MinLength(10)
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '0000000000',
+    description: '사업자등록번호',
+  })
+  businessNum: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @ApiProperty({
+    example: 'YYYYMMDD',
+    description: '설립일자',
+  })
   founded: string;
 
-  @IsOptional()
   @IsString()
-  @ApiProperty({ example: '1020203030', description: '사업자 등록 번호' })
-  businessRegistrationNum?: string;
-
-  @ValidateNested()
-  @Type(() => LocationDto)
-  @ApiProperty({ type: LocationDto, description: '위치 정보' })
-  location: LocationDto;
+  @IsNotEmpty()
+  @ApiProperty({
+    example: '퐁식이네',
+    description: '기업이름',
+  })
+  name: string;
 }

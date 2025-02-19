@@ -7,8 +7,8 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Detective } from './detective.entity';
 import { User } from './user.entity';
+import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'wish_list' })
 export class WishList {

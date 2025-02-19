@@ -3,7 +3,6 @@ import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '../user/entities/user.entity';
-import { Detective } from '../user/entities/detective.entity';
 import { S3Module } from '../s3/s3.module';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -11,8 +10,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from '../utils/strategies/jwt.strategy';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
-import { DetectiveOffice } from '../office/entities/detective-office.entity';
 import { File } from '../s3/entities/s3.entity';
+import { Detective } from '../detective/entities/detective.entity';
+import { Office } from '../office/entities/office.entity';
+import { OfficeModule } from '../office/office.module';
 
 @Module({
   controllers: [AuthController],
@@ -21,7 +22,8 @@ import { File } from '../s3/entities/s3.entity';
     UserModule,
     S3Module,
     PassportModule,
-    TypeOrmModule.forFeature([User, Detective, File, DetectiveOffice]),
+    OfficeModule,
+    TypeOrmModule.forFeature([User, Detective, File, Office]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -4,13 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
   OneToOne,
   JoinColumn,
 } from 'typeorm';
-import { Detective } from '../../user/entities/detective.entity';
-import { DetectivePost } from '../../post/entities/detective-post.entity';
 import { User } from '../../user/entities/user.entity';
+import { Office } from '../../office/entities/office.entity';
+import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'file' })
 export class File {
@@ -26,11 +25,13 @@ export class File {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @OneToMany(() => DetectivePost, (detectivePost) => detectivePost.profileFile)
-  detectivePost: DetectivePost[];
+  @OneToOne(() => Detective, (detective) => detective.profile)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 
-  @OneToMany(() => Detective, (detective) => detective.businessRegistrationFile)
-  detective: Detective[];
+  @OneToOne(() => Office, (office) => office.businessFile)
+  @JoinColumn({ name: 'office_id' })
+  office: Office;
 
   @OneToOne(() => User, (user) => user.file)
   @JoinColumn({ name: 'user_id' })

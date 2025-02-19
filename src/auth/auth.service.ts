@@ -4,21 +4,21 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
-import { hash } from 'bcrypt';
+import { DataSource, QueryRunner } from 'typeorm';
 import { User } from '../user/entities/user.entity';
-import { CreateConsumerAuthDto } from './dto/consumer-signup.dto';
-import { CreateDetectiveAuthDto } from './dto/detective-signup.dto';
-import { Detective } from '../user/entities/detective.entity';
-import { Position } from './type/position-enum.type';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcrypt';
 import { SignInDto } from './dto/sign-in.dto';
 import { S3Service } from '../s3/s3.service';
-import { DetectiveOffice } from '../office/entities/detective-office.entity';
-import { Location } from '../office/entities/location.entity';
 import { UserService } from '../user/user.service';
-import { CreateDetectiveEmployeeAuthDto } from './dto/detective-employee-signup.dto';
+import { Office } from '../office/entities/office.entity';
+import { Detective } from '../detective/entities/detective.entity';
+import { File } from '../s3/entities/s3.entity';
+import { CreateEmployeeDto } from './dto/create-employee.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { CreateOfficeDto } from './dto/create-office.dto';
+import { CreateEmployerDto } from './dto/create-employer.dto';
+import { OfficeService } from '../office/office.service';
 
 @Injectable()
 export class AuthService {
@@ -27,26 +27,25 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly s3Service: S3Service,
     private readonly userService: UserService,
+    private readonly officeService: OfficeService,
   ) {}
 
-  async existedEmail(email: string) {
-    const foundEmail: User | null = await this.userService.findUserbyEmail(email);
-    return foundEmail;
+  async findUserByEmail(email: string) {
+    return await this.userService.findOneByEmail(email);
   }
 
-  async existedUserId(userId: number) {
-    try {
-      const foundUser = await this.userService.findUserbyId(userId);
-
-      return foundUser;
-    } catch (error) {
-      throw error;
-    }
+  async findUserById(userId: number) {
+    return await this.userService.findOneById(userId);
   }
 
-  async validateUser(dto: SignInDto): Promise<{ id: number; email: string; password: string }> {
+  async hashPassword(password: string) {
+    const salt = 10;
+    return await bcrypt.hash(password, salt);
+  }
+
+  async validateUser(dto: SignInDto): Promise<User> {
     try {
-      const user = await this.userService.findUser(dto.email);
+      const user = await this.findUserByEmail(dto.email);
       if (!user) {
         throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
       }
@@ -62,275 +61,92 @@ export class AuthService {
     }
   }
 
-  async createUserInfo(queryRunner, name, email, nickname, phoneNumber, password) {
-    const hashedPassword = await hash(password, 10);
-    const user = await queryRunner.manager.getRepository(User).save({
-      email: email,
-      name: name,
+  async createUser(queryRunner: QueryRunner, dto: CreateUserDto) {
+    const hashedPassword = await this.hashPassword(dto.password);
+    return await queryRunner.manager.getRepository(User).save({
+      ...dto,
       password: hashedPassword,
-      nickname: nickname,
-      phoneNumber: phoneNumber,
     });
-
-    return user;
-  }
-
-  async createDetectiveInfo(dto) {
-    if (dto.position === Position.Employee) {
-      const detective = await dto.queryRunner.manager.getRepository(Detective).save({
-        userId: dto.userId,
-        gender: dto.gender,
-        position: dto.position,
-      });
-
-      return detective;
-    } else if (dto.position === Position.Employer) {
-      const detective = await dto.queryRunner.manager.getRepository(Detective).save({
-        userId: dto.userId,
-        officeId: dto.officeId,
-        gender: dto.gender,
-        position: dto.position,
-        business_registration_file_id: dto.fileId,
-      });
-
-      return detective;
-    }
-  }
-
-  async createOfficeInfo(dto) {
-    const office = await dto.queryRunner.manager.getRepository(DetectiveOffice).save({
-      ownerId: dto.ownerId,
-      name: dto.name,
-      businessRegistrationNum: dto.businessRegistrationNum,
-      founded: dto.founded,
-      locationId: dto.locationId,
-    });
-
-    return office;
-  }
-
-  async createBusinessAddress(dto) {
-    const location = await dto.queryRunner.manager.getRepository(Location).save({
-      address: dto.address,
-    });
-    return location;
-  }
-
-  async createConsumer(createConsumerAuthDto: CreateConsumerAuthDto) {
-    const { email, name, password, nickname, phoneNumber } = createConsumerAuthDto;
-
-    if (createConsumerAuthDto.password !== createConsumerAuthDto.passwordConfirm) {
-      throw new ConflictException('비밀번호와 재입력된 비밀번호가 서로 일치하지 않습니다.');
-    }
-
-    const userExistence = await this.existedEmail(createConsumerAuthDto.email);
-
-    if (userExistence) {
-      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const user = await this.createUserInfo(
-        queryRunner,
-        name,
-        email,
-        nickname,
-        phoneNumber,
-        password,
-      );
-
-      if (!user) {
-        throw new BadRequestException(
-          '사용자 정보 생성에 실패했습니다. 회원가입을 다시 진행해주세요.',
-        );
-      }
-
-      await queryRunner.commitTransaction();
-      return user;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
-  }
-
-  async createDetectiveWithNoFile(createDetectiveEmployeeAuthDto: CreateDetectiveEmployeeAuthDto) {
-    const { name, email, nickname, phoneNumber, password, passwordConfirm, gender } =
-      createDetectiveEmployeeAuthDto;
-
-    if (password !== passwordConfirm) {
-      throw new ConflictException('비밀번호와 재입력된 비밀번호가 서로 일치하지 않습니다.');
-    }
-
-    const userExistence = await this.existedEmail(email);
-
-    if (userExistence) {
-      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
-    }
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      const user = await this.createUserInfo(
-        queryRunner,
-        name,
-        email,
-        nickname,
-        phoneNumber,
-        password,
-      );
-
-      if (!user) {
-        throw new BadRequestException(
-          '사용자 정보 생성에 실패했습니다. 회원가입을 다시 진행해주세요.',
-        );
-      }
-
-      const detectiveDto = {
-        queryRunner,
-        userId: user.id,
-        gender: gender,
-        position: Position.Employee,
-      };
-
-      const detectiveInfo = await this.createDetectiveInfo(detectiveDto);
-
-      if (!detectiveInfo) {
-        throw new BadRequestException(
-          '탐정 정보 생성에 실패했습니다. 회원가입을 다시 진행해주세요.',
-        );
-      }
-
-      await queryRunner.commitTransaction();
-
-      return user;
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      throw error;
-    } finally {
-      await queryRunner.release();
-    }
   }
 
   async createDetective(
-    createDetectiveAuthDto: CreateDetectiveAuthDto,
-    file: Express.Multer.File | null,
-  ) {
-    const {
-      name,
-      email,
-      nickname,
-      phoneNumber,
-      password,
-      passwordConfirm,
-      gender,
-      address,
-      businessNumber,
-      founded,
-      company,
-    } = createDetectiveAuthDto;
+    queryRunner: QueryRunner,
+    dto: { user: User; office?: Office },
+  ): Promise<Detective> {
+    return await queryRunner.manager.getRepository(Detective).save({
+      ...dto,
+    });
+  }
 
-    if (password !== passwordConfirm) {
-      throw new ConflictException('비밀번호와 재입력된 비밀번호가 서로 일치하지 않습니다.');
+  async createOffice(queryRunner: QueryRunner, dto: CreateOfficeDto) {
+    return await queryRunner.manager.getRepository(Office).save({
+      ...dto,
+    });
+  }
+
+  async createFile(queryRunner: QueryRunner, dto: { office: Office; path: string }): Promise<File> {
+    return queryRunner.manager.getRepository(File).save({ ...dto });
+  }
+
+  async createConsumer(dto: {
+    name: string;
+    nickname: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+  }) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      return await this.createUser(queryRunner, dto);
+    } catch (error) {
+      throw error;
     }
+  }
 
-    const userExistence = await this.existedEmail(email);
-
-    if (userExistence) {
-      throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
-    }
-
+  async createEmployee(dto: CreateEmployeeDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // 사용자 정보 생성
-      const user = await this.createUserInfo(
-        queryRunner,
-        name,
-        email,
-        nickname,
-        phoneNumber,
-        password,
-      );
-
-      if (!user) {
-        throw new BadRequestException(
-          '사용자 정보 생성에 실패했습니다. 회원가입을 다시 진행해주세요.',
-        );
+      const user = await this.createUser(queryRunner, dto.user);
+      const detective = await this.createDetective(queryRunner, { user });
+      if (!detective) {
+        throw new ConflictException('탐정 계정을 생성할 수 없습니다.');
       }
-
-      // 사업자 등록 정보 검증
-      const validateBusiness = await this.validationCheckBno(businessNumber, founded, name);
-
-      if (!validateBusiness) {
-        throw new BadRequestException(
-          '사업자 정보를 확인할 수 없습니다. 입력하신 정보를 확인해주세요.',
-        );
-      }
-
-      // location 등록
-      const locationInfo = {
-        queryRunner,
-        address,
-      };
-
-      const location = await this.createBusinessAddress(locationInfo);
-
-      if (!location) {
-        throw new BadRequestException('사업장 등록을 실패했습니다.');
-      }
-
-      // office 등록
-      const officeInfo = {
-        queryRunner,
-        ownerId: user.id,
-        name: company,
-        businessRegistrationNum: businessNumber,
-        founded: founded,
-        locationId: location.id,
-      };
-
-      const office = await this.createOfficeInfo(officeInfo);
-      if (!office) {
-        throw new BadRequestException('office create error: 회원가입 정보를 다시 입력해주세요.');
-      }
-
-      const path = await this.s3Service.uploadFileToS3('registration', file);
-      const savedFile = await this.s3Service.savePath(path);
-      if (!savedFile) {
-        throw new BadRequestException('등록된 사업자등록증 이미지 파일이 존재하지 않습니다.');
-      }
-
-      // detective 등록
-      const detectiveDto = {
-        queryRunner,
-        userId: user.id,
-        officeId: office.id,
-        gender: gender,
-        position: Position.Employer,
-        business_registration_file_id: savedFile,
-      };
-
-      const detectiveInfo = await this.createDetectiveInfo(detectiveDto);
-
-      if (!detectiveInfo) {
-        throw new BadRequestException(
-          '탐정 정보 생성에 실패했습니다. 회원가입을 다시 진행해주세요.',
-        );
-      }
-
       await queryRunner.commitTransaction();
+      await this.officeService.requestRegistration(dto.officeId, user);
 
       return user;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async createEmployer(dto: CreateEmployerDto, path: string) {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // 사용자
+      const owner = await this.createUser(queryRunner, dto.user);
+      // 오피스
+      const office = await this.createOffice(queryRunner, { ...dto.office, owner });
+      // 파일
+      const file = await this.createFile(queryRunner, { path, office });
+      // 탐정
+      const detective = await this.createDetective(queryRunner, { user: owner, office });
+      if (!detective) {
+        throw new ConflictException('탐정 계정을 생성할 수 없습니다.');
+      }
+      await queryRunner.commitTransaction();
+      return owner;
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -407,28 +223,4 @@ export class AuthService {
       throw error;
     }
   }
-
-  // 테스트
-  // async saveNotification(data: any, room: string) {
-  //   if (data.type === NotificationType.Message) {
-  //     const roomMembers = await this.dataSource
-  //       .getRepository(Room)
-  //       .createQueryBuilder('room')
-  //       .select(['room.name', 'user.id'])
-  //       .leftJoin('room.user', 'user')
-  //       .where('room.name = :roomName', { roomName: 'd9b383f3-53ca-45db-a806-c3aabfd78fb3' }) // 변수 사용
-  //       .getOne(); // findOne()과 유사한 메서드
-
-  //     const members = roomMembers.users;
-  //     const memberList: number[] = [];
-
-  //     for (const member of members) {
-  //       memberList.push(Number(member.id));
-  //     }
-  //     console.log(memberList);
-
-  //     return memberList;
-  //   } else if (data.type === NotificationType.Onboarding) {
-  //   }
-  // }
 }

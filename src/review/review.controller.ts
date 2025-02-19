@@ -1,29 +1,61 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ReviewService } from './review.service';
-import { CreateReviewDTO } from './dto/create-review.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
 import { JwtAuthGuard } from 'src/utils/guards/jwt-auth.guard';
 import { UserInfo } from 'src/utils/decorators/decorator';
 import { User } from 'src/user/entities/user.entity';
-import { ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
+import { FindReviewsQueryDto } from './dto/find-reviews-query.dto';
+import { Response } from 'express';
 
-@ApiTags('Review')
-@Controller('posts')
+@ApiTags('Reviews')
+@Controller('reviews')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 
+  @Post(':postId')
   @UseGuards(JwtAuthGuard)
-  @Post('/:postId/review')
   @ApiOperation({ summary: '리뷰 작성', description: '리뷰 작성 입니다' })
   @ApiConsumes('application/x-www-form-urlencoded')
-  @ApiBody({ type: CreateReviewDTO })
+  @ApiBody({ type: CreateReviewDto })
   @Transform(({ value }) => parseInt(value))
-  @ApiParam({ type: 'number', name: '파라미터', example: 1 })
   writeReview(
     @Param('postId') postId: number,
-    @Body() createReviewDTO: CreateReviewDTO,
+    @Body() dto: CreateReviewDto,
     @UserInfo() user: User,
   ) {
-    return this.reviewService.writeReview(createReviewDTO, user.id, postId);
+    return this.reviewService.createReview(user, postId, dto);
+  }
+
+  @Get(':postId')
+  async findAll(@Query() query: FindReviewsQueryDto, @Res() res: Response) {
+    try {
+      const take = query.limit;
+      const skip = (query.page - 1) * take;
+      const reviews = await this.reviewService.findAll(query.postId, skip, take);
+
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: '리뷰를 조회합니다.',
+        data: reviews,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.CONFLICT).json({
+        success: false,
+        message: '리뷰를 조회할 수 없습니다.',
+        data: error.message,
+      });
+    }
   }
 }

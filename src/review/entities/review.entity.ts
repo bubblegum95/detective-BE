@@ -6,27 +6,17 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-  OneToMany,
 } from 'typeorm';
-import { DetectivePost } from '../../post/entities/detective-post.entity';
 import { User } from '../../user/entities/user.entity';
+import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'review' })
 export class Review {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'int', name: 'consumer_id', unsigned: true, nullable: false })
-  consumerId: number;
-
-  @Column({ type: 'int', name: 'detective_post_id', unsigned: true, nullable: false })
-  detectivePostId: number;
-
   @Column({ type: 'text', nullable: false })
   comment: string;
-
-  @Column({ type: 'text', nullable: true })
-  reply: string;
 
   @Column({ type: 'int', nullable: false, default: 5 })
   reliability: number;
@@ -40,15 +30,6 @@ export class Review {
   @Column({ type: 'int', nullable: false, default: 5 })
   completion: number;
 
-  @Column({
-    type: 'decimal',
-    precision: 8,
-    scale: 2,
-    nullable: false,
-    comment: '쿠ㅓ리문 알아서 작성하셈~',
-  })
-  totalScore: number;
-
   @CreateDateColumn()
   createdAt: Date;
 
@@ -59,7 +40,7 @@ export class Review {
   @JoinColumn({ name: 'consumer_id' })
   consumer: User;
 
-  @ManyToOne(() => DetectivePost, (detectivePost) => detectivePost.review)
-  @JoinColumn({ name: 'detective_post_id' })
-  detectivePost: DetectivePost;
+  @ManyToOne(() => Detective, (detective) => detective.reviews)
+  @JoinColumn({ name: 'detective_id' })
+  detective: Detective;
 }

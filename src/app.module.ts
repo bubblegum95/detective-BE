@@ -12,7 +12,6 @@ import { ConsultationModule } from './consultation/consultation.module';
 import { ReviewModule } from './review/review.module';
 import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
-import { DetectiveofficeModule } from './office/detectiveoffice.module';
 import { RedisModule } from './redis/redis.module';
 import { NewsModule } from './news/news.module';
 import { NotificationModule } from './notification/notification.module';
@@ -20,7 +19,13 @@ import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'config/winston.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { CareerController } from './career/career.controller';
+import { LicenseModule } from './license/license.module';
+import { EquipmentModule } from './equipment/equipment.module';
+import { RegionModule } from './region/region.module';
+import { CategoryModule } from './category/category.module';
+import { OfficeModule } from './office/office.module';
+import { CareerModule } from './career/career.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -62,7 +67,7 @@ const MongooseModuleAsyncOptions = {
     AuthModule,
     UserModule,
     S3Module,
-    DetectiveofficeModule,
+    OfficeModule,
     PostModule,
     UserModule,
     ConsultationModule,
@@ -71,9 +76,13 @@ const MongooseModuleAsyncOptions = {
     RedisModule,
     NewsModule,
     NotificationModule,
+    CareerModule,
+    LicenseModule,
+    EquipmentModule,
+    RegionModule,
+    CategoryModule,
   ],
   providers: [AppService],
   controllers: [AppController],
-  exports: [],
 })
 export class AppModule {}

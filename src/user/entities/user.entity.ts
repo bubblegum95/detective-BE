@@ -7,14 +7,14 @@ import {
   Index,
   OneToMany,
   OneToOne,
-  JoinColumn,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
-import { Detective } from './detective.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
 import { Participant } from './participant.entity';
 import { File } from '../../s3/entities/s3.entity';
+import { Office } from '../../office/entities/office.entity';
+import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -60,4 +60,7 @@ export class User {
 
   @OneToMany(() => Consultation, (consultation) => consultation.consumer)
   consultation: Consultation[];
+
+  @OneToOne(() => Office, (office) => office.owner)
+  office: Office;
 }

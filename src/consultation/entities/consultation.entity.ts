@@ -5,26 +5,19 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  OneToOne,
 } from 'typeorm';
-import { Detective } from '../../user/entities/detective.entity';
 import { User } from '../../user/entities/user.entity';
+import { Detective } from '../../detective/entities/detective.entity';
+import { Category } from '../../category/entities/category.entity';
 
 @Entity({ name: 'consultation' })
 export class Consultation {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'bigint', name: 'consumer_id', nullable: false })
-  consumerId: number;
-
-  @Column({ type: 'bigint', name: 'detective_id', nullable: false })
-  detectiveId: number;
-
   @Column({ type: 'varchar', name: 'title', nullable: false })
   title: string;
-
-  @Column({ type: 'bigint', name: 'category_id', nullable: false })
-  categoryId: number;
 
   @Column({ type: 'text', name: 'content', nullable: false })
   content: string;
@@ -44,7 +37,11 @@ export class Consultation {
   @JoinColumn({ name: 'consumer_id' })
   consumer: User;
 
-  @ManyToOne(() => Detective, (detective) => detective.consultation)
+  @ManyToOne(() => Detective, (detective) => detective.consultations)
   @JoinColumn({ name: 'detective_id' })
   detective: Detective;
+
+  @OneToOne(() => Category, (category) => category.consultation)
+  @JoinColumn({ name: 'category_id' })
+  category: Category;
 }

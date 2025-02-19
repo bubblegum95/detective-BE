@@ -25,7 +25,7 @@ export class ChatService {
   ) {}
 
   async findUserById(userId: number) {
-    return await this.userService.findUserbyId(userId);
+    return await this.userService.findOneById(userId);
   }
 
   async findParticipant(roomId: number, userId: number): Promise<Participant> {

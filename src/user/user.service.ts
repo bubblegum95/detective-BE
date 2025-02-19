@@ -1,15 +1,16 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
-import { Room } from '../chat/entities/room.entity';
-import { Participant } from './entities/participant.entity';
 import bcrypt from 'bcrypt';
 import { S3Service } from '../s3/s3.service';
 import { File } from '../s3/entities/s3.entity';
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
+  logger: Logger;
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
@@ -17,54 +18,28 @@ export class UserService {
     private readonly s3Service: S3Service,
   ) {}
 
-  logger: Logger;
-
-  async findUserbyId(userId: number) {
-    try {
-      const foundUser = await this.userRepository.findOneBy({ id: userId });
-
-      if (!foundUser) {
-        throw new UnauthorizedException('일치하는 회원 정보가 없습니다.');
-      }
-
-      return foundUser;
-    } catch (error) {
-      throw error;
-    }
+  async create(dto: { email: string; password: string; nickname: string; phoneNumber: string }) {
+    return await this.userRepository.save({ ...dto });
   }
 
-  async findUserbyEmail(email: string) {
-    console.log('find user by email: ', email);
-    const foundUser = await this.userRepository.findOne({ where: { email } });
-    return foundUser;
-  }
-
-  async findUser(email: string) {
-    try {
-      const foundUser = await this.userRepository.findOne({
-        where: { email },
-        select: { id: true, email: true, password: true },
-      });
-
-      if (!foundUser) {
-        throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
-      }
-
-      return foundUser;
-    } catch (error) {
-      throw error;
-    }
+  async findOneByEmail(email: string) {
+    return await this.userRepository.findOne({ where: { email }, relations: ['detective'] });
   }
 
   async findOneById(id: number) {
-    try {
-      return await this.userRepository.findOne({
-        where: { id },
-        relations: ['detective', 'file', 'participants', 'participants.room'],
-      });
-    } catch (error) {
-      throw error;
-    }
+    return await this.userRepository.findOne({
+      where: { id },
+      relations: [
+        'detective',
+        'detective.office',
+        'office',
+        'office.businessFile',
+        'office.employees',
+        'file',
+        'participants',
+        'participants.room',
+      ],
+    });
   }
 
   async verifyPassword(inputPw: string, comparedPw: string) {

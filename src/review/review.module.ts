@@ -2,16 +2,16 @@ import { Module } from '@nestjs/common';
 import { ReviewService } from './review.service';
 import { ReviewController } from './review.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DetectivePost } from 'src/post/entities/detective-post.entity';
 import { User } from 'src/user/entities/user.entity';
-import { Detective } from 'src/user/entities/detective.entity';
 import { Review } from './entities/review.entity';
 import { JwtStrategy } from 'src/utils/strategies/jwt.strategy';
 import { UserModule } from 'src/user/user.module';
+import { Detective } from '../detective/entities/detective.entity';
+import { DetectiveModule } from '../detective/detective.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DetectivePost, User, Detective, Review]), UserModule],
   controllers: [ReviewController],
   providers: [ReviewService, JwtStrategy],
+  imports: [TypeOrmModule.forFeature([User, Detective, Review]), UserModule, DetectiveModule],
 })
 export class ReviewModule {}
