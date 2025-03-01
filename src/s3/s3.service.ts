@@ -29,12 +29,7 @@ export class S3Service {
   }
 
   async savePath(path: string): Promise<File> {
-    try {
-      const savedFile = await this.fileRepository.save({ path });
-      return savedFile;
-    } catch (error) {
-      throw error;
-    }
+    return await this.fileRepository.save({ path });
   }
 
   async updateFile(file: File) {

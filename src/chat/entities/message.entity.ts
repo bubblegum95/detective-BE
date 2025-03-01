@@ -1,8 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes } from 'mongoose';
 import { MessageType } from '../type/message.type';
-import { Room } from './room.entity';
-import { User } from '../../user/entities/user.entity';
 
 @Schema()
 export class Message extends Document {
@@ -12,10 +10,10 @@ export class Message extends Document {
   @Prop({ required: true, type: SchemaTypes.Mixed })
   content: string | string[];
 
-  @Prop({ required: true })
+  @Prop({ required: true }) // User.id
   sender: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true }) // Room.id
   room: number;
 
   @Prop({ required: true })

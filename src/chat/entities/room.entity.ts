@@ -15,7 +15,4 @@ export class Room {
 
   @OneToMany(() => Participant, (participant) => participant.room)
   participants: Participant[];
-
-  @OneToMany(() => File, (file) => file.room)
-  files: File[];
 }

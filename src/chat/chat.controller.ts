@@ -17,7 +17,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/decorators/user-info.decorator';
-import { S3Service } from '../s3/s3.service';
 import { User } from '../user/entities/user.entity';
 import { RoomService } from './room.service';
 import { HttpExceptionFilter } from '../utils/filter/http-exception.filter';
@@ -25,6 +24,8 @@ import { Response } from 'express';
 import { Room } from './entities/room.entity';
 import { multerOptions } from '../utils/multerStorage';
 import { ParticipantService } from './participant.service';
+import { MessageService } from './message.service';
+import { MessageType } from './type/message.type';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Chats')
@@ -36,7 +37,7 @@ export class ChatController {
   constructor(
     private readonly roomService: RoomService,
     private readonly participantService: ParticipantService,
-    private readonly s3Service: S3Service,
+    private readonly messageService: MessageService,
   ) {}
 
   @Get()
@@ -63,16 +64,27 @@ export class ChatController {
     if (!roomUser) {
       throw new UnauthorizedException('해당 채팅방 참여자가 아닙니다.');
     }
-    const room = await this.roomService.findOne(id);
+    const type = MessageType.File;
     const path = file.filename;
-    const createdFile = await this.s3Service.savePath(path);
-    createdFile.room = room;
-    await this.s3Service.updateFile(createdFile);
+    const room = await this.roomService.findOne(id);
+    const users = room.participants.map(({ id, createdAt, room, user }) => user);
+    let readers: Array<User['id']> = [];
+    for (const user of users) {
+      readers.push(user.id);
+    }
+
+    const message = await this.messageService.create({
+      sender: userId,
+      type,
+      content: path,
+      room: id,
+      read: readers,
+    });
 
     return res.status(HttpStatus.CREATED).json({
       success: true,
       message: '채팅방에 파일을 전송했습니다.',
-      data: createdFile,
+      data: message,
     });
   }
 }
