@@ -7,14 +7,17 @@ import {
   Index,
   OneToMany,
   OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { WishList } from './wish-list.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
-import { Participant } from './participant.entity';
 import { File } from '../../s3/entities/s3.entity';
 import { Office } from '../../office/entities/office.entity';
 import { Detective } from '../../detective/entities/detective.entity';
+import { Role } from '../../role/entities/role.entity';
+import { Participant } from '../../chat/entities/participant.entity';
+import { Application } from '../../office/entities/application.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -42,6 +45,10 @@ export class User {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToOne(() => Role, (role) => role.user)
+  @JoinColumn({ name: 'role_id' })
+  role: Role;
 
   @OneToOne(() => Detective, (detective) => detective.user)
   detective: Detective;

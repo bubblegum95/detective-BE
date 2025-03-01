@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { User } from './user.entity';
 import { Room } from '../../chat/entities/room.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity({ name: 'participant' })
 export class Participant {

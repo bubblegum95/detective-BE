@@ -20,6 +20,7 @@ import { DetectiveEquipment } from './detectiveEquipment.entity';
 import { DetectiveRegion } from './detectiveRegion.entity';
 import { Review } from '../../review/entities/review.entity';
 import { File } from '../../s3/entities/s3.entity';
+import { Application } from '../../office/entities/application.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
@@ -72,4 +73,7 @@ export class Detective {
 
   @OneToMany(() => WishList, (wishList) => wishList.detective)
   wishList: WishList[];
+
+  @OneToMany(() => Application, (applications) => applications.requester)
+  applications: Application[];
 }

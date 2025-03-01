@@ -6,10 +6,12 @@ import {
   UpdateDateColumn,
   OneToOne,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Office } from '../../office/entities/office.entity';
 import { Detective } from '../../detective/entities/detective.entity';
+import { Room } from '../../chat/entities/room.entity';
 
 @Entity({ name: 'file' })
 export class File {
@@ -36,4 +38,7 @@ export class File {
   @OneToOne(() => User, (user) => user.file)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => Room, (room) => room.files)
+  room: Room;
 }

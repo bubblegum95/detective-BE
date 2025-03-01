@@ -27,9 +27,9 @@ export class EmailService {
 
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log('성공');
+      return true;
     } catch (error) {
-      console.error('실패:', error);
+      throw error;
     }
   }
 }

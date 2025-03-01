@@ -4,28 +4,47 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { License } from './entities/license.entity';
 import { Repository } from 'typeorm';
 import { CreateLicenseDto } from './dto/create-license.dto';
+import { User } from '../user/entities/user.entity';
+import { Detective } from '../detective/entities/detective.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class LicenseService {
-  constructor(@InjectRepository(License) private readonly licenseRepository: Repository<License>) {}
+  constructor(
+    @InjectRepository(License) private readonly licenseRepository: Repository<License>,
+    private readonly userService: UserService,
+  ) {}
 
-  async create(dto: CreateLicenseDto) {
-    return await this.licenseRepository.save(dto);
+  async findUser(userId: User['id']) {
+    return await this.userService.findOneWithRelations(userId);
   }
 
-  findAll() {
-    return `This action returns all license`;
+  async create(dto: CreateLicenseDto, detective: Detective) {
+    return await this.licenseRepository.save({ ...dto, detective });
   }
 
-  async findOne(id: number) {
+  async findAll(userId: User['id']) {
+    return await this.licenseRepository
+      .createQueryBuilder('license')
+      .leftJoin('license.detective', 'd')
+      .leftJoin('d.user', 'u')
+      .where('u.id = :userId', { userId })
+      .getMany();
+  }
+
+  async findOne(id: License['id']) {
     return await this.licenseRepository.findOne({ where: { id } });
   }
 
-  async update(id: number, dto: UpdateLicenseDto) {
+  async findOneWithDetective(id: License['id']) {
+    return await this.licenseRepository.findOne({ where: { id }, relations: ['detective'] });
+  }
+
+  async update(id: License['id'], dto: UpdateLicenseDto) {
     return await this.licenseRepository.update({ id }, { ...dto });
   }
 
-  async remove(id: number) {
+  async remove(id: License['id']) {
     return await this.licenseRepository.delete({ id });
   }
 }

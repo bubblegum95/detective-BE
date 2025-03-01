@@ -1,64 +1,78 @@
 import {
-  Body,
   Controller,
-  Inject,
-  Logger,
+  Get,
+  HttpStatus,
+  Param,
   Post,
-  UploadedFiles,
+  Res,
+  UnauthorizedException,
+  UploadedFile,
+  UseFilters,
   UseGuards,
   UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ChatService } from './chat.service';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiBody, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
-import { FileUploadDto } from '../s3/dto/file-upload.dto';
 import { UserInfo } from '../utils/decorators/user-info.decorator';
 import { S3Service } from '../s3/s3.service';
 import { User } from '../user/entities/user.entity';
-import { ClientProxy } from '@nestjs/microservices';
+import { RoomService } from './room.service';
+import { HttpExceptionFilter } from '../utils/filter/http-exception.filter';
+import { Response } from 'express';
+import { Room } from './entities/room.entity';
+import { multerOptions } from '../utils/multerStorage';
+import { ParticipantService } from './participant.service';
 
 @UseGuards(JwtAuthGuard)
-@ApiTags('Chat')
+@ApiTags('Chats')
 @ApiBearerAuth('authorization')
 @UsePipes(new ValidationPipe({ transform: true }))
-@Controller('chat')
+@UseFilters(HttpExceptionFilter)
+@Controller('chats')
 export class ChatController {
   constructor(
-    @Inject('REDIS_CLIENT') private readonly redisClient: ClientProxy,
-    private readonly chatService: ChatService,
+    private readonly roomService: RoomService,
+    private readonly participantService: ParticipantService,
     private readonly s3Service: S3Service,
   ) {}
-  private readonly logger = new Logger(ChatController.name);
 
-  @UseInterceptors(FilesInterceptor('files'))
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: '채팅 파일 전송', description: '채팅 파일 전송' })
-  @ApiBody({ type: FileUploadDto, description: '채팅 파일 전송 및 반환' })
-  @Post('chatfile')
-  async chatFileUpload(
-    @UserInfo() user: User,
-    @UploadedFiles() files: Express.Multer.File[],
-    @Body() dto: FileUploadDto,
+  @Get()
+  @ApiOperation({ description: '내 채팅방 가져오기', summary: '내 채팅방 가져오기' })
+  async findMyChatRooms(@UserInfo('id') userId: User['id'], @Res() res: Response) {
+    const rooms = await this.roomService.findMany(userId);
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: '내 채팅방을 조회합니다.',
+      data: rooms,
+    });
+  }
+
+  @Post(':id')
+  @ApiOperation({ description: '채팅방 파일 전송하기' })
+  @UseInterceptors(FileInterceptor('file', multerOptions))
+  async createFiles(
+    @Param('id') id: Room['id'],
+    @UserInfo('id') userId: User['id'],
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
   ) {
-    try {
-      const uploadedFiles = (await this.s3Service.uploadFilesToS3('chat', files)) as string[];
-      const message = await this.chatService.saveMassage(user, dto.roomId, uploadedFiles);
-      this.redisClient.emit('message_to_redis', message);
-      // return {
-      //   success: true,
-      //   message: '파일을 전송하였습니다.',
-      //   data: {
-      //     uploadedFiles,
-      //   },
-      // };
-    } catch (error) {
-      return {
-        success: false,
-        message: '파일 전송 실패: ' + error.message,
-      };
+    const roomUser = await this.participantService.findByRoomUser(id, userId);
+    if (!roomUser) {
+      throw new UnauthorizedException('해당 채팅방 참여자가 아닙니다.');
     }
+    const room = await this.roomService.findOne(id);
+    const path = file.filename;
+    const createdFile = await this.s3Service.savePath(path);
+    createdFile.room = room;
+    await this.s3Service.updateFile(createdFile);
+
+    return res.status(HttpStatus.CREATED).json({
+      success: true,
+      message: '채팅방에 파일을 전송했습니다.',
+      data: createdFile,
+    });
   }
 }

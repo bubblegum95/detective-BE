@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   Query,
   Res,
@@ -27,7 +26,7 @@ import { multerOptions } from '../utils/multerStorage';
 import { FindQueryDto } from './dto/find-query.dto';
 import { findQueryKeyType } from './type/find-query-key.type';
 
-@ApiTags('Detective')
+@ApiTags('Detectives')
 @Controller('detectives')
 export class DetectiveController {
   constructor(private readonly detectiveService: DetectiveService) {}
@@ -39,15 +38,15 @@ export class DetectiveController {
   @ApiOperation({ summary: '탐정 프로필 수정', description: '탐정 프로필 수정' })
   @ApiBody({ type: UpdateDetectiveDto })
   async updateProfile(
-    @UserInfo() user: User,
+    @UserInfo('id') userId: User['id'],
     @Body() dto: UpdateDetectiveDto,
-    @Query('id') id: number,
+    @Param('id') id: number,
     @Res() res: Response,
   ) {
     try {
       const detective = await this.detectiveService.findOne(id);
       const postOwner = detective.user.id;
-      if (postOwner !== user.id) {
+      if (postOwner !== userId) {
         throw new BadRequestException('작성자 본인이 아닙니다.');
       }
 
@@ -69,7 +68,7 @@ export class DetectiveController {
 
   @Get(':id')
   @ApiOperation({ summary: '탐정 프로필 단일 조회', description: '탐정 프로필 단일 조회' })
-  async findOne(@Query('id') id: number, @Res() res: Response) {
+  async findOne(@Param('id') id: number, @Res() res: Response) {
     try {
       const post = await this.detectiveService.findOne(id);
       if (!post) {
@@ -91,7 +90,7 @@ export class DetectiveController {
 
   @Get() // 탐정 조회
   @ApiOperation({ summary: '탐정 조회', description: '탐정 조회' })
-  async find(@Query() query: FindQueryDto, @Res() res: Response) {
+  async findMany(@Query() query: FindQueryDto, @Res() res: Response) {
     try {
       let posts;
       switch (query.key) {
@@ -111,13 +110,6 @@ export class DetectiveController {
           break;
         case findQueryKeyType.REGION:
           posts = await this.detectiveService.findManyByRegion(
-            query.value,
-            query.page,
-            query.limit,
-          );
-          break;
-        case findQueryKeyType.OFFICE:
-          posts = await this.detectiveService.findManyByOffice(
             query.value,
             query.page,
             query.limit,
@@ -149,15 +141,15 @@ export class DetectiveController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 이미지 생성', description: '탐정 프로필 이미지 생성' })
   async createProfileImage(
-    @UserInfo() user: User,
+    @UserInfo('id') userId: number,
     @Res() res: Response,
-    @Query('id') id: number,
+    @Param('id') id: number,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     try {
       const detective = await this.detectiveService.findOne(id);
       const profileOwner = detective.user.id;
-      if (profileOwner !== user.id) {
+      if (profileOwner !== userId) {
         throw new BadRequestException('작성자 본인이 아닙니다.');
       }
       if (!file) {
@@ -190,15 +182,15 @@ export class DetectiveController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 이미지 수정', description: '탐정 프로필 이미지 생성 수정' })
   async updateProfileImage(
-    @UserInfo() user: User,
+    @UserInfo('id') userId: number,
     @Res() res: Response,
-    @Query('id') id: number,
+    @Param('id') id: number,
     @UploadedFile() file?: Express.Multer.File,
   ) {
     try {
       const detective = await this.detectiveService.findOne(id);
       const postOwner = detective.user.id;
-      if (postOwner !== user.id) {
+      if (postOwner !== userId) {
         throw new BadRequestException('작성자 본인이 아닙니다.');
       }
 
@@ -222,54 +214,6 @@ export class DetectiveController {
       return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: '탐정 프로필을 수정할 수 없습니다.',
-        error: error.message,
-      });
-    }
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('authorization')
-  update(@Param('id') id: string, @Body() dto: UpdateDetectiveDto) {
-    return this.detectiveService.update(+id, dto);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('authorization')
-  remove(@Param('id') id: string) {
-    return this.detectiveService.remove(+id);
-  }
-
-  // 직원 등록 승인
-  @Post(':id/employees')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('authorization')
-  @ApiOperation({ summary: '오피스 직원 등록 승인', description: '오피스 직원 등록 승인' })
-  async approve(
-    @UserInfo() user: User,
-    @Query('id') id: number,
-    @Body() dto: { email: string },
-    @Res() res: Response,
-  ) {
-    try {
-      const foundOwner = await this.detectiveService.findUserById(user.id);
-      if (!foundOwner.office || foundOwner.office.id !== id) {
-        ('사업장이 존재하지 않거나 사업자 정보와 일치하지 않습니다.');
-      }
-      const foundUser = await this.detectiveService.findUserByEmail(dto.email);
-      const detective = foundUser.detective;
-      const office = foundOwner.office;
-      await this.detectiveService.approve(detective, office);
-
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: '직원 등록을 성공적으로 완료하였습니다.',
-      });
-    } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        success: false,
-        message: '직원 등록을 수행할 수 없습니다.',
         error: error.message,
       });
     }

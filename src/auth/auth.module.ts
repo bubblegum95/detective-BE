@@ -14,15 +14,23 @@ import { File } from '../s3/entities/s3.entity';
 import { Detective } from '../detective/entities/detective.entity';
 import { Office } from '../office/entities/office.entity';
 import { OfficeModule } from '../office/office.module';
+import { RoleModule } from '../role/role.module';
+import { ChatModule } from '../chat/chat.module';
+import { EmailModule } from '../mail/email.module';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtService, JwtStrategy, JwtAuthGuard],
   imports: [
     UserModule,
+    OfficeModule,
+    RoleModule,
     S3Module,
     PassportModule,
-    OfficeModule,
+    ChatModule,
+    EmailModule,
+    RedisModule,
     TypeOrmModule.forFeature([User, Detective, File, Office]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

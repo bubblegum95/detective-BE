@@ -91,7 +91,7 @@ export class AuthController {
   @ApiOperation({ summary: '탐정 직원 회원가입', description: '탐정 직원 회원가입' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiBody({ type: CreateEmployeeDto })
-  async employeeSignUp(@Body() dto: CreateEmployeeDto) {
+  async employeeSignUp(@Body() dto: CreateEmployeeDto, @Res() res: Response) {
     try {
       const userExistence = await this.authService.findUserByEmail(dto.user.email);
       if (userExistence) {
@@ -99,19 +99,19 @@ export class AuthController {
       }
 
       const employee = await this.authService.createEmployee(dto);
-      return {
+      return res.status(HttpStatus.CREATED).json({
         success: true,
         message:
           '회원가입이 완료되었습니다. 활동 프로필 작성을 위한 탐정 직원등록을 신청하였습니다. 승인을 기다려주세요.',
         data: { email: employee.email },
-      };
+      });
     } catch (error) {
       console.error(error.message);
-      return {
+      return res.status(HttpStatus.CONFLICT).json({
         success: false,
         message: '회원가입을 완료할 수 없습니다.',
         error: error.message,
-      };
+      });
     }
   }
 
@@ -121,7 +121,11 @@ export class AuthController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 업주 회원가입', description: '탐정 업주 회원가입' })
   @ApiBody({ type: CreateEmployerDto })
-  async employerSignUp(@Body() dto: CreateEmployerDto, @UploadedFile() file: Express.Multer.File) {
+  async employerSignUp(
+    @Body() dto: CreateEmployerDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res: Response,
+  ) {
     try {
       const userExistence = await this.authService.findUserByEmail(dto.user.email);
       if (userExistence) {
@@ -144,18 +148,18 @@ export class AuthController {
 
       const path = file.originalname;
       const owner = await this.authService.createEmployer(dto, path);
-      return {
+      return res.status(HttpStatus.CREATED).json({
         success: true,
         message: '회원가입이 완료되었습니다',
         data: { email: owner.email },
-      };
+      });
     } catch (error) {
       console.error(error.message);
-      return {
+      return res.status(HttpStatus.CONFLICT).json({
         success: false,
         message: '회원가입할 수 없습니다.',
         error: error.message,
-      };
+      });
     }
   }
 
@@ -176,11 +180,37 @@ export class AuthController {
         .json({ success: true, message: '로그인하였습니다.', token: token });
     } catch (error) {
       console.error(error.message);
-      return res.json({
+      return res.status(HttpStatus.CONFLICT).json({
         success: false,
         message: '로그인을 진행할 수 없습니다.',
         error: error.message,
       });
     }
   }
+
+  // 오피스 등록 요청
+  // @Post('office/:officeId')
+  // @UseGuards(JwtAuthGuard)
+  // @ApiBearerAuth('authorization')
+  // @ApiOperation({ summary: '오피스 등록 요청', description: '오피스 등록 요청' })
+  // async requestRegistration(
+  //   @Param('officeId') officeId: Office['id'],
+  //   @UserInfo('id') userId: User['id'],
+  //   @Res() res: Response,
+  // ) {
+  //   try {
+  //     const requester = await this.authService.findUserById(userId);
+  //     const
+  //     res.status(HttpStatus.OK).json({
+  //       success: true,
+  //       message: '해당 사무소로 탐정 직원 등록 요청을 성공적으로 완료하였습니다.',
+  //     });
+  //   } catch (error) {
+  //     res.status(HttpStatus.BAD_REQUEST).json({
+  //       success: false,
+  //       message: '해당 사무로소 탐정 직원 등록 요청을 할 수 없습니다.',
+  //       error: error.message,
+  //     });
+  //   }
+  // }
 }

@@ -7,25 +7,32 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Room } from './entities/room.entity';
 import { UserModule } from 'src/user/user.module';
-import { ChatService } from './chat.service';
+import { RoomService } from './room.service';
 import { RedisModule } from 'src/redis/redis.module';
 import { S3Module } from '../s3/s3.module';
-import { Participant } from '../user/entities/participant.entity';
 import { ChatController } from './chat.controller';
 import { File } from '../s3/entities/s3.entity';
+import { NotificationService } from './notification.service';
+import { Notification, NotificationSchema } from './entities/notification.entity';
+import { ParticipantService } from './participant.service';
+import { Participant } from './entities/participant.entity';
+import { MessageService } from './message.service';
 
 @Module({
   controllers: [ChatController],
-  providers: [ChatGateway, ChatService],
+  providers: [ChatGateway, MessageService, RoomService, NotificationService, ParticipantService],
+  exports: [RoomService, MessageService, NotificationService, ParticipantService, ChatGateway],
   imports: [
     UserModule,
     S3Module,
     RedisModule,
     JwtModule,
     UserModule,
-    MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
+    MongooseModule.forFeature([
+      { name: Message.name, schema: MessageSchema },
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
     TypeOrmModule.forFeature([User, Room, Participant, File]),
   ],
-  exports: [ChatService],
 })
 export class ChatModule {}

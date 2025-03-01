@@ -5,7 +5,6 @@ import { DataSource, Repository } from 'typeorm';
 import bcrypt from 'bcrypt';
 import { S3Service } from '../s3/s3.service';
 import { File } from '../s3/entities/s3.entity';
-import { CreateUserDto } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
@@ -23,13 +22,17 @@ export class UserService {
   }
 
   async findOneByEmail(email: string) {
-    return await this.userRepository.findOne({ where: { email }, relations: ['detective'] });
+    return await this.userRepository.findOne({
+      where: { email },
+      relations: ['detective', 'role'],
+    });
   }
 
-  async findOneById(id: number) {
+  async findOneWithRelations(id: number) {
     return await this.userRepository.findOne({
       where: { id },
       relations: [
+        'role',
         'detective',
         'detective.office',
         'office',
@@ -40,6 +43,10 @@ export class UserService {
         'participants.room',
       ],
     });
+  }
+
+  async findOneById(id: number) {
+    return await this.userRepository.findOne({ where: { id }, relations: ['role'] });
   }
 
   async verifyPassword(inputPw: string, comparedPw: string) {
@@ -56,7 +63,7 @@ export class UserService {
 
   async updateUserPhoto(userId: number, path: string) {
     try {
-      const user = await this.findOneById(userId);
+      const user = await this.findOneWithRelations(userId);
 
       if (!user.file) {
         const savedFile = await this.saveFile(path);
@@ -89,7 +96,7 @@ export class UserService {
   }
 
   async returnFoundUser(id: number) {
-    const data = await this.findOneById(id);
+    const data = await this.findOneWithRelations(id);
     console.log(data);
     const newCreated = data.createdAt.toString().split(' ', 4).reverse().join(' ');
     return {

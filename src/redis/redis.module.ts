@@ -4,9 +4,13 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { redisStore } from 'cache-manager-redis-yet';
 import { RedisClientOptions } from 'redis';
+import { RedisService } from './redis.service';
 
 @Global()
 @Module({
+  controllers: [],
+  providers: [RedisService],
+  exports: [ClientsModule, CacheModule, RedisService],
   imports: [
     ConfigModule,
     CacheModule.registerAsync<RedisClientOptions>({
@@ -34,8 +38,5 @@ import { RedisClientOptions } from 'redis';
       },
     ]),
   ],
-  controllers: [],
-  providers: [],
-  exports: [ClientsModule],
 })
 export class RedisModule {}

@@ -1,26 +1,33 @@
 import { Injectable } from '@nestjs/common';
 import { CreateEquipmentDto } from './dto/create-equipment.dto';
 import { UpdateEquipmentDto } from './dto/update-equipment.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Equipment } from './entities/equipment.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class EquipmentService {
-  create(createEquipmentDto: CreateEquipmentDto) {
-    return 'This action adds a new equipment';
+  constructor(
+    @InjectRepository(Equipment) private readonly equipmentRepository: Repository<Equipment>,
+  ) {}
+
+  async create(dto: CreateEquipmentDto) {
+    return await this.equipmentRepository.save({ ...dto });
   }
 
-  findAll() {
-    return `This action returns all equipment`;
+  async findAll() {
+    return await this.equipmentRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} equipment`;
+  async findOne(id: number) {
+    return await this.equipmentRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateEquipmentDto: UpdateEquipmentDto) {
-    return `This action updates a #${id} equipment`;
+  async update(id: number, dto: UpdateEquipmentDto) {
+    return await this.equipmentRepository.update({ id }, { ...dto });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} equipment`;
+  async remove(id: number) {
+    return await this.equipmentRepository.delete({ id });
   }
 }

@@ -1,7 +1,7 @@
 import { IsDateString, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CareerDto {
+export class CreateCareerDto {
   @IsDateString()
   @IsNotEmpty()
   @ApiProperty({ example: '2023-01-01', description: '시작 날짜' })

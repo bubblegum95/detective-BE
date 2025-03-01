@@ -19,6 +19,12 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateEmployerDto } from './dto/create-employer.dto';
 import { OfficeService } from '../office/office.service';
+import { RoleType } from '../role/types/role.type';
+import { RoleService } from '../role/role.service';
+import { ApplicationService } from '../office/application.service';
+import { ChatGateway } from '../chat/chat.gateway';
+import { EmailService } from '../mail/email.service';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -28,19 +34,42 @@ export class AuthService {
     private readonly s3Service: S3Service,
     private readonly userService: UserService,
     private readonly officeService: OfficeService,
+    private readonly applicationService: ApplicationService,
+    private readonly roleService: RoleService,
+    private readonly chatGateway: ChatGateway,
+    private readonly emailService: EmailService,
+    private readonly redisService: RedisService,
   ) {}
+
+  async findUserById(id: User['id']) {
+    return await this.userService.findOneById(id);
+  }
 
   async findUserByEmail(email: string) {
     return await this.userService.findOneByEmail(email);
   }
 
-  async findUserById(userId: number) {
-    return await this.userService.findOneById(userId);
+  async findRole(name: RoleType) {
+    return await this.roleService.find(name);
   }
 
   async hashPassword(password: string) {
     const salt = 10;
     return await bcrypt.hash(password, salt);
+  }
+
+  async findOfficeOwnerById(officeId: Office['id']) {
+    return await this.officeService.findOneById(officeId);
+  }
+
+  async createEmail(email: User['email'], subject: string, content: string) {
+    this.emailService.sendEmail(email, subject, content);
+  }
+
+  async sendNotice(requester: User, owner: User) {
+    const subject = `[진실을찾는사람들] 오피스 직원 승인 요청`;
+    const content = `${requester.name}(${requester.email})님께서 귀사의 직원 계정 등록을 요청하셨습니다. 페이지로 이동하여 알림을 확인해주세요.`;
+    await this.createEmail(owner.email, subject, content);
   }
 
   async validateUser(dto: SignInDto): Promise<User> {
@@ -62,10 +91,12 @@ export class AuthService {
   }
 
   async createUser(queryRunner: QueryRunner, dto: CreateUserDto) {
+    const role = await this.findRole(RoleType.USER);
     const hashedPassword = await this.hashPassword(dto.password);
     return await queryRunner.manager.getRepository(User).save({
       ...dto,
       password: hashedPassword,
+      role,
     });
   }
 
@@ -86,6 +117,10 @@ export class AuthService {
 
   async createFile(queryRunner: QueryRunner, dto: { office: Office; path: string }): Promise<File> {
     return queryRunner.manager.getRepository(File).save({ ...dto });
+  }
+
+  createApplicaiton(requester: Detective, office: Office) {
+    return this.applicationService.create(requester, office);
   }
 
   async createConsumer(dto: {
@@ -117,7 +152,11 @@ export class AuthService {
         throw new ConflictException('탐정 계정을 생성할 수 없습니다.');
       }
       await queryRunner.commitTransaction();
-      await this.officeService.requestRegistration(dto.officeId, user);
+      // 신청서 생성 및 신청 알림 발송
+      const office = await this.findOfficeOwnerById(dto.officeId);
+      const owner = office.owner;
+      this.createApplicaiton(detective, office);
+      await this.sendNotice(user, owner);
 
       return user;
     } catch (error) {

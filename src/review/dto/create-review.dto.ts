@@ -14,6 +14,7 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
+  @Transform(({ value }) => parseInt(value))
   @ApiProperty({
     example: 1,
     description: '신뢰도',
@@ -23,6 +24,7 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
+  @Transform(({ value }) => parseInt(value))
   @ApiProperty({
     example: 1,
     description: '속도',
@@ -32,6 +34,7 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
+  @Transform(({ value }) => parseInt(value))
   @ApiProperty({
     example: 1,
     description: '정확도',
@@ -41,6 +44,7 @@ export class CreateReviewDto {
   @IsNumber()
   @Min(1)
   @Max(5)
+  @Transform(({ value }) => parseInt(value))
   @ApiProperty({
     example: 1,
     description: '완성도',

@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
-import { PostModule } from './post/post.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { S3Module } from './s3/s3.module';
@@ -14,18 +13,17 @@ import { MongooseModule, MongooseModuleOptions } from '@nestjs/mongoose';
 import { ChatModule } from './chat/chat.module';
 import { RedisModule } from './redis/redis.module';
 import { NewsModule } from './news/news.module';
-import { NotificationModule } from './notification/notification.module';
 import { WinstonModule } from 'nest-winston';
 import { winstonConfig } from 'config/winston.config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { CareerController } from './career/career.controller';
 import { LicenseModule } from './license/license.module';
 import { EquipmentModule } from './equipment/equipment.module';
 import { RegionModule } from './region/region.module';
 import { CategoryModule } from './category/category.module';
 import { OfficeModule } from './office/office.module';
 import { CareerModule } from './career/career.module';
+import { RoleModule } from './role/role.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -68,19 +66,18 @@ const MongooseModuleAsyncOptions = {
     UserModule,
     S3Module,
     OfficeModule,
-    PostModule,
     UserModule,
     ConsultationModule,
     ReviewModule,
     ChatModule,
     RedisModule,
     NewsModule,
-    NotificationModule,
     CareerModule,
     LicenseModule,
     EquipmentModule,
     RegionModule,
     CategoryModule,
+    RoleModule,
   ],
   providers: [AppService],
   controllers: [AppController],

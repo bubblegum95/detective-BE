@@ -1,36 +1,104 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Res,
+  HttpStatus,
+  UnauthorizedException,
+  UseFilters,
+} from '@nestjs/common';
 import { RegionService } from './region.service';
 import { CreateRegionDto } from './dto/create-region.dto';
 import { UpdateRegionDto } from './dto/update-region.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
+import { Response } from 'express';
+import { UserInfo } from '../utils/decorators/decorator';
+import { User } from '../user/entities/user.entity';
+import { Role } from '../role/entities/role.entity';
+import { HttpExceptionFilter } from '../utils/filter/http-exception.filter';
 
 @Controller('regions')
+@UseFilters(HttpExceptionFilter)
 @ApiTags('Regions')
 export class RegionController {
   constructor(private readonly regionService: RegionService) {}
 
   @Post()
-  create(@Body() createRegionDto: CreateRegionDto) {
-    return this.regionService.create(createRegionDto);
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('authorization')
+  @ApiBody({ type: CreateRegionDto })
+  @ApiOperation({ description: '활동지역 생성', summary: '활동지역 생성' })
+  @ApiConsumes('application/x-www-form-urlencoded')
+  create(@Body() createRegionDto: CreateRegionDto, @Res() res: Response, @UserInfo() user: User) {
+    try {
+      if (user.role.name !== 'admin') {
+        throw new UnauthorizedException('권한이 없습니다.');
+      }
+      const region = this.regionService.create(createRegionDto);
+      return res.status(HttpStatus.CREATED).json({
+        success: true,
+        message: '활동지역을 성공적으로 생성완료하였습니다.',
+        data: region,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.CONFLICT).json({
+        success: false,
+        message: '활동지역 생성을 완료할 수 없습니다.',
+        error: error.message,
+      });
+    }
   }
 
   @Get()
-  findAll() {
-    return this.regionService.findAll();
+  @ApiOperation({ description: '활동지역 조회', summary: '활동지역 조회' })
+  findAll(@Res() res: Response) {
+    try {
+      const regions = this.regionService.findAll();
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: '활동지역을 조회합니다.', data: regions });
+    } catch (error) {
+      return res.status(HttpStatus.CONFLICT).json({
+        success: false,
+        message: '활동지역을 조회할 수 없습니다.',
+        error: error.message,
+      });
+    }
   }
 
   @Get(':id')
+  @ApiOperation({ description: '활동지역 조회', summary: '활동지역 조회' })
   findOne(@Param('id') id: string) {
     return this.regionService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateRegionDto: UpdateRegionDto) {
-    return this.regionService.update(+id, updateRegionDto);
+  @ApiOperation({ description: '활동지역 수정', summary: '활동지역 수정' })
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('authorization')
+  update(@Param('id') id: string, @UserInfo('role') role: Role, @Body() dto: UpdateRegionDto) {
+    if (role.name !== 'admin') {
+      throw new UnauthorizedException('수정 권한이 없습니다.');
+    }
+    return this.regionService.update(+id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ description: '활동지역 수정', summary: '활동지역 수정' })
+  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiBearerAuth('authorization')
+  remove(@Param('id') id: string, @UserInfo('role') role: Role) {
+    if (role.name !== 'admin') {
+      throw new UnauthorizedException('삭제 권한이 없습니다.');
+    }
     return this.regionService.remove(+id);
   }
 }

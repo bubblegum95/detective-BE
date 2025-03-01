@@ -11,6 +11,7 @@ import {
 import { User } from '../../user/entities/user.entity';
 import { Detective } from '../../detective/entities/detective.entity';
 import { File } from '../../s3/entities/s3.entity';
+import { Application } from './application.entity';
 
 @Entity({ name: 'office' })
 export class Office {
@@ -47,4 +48,7 @@ export class Office {
 
   @OneToMany(() => Detective, (detective) => detective.office)
   employees: Detective[];
+
+  @OneToMany(() => Application, (applications) => applications.office)
+  applications: Application[];
 }

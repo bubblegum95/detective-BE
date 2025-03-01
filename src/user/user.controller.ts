@@ -14,8 +14,7 @@ import {
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/decorators/decorator';
-import { User } from './entities/user.entity';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -32,9 +31,9 @@ export class UserController {
   @ApiOperation({ summary: '사용자 정보 조회', description: '사용자 정보 조회' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @Get()
-  async getUserInfo(@UserInfo() user: User, @Res() res: Response) {
+  async getUserInfo(@UserInfo('id') userId: number, @Res() res: Response) {
     try {
-      const data = await this.userService.returnFoundUser(user.id);
+      const data = await this.userService.returnFoundUser(userId);
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '사용자 정보를 조회합니다.',
@@ -52,10 +51,9 @@ export class UserController {
   @UseInterceptors(FileInterceptor('file', multerOptions))
   @ApiOperation({ summary: '사용자 정보 수정', description: '사용자 정보 수정' })
   @ApiConsumes('multipart/form-data')
-  @ApiQuery({ name: 'type' })
   @Patch('update')
   async updateUserInfo(
-    @UserInfo() user: User,
+    @UserInfo('id') userId: number,
     @Query('type') type: 'nickname' | 'password' | 'file',
     @Body() dto: UpdateUserDto,
     @Res() res: Response,
@@ -69,14 +67,14 @@ export class UserController {
           if (!dto.nickname) {
             throw new BadRequestException('닉네임을 입력해주세요.');
           }
-          result = await this.userService.update(user.id, dto);
+          result = await this.userService.update(userId, dto);
           break;
 
         case 'password':
           if (!dto.password || !dto.newPassword || !dto.passwordConfirm) {
             throw new BadRequestException('기존의 비밀번호와 변경하실 비밀번호를 입력해주세요.');
           }
-          const userInfo = await this.userService.findOneById(user.id);
+          const userInfo = await this.userService.findOneById(userId);
           const compared = await this.userService.verifyPassword(dto.password, userInfo.password);
           if (!compared) {
             throw new BadRequestException(
@@ -89,7 +87,7 @@ export class UserController {
             );
           }
           const hashedPassword = await hash(dto.newPassword, 10);
-          result = await this.userService.update(user.id, { password: hashedPassword });
+          result = await this.userService.update(userId, { password: hashedPassword });
           break;
 
         case 'file':
@@ -97,7 +95,7 @@ export class UserController {
             throw new BadRequestException('이미지를 업로드해주세요.');
           }
           const path = file.filename;
-          const savedFile = await this.userService.updateUserPhoto(user.id, path);
+          const savedFile = await this.userService.updateUserPhoto(userId, path);
           result = savedFile;
           break;
 

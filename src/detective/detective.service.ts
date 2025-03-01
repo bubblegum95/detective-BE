@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import AWS from 'aws-sdk';
 import { File } from '../s3/entities/s3.entity';
 import { DetectiveEquipment } from './entities/detectiveEquipment.entity';
@@ -19,11 +18,9 @@ export class DetectiveService {
   private lambda: AWS.Lambda;
   constructor(
     @InjectRepository(Detective) private readonly detectiveRepository: Repository<Detective>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
-    private readonly officeService: OfficeService,
   ) {
     this.lambda = new AWS.Lambda();
   }
@@ -131,12 +128,6 @@ export class DetectiveService {
       .skip(skip)
       .take(limit)
       .getMany();
-  }
-
-  async findManyByOffice(name: string, page: number, limit: number) {
-    const take = limit;
-    const skip = (page - 1) * limit;
-    return await this.officeService.findByName(name, take, skip);
   }
 
   // async optimizedPosts(page: number): Promise<{ posts: Partial<Detective>[]; totalCount: number }> {

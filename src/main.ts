@@ -6,12 +6,14 @@ import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RedisIoAdapter } from './socket/redis-io-adapter';
+import { HttpExceptionFilter } from './utils/filter/http-exception.filter';
 
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
     const winstonLogger = app.get(WINSTON_MODULE_NEST_PROVIDER);
     app.useLogger(winstonLogger);
+    app.useGlobalFilters(new HttpExceptionFilter());
 
     const configService = app.get(ConfigService);
     const option = {

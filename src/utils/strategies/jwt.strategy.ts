@@ -38,7 +38,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       if (!user) {
         throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
       }
-      return user;
+      return { id: user.id, sub: user.email, role: user.role };
     } catch (error) {
       throw error;
     }

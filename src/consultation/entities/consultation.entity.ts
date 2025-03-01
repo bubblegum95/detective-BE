@@ -10,25 +10,26 @@ import {
 import { User } from '../../user/entities/user.entity';
 import { Detective } from '../../detective/entities/detective.entity';
 import { Category } from '../../category/entities/category.entity';
+import { ConsultationStatus } from '../types/status.type';
 
 @Entity({ name: 'consultation' })
 export class Consultation {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'varchar', name: 'title', nullable: false })
-  title: string;
+  @Column({ type: 'varchar', name: 'subject', nullable: false })
+  subject: string;
 
   @Column({ type: 'text', name: 'content', nullable: false })
   content: string;
 
   @Column({
     type: 'enum',
-    enum: ['pending', 'rejection', 'undergoing', 'completed'],
+    enum: ConsultationStatus,
     nullable: false,
-    default: 'pending',
+    default: ConsultationStatus.PENDING,
   })
-  status: 'pending' | 'rejection' | 'undergoing' | 'completed';
+  status: ConsultationStatus;
 
   @CreateDateColumn()
   createdAt: Date;
