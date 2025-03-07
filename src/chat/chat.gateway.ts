@@ -11,7 +11,7 @@ import {
 } from '@nestjs/websockets';
 import { Inject } from '@nestjs/common';
 import { Namespace, Server, Socket } from 'socket.io';
-import { ClientProxy, EventPattern } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RedisMessageDto } from './dto/redis-message.dto';
@@ -95,10 +95,31 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     console.log('✅ socket clients disconnected');
   }
 
+  async receiveNotification(socketId: Socket['id'], dto: RedisNotificationDto) {
+    console.log('data', dto);
+    this.server.to(socketId).emit('receiveNotification', dto); // receiveMessage
+  }
+
   @SubscribeMessage('ping')
   ping(@ConnectedSocket() client: Socket, @MessageBody() hello: string) {
     console.log('client socket:', client, 'hello', hello);
   }
+
+  @SubscribeMessage('findMyRoom')
+  async findMyRoom(@ConnectedSocket() client: Socket) {
+    const userId = client.data.user.id;
+    const rooms = await this.roomService.findMany(userId);
+    const roomInfos = rooms.map(async (room) => {
+      const lastMsg = await this.messageService.findLast(room.id);
+      return {
+        ...room,
+        content: lastMsg,
+      };
+    });
+
+    client.emit('getRooms', roomInfos);
+  }
+
   // 초대하기
   @SubscribeMessage('invite')
   @ApiOperation({ description: '채팅방 초대하기', summary: '채팅방 초대하기' })
@@ -178,16 +199,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
 
       const foundSender = await this.roomService.findUser(sender);
-      const redisMessage: RedisMessageDto = {
+      const sendMessage: RedisMessageDto = {
         id: message._id,
         sender: foundSender.nickname,
         type,
         content,
         timestamp: message.timestamp,
-        room: room.name,
         read: read.length - 1,
       };
-      this.redisClient.emit('message', redisMessage);
+      this.server.to(room.name).emit('message', sendMessage);
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -227,18 +247,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     await this.messageService.updateRead(data.id, userId);
   }
 
-  @EventPattern('message')
-  async subscribeMessage(dto: RedisMessageDto) {
-    console.log('data', dto);
-    this.server.to(dto.room).emit('receiveMessage', dto); // receiveMessage
-  }
-
-  @EventPattern('notification')
-  async subscribeNotification(socketId: Socket['id'], dto: RedisNotificationDto) {
-    console.log('data', dto);
-    this.server.to(socketId).emit('receiveNotification', dto); // receiveMessage
-  }
-
   async createNotification(dto: CreateNotificationDto) {
     return await this.notificationService.createAndReturn(dto);
   }
@@ -251,7 +259,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return this.redisService.findUserSocket(email);
   }
 
-  async notifyReceiverOfMessage(sender: User, roomId: Room['id']) {
+  async notifyReceiverOfMessage(sender: User, roomId: Room['id'], content: string) {
     const room = await this.roomService.findOne(roomId);
     const receivers = room.participants.map(({ id, room, user }) => user);
     for (const receiver of receivers) {
@@ -267,7 +275,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       await this.notify(clientId, {
         id: notification['id'],
-        content: `${sender.nickname} 님이 메시지를 보냈습니다.`,
+        content: content,
         room: room.id,
         timestamp: notification.timestamp,
       });

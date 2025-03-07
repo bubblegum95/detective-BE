@@ -10,6 +10,7 @@ import {
   HttpStatus,
   Res,
   ConflictException,
+  Req,
 } from '@nestjs/common';
 import { CreateEmployerDto } from './dto/create-employer.dto';
 import { CreateConsumerDto } from './dto/create-consumer.dto';
@@ -19,8 +20,10 @@ import { SignInDto } from './dto/sign-in.dto';
 import { AuthService } from './auth.service';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
 import { FoundEmailDto } from './dto/found-email.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { multerOptions } from '../utils/multerStorage';
+import { plainToInstance } from 'class-transformer';
+import { CreateOfficeDto } from '../office/dto/create-office.dto';
 
 @ApiTags('Auth')
 @UsePipes(new ValidationPipe({ transform: true }))
@@ -122,12 +125,19 @@ export class AuthController {
   @ApiOperation({ summary: '탐정 업주 회원가입', description: '탐정 업주 회원가입' })
   @ApiBody({ type: CreateEmployerDto })
   async employerSignUp(
-    @Body() dto: CreateEmployerDto,
+    // @Body() dto: CreateEmployerDto,
+    @Req() req: Request,
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
   ) {
     try {
-      const userExistence = await this.authService.findUserByEmail(dto.user.email);
+      const body = req.body;
+      const parsedUser = JSON.parse(body.user.trim());
+      const parsedOffice = JSON.parse(body.office.trim());
+      const user = plainToInstance(CreateConsumerDto, parsedUser);
+      const office = plainToInstance(CreateOfficeDto, parsedOffice);
+      const dto = plainToInstance(CreateEmployerDto, { user, office });
+      const userExistence = await this.authService.findUserByEmail(user.email);
       if (userExistence) {
         throw new BadRequestException('해당 이메일로 가입된 사용자가 있습니다.');
       }
@@ -135,16 +145,16 @@ export class AuthController {
         throw new BadRequestException('사업자등록증 이미지 파일을 업로드해주세요.');
       }
       // 사업자 등록 정보 검증
-      const validateBusiness = await this.authService.validationCheckBno(
-        dto.office.businessNum,
-        dto.office.founded,
-        dto.office.name,
-      );
-      if (!validateBusiness) {
-        throw new BadRequestException(
-          '사업자 정보를 확인할 수 없습니다. 입력하신 정보를 확인해주세요.',
-        );
-      }
+      // const validateBusiness = await this.authService.validationCheckBno(
+      //   dto.office.businessNum,
+      //   dto.office.founded,
+      //   dto.office.name,
+      // );
+      // if (!validateBusiness) {
+      //   throw new BadRequestException(
+      //     '사업자 정보를 확인할 수 없습니다. 입력하신 정보를 확인해주세요.',
+      //   );
+      // }
 
       const path = file.originalname;
       const owner = await this.authService.createEmployer(dto, path);

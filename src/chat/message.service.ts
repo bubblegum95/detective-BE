@@ -21,6 +21,10 @@ export class MessageService {
       .exec();
   }
 
+  async findLast(room: Room['id']) {
+    return await this.messageModel.findOne({ room }).sort({ timestamp: -1 }).exec();
+  }
+
   async create(dto: {
     sender: User['id'];
     type: MessageType;

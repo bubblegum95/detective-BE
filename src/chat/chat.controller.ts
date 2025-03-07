@@ -40,17 +40,6 @@ export class ChatController {
     private readonly messageService: MessageService,
   ) {}
 
-  @Get()
-  @ApiOperation({ description: '내 채팅방 가져오기', summary: '내 채팅방 가져오기' })
-  async findMyChatRooms(@UserInfo('id') userId: User['id'], @Res() res: Response) {
-    const rooms = await this.roomService.findMany(userId);
-    return res.status(HttpStatus.OK).json({
-      success: true,
-      message: '내 채팅방을 조회합니다.',
-      data: rooms,
-    });
-  }
-
   @Post(':id')
   @ApiOperation({ description: '채팅방 파일 전송하기' })
   @UseInterceptors(FileInterceptor('file', multerOptions))

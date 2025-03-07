@@ -195,7 +195,11 @@ export class AuthService {
   }
 
   // 사업자 등록 정보 검증
-  async validationCheckBno(b_no: string, start_dt: string, p_nm: string) {
+  async validationCheckBno(
+    b_no: Office['businessNum'],
+    start_dt: Office['founded'],
+    p_nm: Office['name'],
+  ) {
     console.log(p_nm);
     const data = {
       businesses: [
@@ -221,21 +225,23 @@ export class AuthService {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      body: JSON.stringify(data), // JSON을 string으로 변환하여 전송
+      body: JSON.stringify(data),
     };
 
     try {
-      const response = fetch(url, option)
-        .then((a) => a.json())
+      const request = await fetch(url, option)
+        .then((response) => response.json())
         .then((data) => {
+          console.log(data);
+          const status = data.status_code;
+          if (status !== 'OK') {
+            throw new BadRequestException('사업자등록진위여부 요청이 잘못 되었습니다.');
+          }
           const validation = data.data[0].valid;
-
           if (validation === '02') {
             throw new Error('등록되지 않은 사업자번호입니다.');
           }
         });
-
-      console.log('사업자등록진위여부결과: ', response);
       return true;
     } catch (error) {
       throw error;

@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { RedisIoAdapter } from './socket/redis-io-adapter';
 import { HttpExceptionFilter } from './utils/filter/http-exception.filter';
+import { TrimStringPipe } from './utils/pipes/trim-string.pipe';
 
 async function bootstrap() {
   try {
@@ -14,6 +15,16 @@ async function bootstrap() {
     const winstonLogger = app.get(WINSTON_MODULE_NEST_PROVIDER);
     app.useLogger(winstonLogger);
     app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalPipes(
+      new TrimStringPipe(),
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+      }),
+    );
 
     const configService = app.get(ConfigService);
     const option = {

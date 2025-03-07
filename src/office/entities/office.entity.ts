@@ -21,7 +21,7 @@ export class Office {
   @Column({ type: 'varchar', length: 25, nullable: false })
   name: string;
 
-  @Column({ type: 'varchar', length: 25, nullable: false })
+  @Column({ type: 'varchar', length: 25, nullable: false, unique: true })
   businessNum: string;
 
   @Column({ type: 'varchar', length: 25, nullable: false })

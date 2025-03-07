@@ -4,7 +4,6 @@ import { CreateConsumerDto } from './create-consumer.dto';
 import { Transform, Type } from 'class-transformer';
 
 export class CreateEmployeeDto {
-  @IsObject()
   @ValidateNested()
   @Type(() => CreateConsumerDto)
   @ApiProperty({ description: '유저 정보', type: CreateConsumerDto })

@@ -1,5 +1,5 @@
 # 베이스 이미지 선택
-FROM node:latest
+FROM node:20
 
 # 작업 디렉토리 설정
 WORKDIR /app
@@ -11,11 +11,12 @@ ENV NODE_ENV=production
 COPY . .
 
 # 시스템 업데이트 및 PostgreSQL 클라이언트 설치
-RUN apt-get update && apt-get install -y postgresql-client redis-tools
+# RUN apt-get update && apt-get install -y postgresql-client redis-tools
 
-RUN redis-cli -h redis
+# RUN redis-cli -h redis
 
 # 모든 종속성 설치 (개발 종속성 포함)
+ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm i
 
 # NestJS CLI 전역 설치
