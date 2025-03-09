@@ -25,6 +25,8 @@ import { ApplicationService } from '../office/application.service';
 import { ChatGateway } from '../chat/chat.gateway';
 import { EmailService } from '../mail/email.service';
 import { RedisService } from '../redis/redis.service';
+import { Role } from '../role/entities/role.entity';
+import { CreateConsumerDto } from './dto/create-consumer.dto';
 
 @Injectable()
 export class AuthService {
@@ -45,12 +47,20 @@ export class AuthService {
     return await this.userService.findOneById(id);
   }
 
-  async findUserByEmail(email: string) {
+  async findUserByEmail(email: User['email']) {
     return await this.userService.findOneByEmail(email);
+  }
+
+  async findUserByDigit(phone: User['phoneNumber']) {
+    return await this.userService.findOneByDigit(phone);
   }
 
   async findRole(name: RoleType) {
     return await this.roleService.find(name);
+  }
+
+  async createRole(name: Role['name']) {
+    return await this.roleService.create(name);
   }
 
   async hashPassword(password: string) {
@@ -62,14 +72,14 @@ export class AuthService {
     return await this.officeService.findOneById(officeId);
   }
 
-  async createEmail(email: User['email'], subject: string, content: string) {
-    this.emailService.sendEmail(email, subject, content);
+  async sendEmail(email: User['email'], subject: string, content: string) {
+    return this.emailService.sendEmail(email, subject, content);
   }
 
   async sendNotice(requester: User, owner: User) {
     const subject = `[진실을찾는사람들] 오피스 직원 승인 요청`;
     const content = `${requester.name}(${requester.email})님께서 귀사의 직원 계정 등록을 요청하셨습니다. 페이지로 이동하여 알림을 확인해주세요.`;
-    await this.createEmail(owner.email, subject, content);
+    await this.sendEmail(owner.email, subject, content);
   }
 
   async validateUser(dto: SignInDto): Promise<User> {
@@ -78,32 +88,31 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
       }
-
       const isPasswordMatched = bcrypt.compareSync(dto.password, user.password ?? '');
       if (!isPasswordMatched) {
         throw new BadRequestException('비밀번호가 일치하지 않습니다.');
       }
-
       return user;
     } catch (error) {
       throw error;
     }
   }
 
-  async createUser(queryRunner: QueryRunner, dto: CreateUserDto) {
-    const role = await this.findRole(RoleType.USER);
-    const hashedPassword = await this.hashPassword(dto.password);
-    return await queryRunner.manager.getRepository(User).save({
-      ...dto,
-      password: hashedPassword,
-      role,
-    });
+  async createUser(queryRunner: QueryRunner, dto: CreateConsumerDto) {
+    try {
+      const role = (await this.findRole(RoleType.USER)) || (await this.createRole(RoleType.USER));
+      const hashedPassword = await this.hashPassword(dto.password);
+      return await queryRunner.manager.getRepository(User).save({
+        ...dto,
+        password: hashedPassword,
+        role,
+      });
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async createDetective(
-    queryRunner: QueryRunner,
-    dto: { user: User; office?: Office },
-  ): Promise<Detective> {
+  async createDetective(queryRunner: QueryRunner, dto: { user: User; office?: Office }) {
     return await queryRunner.manager.getRepository(Detective).save({
       ...dto,
     });
@@ -123,20 +132,18 @@ export class AuthService {
     return this.applicationService.create(requester, office);
   }
 
-  async createConsumer(dto: {
-    name: string;
-    nickname: string;
-    email: string;
-    password: string;
-    phoneNumber: string;
-  }) {
+  async createConsumer(dto: CreateConsumerDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      return await this.createUser(queryRunner, dto);
+      const user = await this.createUser(queryRunner, dto);
+      await queryRunner.commitTransaction();
+      return user;
     } catch (error) {
       throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -148,17 +155,9 @@ export class AuthService {
     try {
       const user = await this.createUser(queryRunner, dto.user);
       const detective = await this.createDetective(queryRunner, { user });
-      if (!detective) {
-        throw new ConflictException('탐정 계정을 생성할 수 없습니다.');
-      }
+      console.log(user, detective);
       await queryRunner.commitTransaction();
-      // 신청서 생성 및 신청 알림 발송
-      const office = await this.findOfficeOwnerById(dto.officeId);
-      const owner = office.owner;
-      this.createApplicaiton(detective, office);
-      await this.sendNotice(user, owner);
-
-      return user;
+      return { user, detective };
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;

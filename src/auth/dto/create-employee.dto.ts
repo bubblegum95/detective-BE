@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumber, IsObject, ValidateNested } from 'class-validator';
 import { CreateConsumerDto } from './create-consumer.dto';
-import { Transform, Type } from 'class-transformer';
+import { plainToInstance, Transform, Type } from 'class-transformer';
 
 export class CreateEmployeeDto {
+  @Transform(({ value }) => plainToInstance(CreateConsumerDto, value))
   @ValidateNested()
-  @Type(() => CreateConsumerDto)
   @ApiProperty({ description: '유저 정보', type: CreateConsumerDto })
   user: CreateConsumerDto;
 

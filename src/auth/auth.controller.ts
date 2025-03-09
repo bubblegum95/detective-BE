@@ -69,9 +69,13 @@ export class AuthController {
   @ApiBody({ type: CreateConsumerDto })
   async consumerSignUp(@Body() dto: CreateConsumerDto, @Res() res: Response) {
     try {
-      const userExistence = await this.authService.findUserByEmail(dto.email);
-      if (userExistence) {
+      const exstingEmail = await this.authService.findUserByEmail(dto.email);
+      if (exstingEmail) {
         throw new ConflictException('해당 이메일로 가입된 사용자가 있습니다.');
+      }
+      const existingDigit = await this.authService.findUserByDigit(dto.phoneNumber);
+      if (existingDigit) {
+        throw new ConflictException('해당 연락처는 이미 사용중입니다.');
       }
 
       const consumer = await this.authService.createConsumer(dto);
@@ -92,21 +96,30 @@ export class AuthController {
   // detective/employee 회원가입
   @Post('signup/employee')
   @ApiOperation({ summary: '탐정 직원 회원가입', description: '탐정 직원 회원가입' })
-  @ApiConsumes('application/x-www-form-urlencoded')
+  @ApiConsumes('application/json')
   @ApiBody({ type: CreateEmployeeDto })
-  async employeeSignUp(@Body() dto: CreateEmployeeDto, @Res() res: Response) {
+  async employeeSignUp(@Req() req: Request, @Body() dto: CreateEmployeeDto, @Res() res: Response) {
     try {
-      const userExistence = await this.authService.findUserByEmail(dto.user.email);
-      if (userExistence) {
+      const existingEmail = await this.authService.findUserByEmail(dto.user.email);
+      if (existingEmail) {
         throw new BadRequestException('해당 이메일로 가입된 사용자가 있습니다.');
       }
+      const existingDigit = await this.authService.findUserByDigit(dto.user.phoneNumber);
+      if (existingDigit) {
+        throw new ConflictException('해당 연락처는 이미 사용중입니다.');
+      }
 
-      const employee = await this.authService.createEmployee(dto);
+      const { user, detective } = await this.authService.createEmployee(dto);
+      // 신청서 생성 및 신청 알림 발송
+      const office = await this.authService.findOfficeOwnerById(dto.officeId);
+      const owner = office.owner;
+      this.authService.createApplicaiton(detective, office);
+      await this.authService.sendNotice(user, owner);
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message:
           '회원가입이 완료되었습니다. 활동 프로필 작성을 위한 탐정 직원등록을 신청하였습니다. 승인을 기다려주세요.',
-        data: { email: employee.email },
+        data: { email: user.email },
       });
     } catch (error) {
       console.error(error.message);
@@ -137,9 +150,13 @@ export class AuthController {
       const user = plainToInstance(CreateConsumerDto, parsedUser);
       const office = plainToInstance(CreateOfficeDto, parsedOffice);
       const dto = plainToInstance(CreateEmployerDto, { user, office });
-      const userExistence = await this.authService.findUserByEmail(user.email);
-      if (userExistence) {
+      const existingEmail = await this.authService.findUserByEmail(user.email);
+      if (existingEmail) {
         throw new BadRequestException('해당 이메일로 가입된 사용자가 있습니다.');
+      }
+      const existingDigit = await this.authService.findUserByDigit(dto.user.phoneNumber);
+      if (existingDigit) {
+        throw new ConflictException('해당 연락처는 이미 사용중입니다.');
       }
       if (!file) {
         throw new BadRequestException('사업자등록증 이미지 파일을 업로드해주세요.');

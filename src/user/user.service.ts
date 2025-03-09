@@ -21,11 +21,17 @@ export class UserService {
     return await this.userRepository.save({ ...dto });
   }
 
-  async findOneByEmail(email: string) {
-    return await this.userRepository.findOne({
-      where: { email },
-      relations: ['detective', 'role'],
-    });
+  async findOneByEmail(email: User['email']) {
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.detective', 'detective')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('user.email = :email', { email })
+      .getOne();
+  }
+
+  async findOneByDigit(phoneNumber: User['phoneNumber']) {
+    return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 
   async findOneWithRelations(id: number) {

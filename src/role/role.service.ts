@@ -15,4 +15,8 @@ export class RoleService {
   async findById(id: number) {
     return await this.roleRepository.findOne({ where: { id } });
   }
+
+  async create(name: Role['name']) {
+    return await this.roleRepository.save({ name });
+  }
 }

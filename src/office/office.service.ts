@@ -46,7 +46,7 @@ export class OfficeService {
   async findOneById(id: Office['id']) {
     return await this.officeRepo.findOne({
       where: { id },
-      relations: ['owner', 'location', 'employees'],
+      relations: ['owner', 'employees'],
     });
   }
 
