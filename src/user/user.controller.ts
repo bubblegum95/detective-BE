@@ -20,6 +20,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { hash } from 'bcrypt';
 import { multerOptions } from '../utils/multerStorage';
+import { User } from './entities/user.entity';
 
 @ApiTags('User')
 @UseGuards(JwtAuthGuard)
@@ -31,8 +32,9 @@ export class UserController {
   @ApiOperation({ summary: '사용자 정보 조회', description: '사용자 정보 조회' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @Get()
-  async getUserInfo(@UserInfo('id') userId: number, @Res() res: Response) {
+  async getUserInfo(@UserInfo('id') userId: User['id'], @Res() res: Response) {
     try {
+      console.log('userId:', userId);
       const data = await this.userService.returnFoundUser(userId);
       return res.status(HttpStatus.OK).json({
         success: true,
