@@ -63,8 +63,8 @@ export class UserService {
     return await this.s3Service.savePath(path);
   }
 
-  async updateFile(file: File) {
-    return await this.s3Service.updateFile(file);
+  async updateFile(id: File['id'], dto: { path: File['path'] }) {
+    return await this.s3Service.updateFile(id, dto);
   }
 
   async updateUserPhoto(userId: number, path: string) {
@@ -79,8 +79,8 @@ export class UserService {
       } else {
         const file = user.file;
         file.path = path;
-        await this.updateFile(file);
-        return 1;
+        const updated = await this.updateFile(file.id, { path });
+        return updated.affected;
       }
     } catch (error) {
       throw error;

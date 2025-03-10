@@ -124,7 +124,7 @@ export class AuthService {
     });
   }
 
-  async createFile(queryRunner: QueryRunner, dto: { office: Office; path: string }): Promise<File> {
+  async createFile(queryRunner: QueryRunner, dto: { path: string }): Promise<File> {
     return queryRunner.manager.getRepository(File).save({ ...dto });
   }
 
@@ -174,10 +174,10 @@ export class AuthService {
     try {
       // 사용자
       const owner = await this.createUser(queryRunner, dto.user);
-      // 오피스
-      const office = await this.createOffice(queryRunner, { ...dto.office, owner });
       // 파일
-      const file = await this.createFile(queryRunner, { path, office });
+      const businessFile = await this.createFile(queryRunner, { path });
+      // 오피스
+      const office = await this.createOffice(queryRunner, { ...dto.office, owner, businessFile });
       // 탐정
       const detective = await this.createDetective(queryRunner, { user: owner, office });
       if (!detective) {
