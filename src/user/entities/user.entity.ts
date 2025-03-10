@@ -10,7 +10,7 @@ import {
   JoinColumn,
   ManyToOne,
 } from 'typeorm';
-import { WishList } from './wish-list.entity';
+import { WishList } from '../../wishlist/entities/wish-list.entity';
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Review } from '../../review/entities/review.entity';
 import { File } from '../../s3/entities/s3.entity';
@@ -54,6 +54,7 @@ export class User {
   detective: Detective;
 
   @OneToOne(() => File, (file) => file.user)
+  @JoinColumn({ name: 'file_id' })
   file: File;
 
   @OneToMany(() => WishList, (wishList) => wishList.consumer)

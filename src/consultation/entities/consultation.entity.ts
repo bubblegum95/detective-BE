@@ -42,7 +42,7 @@ export class Consultation {
   @JoinColumn({ name: 'detective_id' })
   detective: Detective;
 
-  @OneToOne(() => Category, (category) => category.consultation)
+  @ManyToOne(() => Category, (category) => category.consultation)
   @JoinColumn({ name: 'category_id' })
-  category: Category;
+  categories: Category[];
 }

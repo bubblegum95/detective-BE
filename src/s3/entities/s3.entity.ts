@@ -26,14 +26,11 @@ export class File {
   updatedAt: Date;
 
   @OneToOne(() => Detective, (detective) => detective.profile)
-  @JoinColumn({ name: 'detective_id' })
   detective: Detective;
 
   @OneToOne(() => Office, (office) => office.businessFile)
-  @JoinColumn({ name: 'office_id' })
   office: Office;
 
   @OneToOne(() => User, (user) => user.file)
-  @JoinColumn({ name: 'user_id' })
   user: User;
 }

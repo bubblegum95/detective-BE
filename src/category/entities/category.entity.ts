@@ -14,6 +14,6 @@ export class Category {
   @OneToMany(() => DetectiveCategory, (detectiveCategories) => detectiveCategories.category)
   detectiveCategories: DetectiveCategory[];
 
-  @OneToOne(() => Consultation, (consultation) => consultation.category)
+  @OneToMany(() => Consultation, (consultation) => consultation.categories)
   consultation: Consultation;
 }

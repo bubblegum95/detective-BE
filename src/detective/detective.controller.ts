@@ -31,41 +31,6 @@ import { findQueryKeyType } from './type/find-query-key.type';
 export class DetectiveController {
   constructor(private readonly detectiveService: DetectiveService) {}
 
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth('authorization')
-  @ApiConsumes('application/json')
-  @ApiOperation({ summary: '탐정 프로필 수정', description: '탐정 프로필 수정' })
-  @ApiBody({ type: UpdateDetectiveDto })
-  async updateProfile(
-    @UserInfo('id') userId: User['id'],
-    @Body() dto: UpdateDetectiveDto,
-    @Param('id') id: number,
-    @Res() res: Response,
-  ) {
-    try {
-      const detective = await this.detectiveService.findOne(id);
-      const postOwner = detective.user.id;
-      if (postOwner !== userId) {
-        throw new BadRequestException('작성자 본인이 아닙니다.');
-      }
-
-      const updated = await this.detectiveService.update(id, dto);
-      if (updated.affected === 0) {
-        throw new ConflictException('탐정 프로필 수정을 완료할 수 없습니다.');
-      }
-      return res
-        .status(HttpStatus.OK)
-        .json({ success: true, message: '탐정 프로필을 수정 완료하였습니다.' });
-    } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
-        success: false,
-        message: '탐정 프로필을 수정할 수 없습니다.',
-        error: error.message,
-      });
-    }
-  }
-
   @Get(':id')
   @ApiOperation({ summary: '탐정 프로필 단일 조회', description: '탐정 프로필 단일 조회' })
   async findOne(@Param('id') id: number, @Res() res: Response) {
@@ -133,6 +98,41 @@ export class DetectiveController {
     }
   }
 
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('authorization')
+  @ApiConsumes('application/json')
+  @ApiOperation({ summary: '탐정 프로필 수정', description: '탐정 프로필 수정' })
+  @ApiBody({ type: UpdateDetectiveDto })
+  async updateProfile(
+    @UserInfo('id') userId: User['id'],
+    @Body() dto: UpdateDetectiveDto,
+    @Param('id') id: number,
+    @Res() res: Response,
+  ) {
+    try {
+      const detective = await this.detectiveService.findOne(id);
+      const postOwner = detective.user.id;
+      if (postOwner !== userId) {
+        throw new BadRequestException('작성자 본인이 아닙니다.');
+      }
+
+      const updated = await this.detectiveService.update(id, dto);
+      if (updated.affected === 0) {
+        throw new ConflictException('탐정 프로필 수정을 완료할 수 없습니다.');
+      }
+      return res
+        .status(HttpStatus.OK)
+        .json({ success: true, message: '탐정 프로필을 수정 완료하였습니다.' });
+    } catch (error) {
+      return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: '탐정 프로필을 수정할 수 없습니다.',
+        error: error.message,
+      });
+    }
+  }
+
   // 탐정 프로필 사진 업로드
   @Post(':id/image')
   @UseGuards(JwtAuthGuard)
@@ -157,13 +157,11 @@ export class DetectiveController {
       }
       const path = file.filename;
       const savedFile = await this.detectiveService.saveFile(path);
-      Object.assign(savedFile, detective);
-      const updatedPost = await this.detectiveService.updateFile(savedFile);
-
+      const updated = await this.detectiveService.update(detective.id, { profile: savedFile });
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '탐정 프로필 사진을 수정완료하였습니다.',
-        data: updatedPost,
+        data: updated,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
@@ -193,7 +191,6 @@ export class DetectiveController {
       if (postOwner !== userId) {
         throw new BadRequestException('작성자 본인이 아닙니다.');
       }
-
       if (!file) {
         throw new BadRequestException('파일을 업로드해주세요.');
       }
@@ -202,9 +199,10 @@ export class DetectiveController {
         throw new BadRequestException('수정할 프로필 이미지가 없습니다.');
       }
       const path = file.filename;
-      Object.assign(profile, path);
-      const savedFile = await this.detectiveService.updateFile(profile);
-
+      const savedFile = await this.detectiveService.updateFile(profile.id, { path });
+      if (savedFile.affected !== 1) {
+        throw new ConflictException('파일 업데이트를 완료할 수 없습니다.');
+      }
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '탐정 프로필 사진을 수정완료하였습니다.',

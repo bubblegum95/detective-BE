@@ -7,19 +7,13 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { User } from './user.entity';
+import { User } from '../../user/entities/user.entity';
 import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'wish_list' })
 export class WishList {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
-
-  @Column({ type: 'bigint', name: 'detective_id', nullable: false })
-  detectiveId: number;
-
-  @Column({ type: 'bigint', name: 'consumer_id', nullable: false })
-  consumerId: number;
 
   @CreateDateColumn()
   createdAt: Date;

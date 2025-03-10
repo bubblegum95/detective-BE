@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Repository } from 'typeorm';
 import { File } from './entities/s3.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Detective } from '../detective/entities/detective.entity';
 
 @Injectable()
 export class S3Service {
@@ -32,12 +31,8 @@ export class S3Service {
     return await this.fileRepository.save({ path });
   }
 
-  async updateFile(file: File) {
-    try {
-      return await this.fileRepository.save(file);
-    } catch (error) {
-      throw error;
-    }
+  async updateFile(id: File['id'], dto: { path: File['path'] }) {
+    return await this.fileRepository.update({ id }, { ...dto });
   }
 
   async uploadFileToS3(type: string, file: Express.Multer.File) {
@@ -72,10 +67,5 @@ export class S3Service {
       console.log('fail upload file to AWS S3: ', error.message);
       throw error;
     }
-  }
-
-  async creatPostProfile(file: File, detective: Detective) {
-    file.detective = detective;
-    return await this.fileRepository.save(file);
   }
 }

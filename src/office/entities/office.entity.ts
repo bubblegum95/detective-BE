@@ -40,6 +40,7 @@ export class Office {
   updatedAt: Date;
 
   @OneToOne(() => File, (file) => file.office)
+  @JoinColumn({ name: 'business_file_id' })
   businessFile: File; // 사업자등록증
 
   @OneToOne(() => User, (user) => user.office)

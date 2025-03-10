@@ -12,7 +12,7 @@ import {
 import { Consultation } from '../../consultation/entities/consultation.entity';
 import { Office } from '../../office/entities/office.entity';
 import { User } from '../../user/entities/user.entity';
-import { WishList } from '../../user/entities/wish-list.entity';
+import { WishList } from '../../wishlist/entities/wish-list.entity';
 import { License } from '../../license/entities/license.entity';
 import { Career } from '../../career/entities/career.entity';
 import { DetectiveCategory } from './detectiveCategory.entity';
@@ -48,6 +48,7 @@ export class Detective {
   office: Office;
 
   @OneToOne(() => File, (file) => file.detective)
+  @JoinColumn({ name: 'profile_id' })
   profile: File;
 
   @OneToMany(() => License, (license) => license.detective)

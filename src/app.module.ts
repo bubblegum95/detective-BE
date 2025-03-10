@@ -24,6 +24,7 @@ import { CategoryModule } from './category/category.module';
 import { OfficeModule } from './office/office.module';
 import { CareerModule } from './career/career.module';
 import { RoleModule } from './role/role.module';
+import { WishlistModule } from './wishlist/wishlist.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (configService: ConfigService): Promise<TypeOrmModuleOptions> => ({
@@ -78,6 +79,7 @@ const MongooseModuleAsyncOptions = {
     RegionModule,
     CategoryModule,
     RoleModule,
+    WishlistModule,
   ],
   providers: [AppService],
   controllers: [AppController],

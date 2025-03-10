@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UpdateDetectiveDto } from './dto/update-detective.dto';
 import { Detective } from './entities/detective.entity';
 import { Office } from '../office/entities/office.entity';
@@ -11,7 +11,6 @@ import { File } from '../s3/entities/s3.entity';
 import { DetectiveEquipment } from './entities/detectiveEquipment.entity';
 import { DetectiveRegion } from './entities/detectiveRegion.entity';
 import { DetectiveCategory } from './entities/detectiveCategory.entity';
-import { OfficeService } from '../office/office.service';
 
 @Injectable()
 export class DetectiveService {
@@ -46,7 +45,7 @@ export class DetectiveService {
       where: { id },
       relations: [
         'user',
-        'office', // 소속된 회사
+        'office', // 소속사
         'profile',
         'licenses',
         'careers',
@@ -75,8 +74,8 @@ export class DetectiveService {
     return await this.s3Service.savePath(path);
   }
 
-  async updateFile(file: File) {
-    return await this.s3Service.updateFile(file);
+  async updateFile(id: File['id'], dto: { path: File['path'] }) {
+    return await this.s3Service.updateFile(id, dto);
   }
 
   async findManyOrderByReviewCount(page: number, limit: number) {

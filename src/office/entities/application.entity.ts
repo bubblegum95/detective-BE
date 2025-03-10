@@ -18,13 +18,13 @@ export class Application {
   clear: boolean;
 
   @Column({ nullable: true, type: 'boolean' }) // 승인/거부
-  result?: boolean;
+  result: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @ManyToOne(() => Detective, (detective) => detective.applications)
-  @JoinColumn({ name: 'detective_id' })
+  @JoinColumn({ name: 'requester_id' })
   requester: Detective;
 
   @ManyToOne(() => Office, (office) => office.applications)
