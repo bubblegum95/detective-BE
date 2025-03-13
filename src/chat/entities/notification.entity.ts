@@ -12,6 +12,9 @@ export class Notification extends Document {
   @Prop({ required: false })
   room: number;
 
+  @Prop({ required: false })
+  content: string;
+
   @Prop({ default: Date.now() })
   timestamp: string;
 

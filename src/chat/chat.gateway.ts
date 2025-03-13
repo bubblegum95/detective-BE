@@ -14,7 +14,6 @@ import { Namespace, Server, Socket } from 'socket.io';
 import { ClientProxy } from '@nestjs/microservices';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { RedisMessageDto } from './dto/redis-message.dto';
 import { NotificationService } from './notification.service';
 import { User } from '../user/entities/user.entity';
 import { Room } from './entities/room.entity';
@@ -25,9 +24,10 @@ import { MessageType } from './type/message.type';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { RedisService } from '../redis/redis.service';
 import { Message } from './entities/message.entity';
-import { RedisNotificationDto } from './dto/redis-notification.dto';
 import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { CreatedRoomDto, CreateRoomDto } from './dto/create-room.dto';
+import { SendNotificationDto } from './dto/send-notification.dto';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @WebSocketGateway(3400, { cors: true })
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
@@ -82,7 +82,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
       const user = await this.roomService.findUser(payload.id);
       client.data.user = { id: user.id, sub: user.email, role: user.role };
-      await this.redisService.setUserSocket(payload.email, client.id);
+
+      await this.setUserSocket(user.email, client.id);
+      await this.setUserIdSocket(user.id, client.id);
+      await this.setSocketUserId(client.id, user.id);
+
       console.log('✅ socket clients connected');
     } catch (error) {
       console.error(error.message);
@@ -90,14 +94,81 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   async handleDisconnect(client: Socket) {
-    const email = client.data.user.sub;
-    await this.redisService.clearUserSocket(email);
+    const user = client.data.user;
+    await this.clearUserSocket(user.email);
+    await this.clearUserIdSocket(user.id);
+    await this.clearSocketUserId(client.id);
     console.log('✅ socket clients disconnected');
   }
 
-  async receiveNotification(socketId: Socket['id'], dto: RedisNotificationDto) {
-    console.log('data', dto);
-    this.server.to(socketId).emit('receiveNotification', dto); // receiveMessage
+  async sendMessage(room: Room['name'], data: SendMessageDto) {
+    this.server.to(room).emit('receiveMessage', data);
+  }
+
+  async createNotification(dto: CreateNotificationDto) {
+    return await this.notificationService.create(dto);
+  }
+
+  async notify(clientId: Socket['id'], data: SendNotificationDto) {
+    this.server.to(clientId).emit('notify', data); // notification
+  }
+
+  async setUserSocket(email: User['email'], clientId: Socket['id']) {
+    return this.redisService.setUserSocket(email, clientId);
+  }
+
+  async getUserSocket(email: User['email']) {
+    return this.redisService.getUserSocket(email);
+  }
+
+  async clearUserSocket(email: User['email']) {
+    return this.redisService.clearUserSocket(email);
+  }
+
+  async setUserIdSocket(userId: User['id'], clientId: Socket['id']) {
+    return this.redisService.setUserIdSocket(userId, clientId);
+  }
+
+  async getUserIdSocket(userId: User['id']) {
+    return this.redisService.getUserIdSocket(userId);
+  }
+
+  async clearUserIdSocket(userId: User['id']) {
+    return this.redisService.clearUserIdSocket(userId);
+  }
+
+  async setSocketUserId(clientId: Socket['id'], userId: User['id']) {
+    return await this.redisService.setSocketUserId(clientId, userId);
+  }
+
+  async getSocketUserId(clientId: Socket['id']) {
+    return await this.redisService.getSocketUserId(clientId);
+  }
+
+  async clearSocketUserId(client: Socket['id']) {
+    return await this.redisService.clearSocketUserId(client);
+  }
+
+  async createReaders(
+    sender: User['id'],
+    roomId: Room['id'],
+  ): Promise<{ room: Room['name']; readers: Array<User['id']> }> {
+    const room = await this.roomService.findOne(roomId);
+    const users = room.participants.map(({ id, createdAt, room, user }) => user); // room과 relation 되어 있는 모든 유저들
+    let read: Set<User['id']>; // 수신자의 id
+    users.map((user) => {
+      read.add(user.id);
+    });
+    read.delete(sender); // 발신자는 제거
+    const sockets: Set<Socket['id']> = this.server.sockets.adapter.rooms.get(room.name); // join 되어 있는 소켓들
+    sockets.forEach(async (socket) => {
+      const readerId = await this.redisService.getSocketUserId(socket); // join된 socket의 userid
+      const includes = read.has(+readerId);
+      includes && read.delete(+readerId); // socket join 되어 있지않은 userid만 남기기 => message.read(읽지 않은 사람들)
+    });
+
+    const readerArray = Array.from(read);
+    return { room: room.name, readers: readerArray };
   }
 
   @SubscribeMessage('ping')
@@ -167,6 +238,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       }
       const room = participated.room.name;
       client.leave(room);
+      await this.clearSocketUserId(client.id);
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -185,29 +257,42 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         throw new WsException('해당 채팅방의 초대자가 아닙니다.');
       }
 
+      const { room, readers } = await this.createReaders(sender, roomId);
       const type = MessageType.Text;
-      const room = await this.roomService.findOne(roomId);
-      const users = room.participants.map(({ id, createdAt, room, user }) => user);
-      let read: Array<User['id']>;
-      users.map((user) => read.push(user.id));
       const message = await this.messageService.create({
         sender,
         type,
         content,
         room: roomId,
-        read,
+        read: readers,
       });
 
       const foundSender = await this.roomService.findUser(sender);
-      const sendMessage: RedisMessageDto = {
-        id: message._id,
+      const sendMessage = {
+        id: message.id,
         sender: foundSender.nickname,
-        type,
-        content,
+        type: message.type,
+        content: message.content,
         timestamp: message.timestamp,
-        read: read.length - 1,
+        read: message.read.length,
       };
-      this.server.to(room.name).emit('message', sendMessage);
+      await this.sendMessage(room, sendMessage);
+
+      for (const reader of message.read) {
+        const notice = await this.createNotification({
+          receiver: reader,
+          sender: message.sender,
+          content: message.content,
+          room: message.room,
+          isRead: false,
+        });
+        const clientId = await this.getUserIdSocket(reader);
+        if (!client) {
+          // socket 이 연결되어 있을 경우에만 알람 전송
+          continue;
+        }
+        await this.notify(clientId, notice);
+      }
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -247,50 +332,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     await this.messageService.updateRead(data.id, userId);
   }
 
-  async createNotification(dto: CreateNotificationDto) {
-    return await this.notificationService.createAndReturn(dto);
-  }
-
-  async notify(clientId: Socket['id'], data: RedisNotificationDto) {
-    this.server.to(clientId).emit('notify', data); // notification
-  }
-
-  async findUserSocket(email: User['email']) {
-    return this.redisService.findUserSocket(email);
-  }
-
-  async notifyReceiverOfMessage(sender: User, roomId: Room['id'], content: string) {
-    const room = await this.roomService.findOne(roomId);
-    const receivers = room.participants.map(({ id, room, user }) => user);
-    for (const receiver of receivers) {
-      const notification = await this.createNotification({
-        receiver: receiver.id,
-        sender: sender.id,
-        room: room.id,
-        isRead: false,
-      });
-      const clientId = await this.redisService.findUserSocket(receiver.email);
-      if (!clientId) {
-        throw new WsException('client id를 찾을 수 없습니다. 다시 로그인해주세요.');
-      }
-      await this.notify(clientId, {
-        id: notification['id'],
-        content: content,
-        room: room.id,
-        timestamp: notification.timestamp,
-      });
-    }
-  }
-
   @SubscribeMessage('notReadNotification')
   async readNotNotifications(@ConnectedSocket() client: Socket) {
     const userId = client.data.user.id;
     const notifications = await this.notificationService.findManyNotRead(userId);
     const data = await Promise.all(
-      notifications.map(async ({ _id, sender, receiver, room, timestamp, isRead }) => {
+      notifications.map(async ({ id, sender, receiver, room, timestamp, isRead }) => {
         const findSender = await this.roomService.findUser(sender);
         return {
-          id: _id,
+          id,
           sender: findSender.nickname,
           room,
           timestamp,
@@ -302,8 +352,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('readNotification') // 읽은 알림 처리하기
-  async isRead(@ConnectedSocket() client: Socket, @MessageBody() notificationId: string) {
+  async isRead(@ConnectedSocket() client: Socket, @MessageBody() data: { notificationId: string }) {
     const user = client.data.user;
-    const data = await this.notificationService.isRead(notificationId);
+    await this.notificationService.isRead(data.notificationId);
   }
 }

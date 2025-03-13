@@ -8,15 +8,39 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 export class RedisService {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
-  async findUserSocket(email: User['email']) {
-    return await this.cacheManager.get<string>(email);
+  async setUserSocket(email: User['email'], clientId: Socket['id']) {
+    return await this.cacheManager.set(`email:${email}`, clientId);
   }
 
-  async setUserSocket(email: User['email'], clientId: Socket['id']) {
-    return await this.cacheManager.set(email, clientId);
+  async getUserSocket(email: User['email']) {
+    return await this.cacheManager.get<string>(`email:${email}`);
   }
 
   async clearUserSocket(email: User['email']) {
-    return await this.cacheManager.del(email);
+    return await this.cacheManager.del(`email:${email}`);
+  }
+
+  async setUserIdSocket(userId: User['id'], clientId: Socket['id']) {
+    return await this.cacheManager.set(`id:${userId}`, clientId);
+  }
+
+  async getUserIdSocket(userId: User['id']) {
+    return await this.cacheManager.get<string>(`id:${userId}`);
+  }
+
+  async clearUserIdSocket(userId: User['id']) {
+    return await this.cacheManager.del(`id:${userId}`);
+  }
+
+  async setSocketUserId(clientId: Socket['id'], userId: User['id']) {
+    return await this.cacheManager.set(`socket:${clientId}`, userId);
+  }
+
+  async getSocketUserId(clientId: Socket['id']) {
+    return await this.cacheManager.get<string>(`socket:${clientId}`);
+  }
+
+  async clearSocketUserId(clientId: Socket['id']) {
+    return await this.cacheManager.del(`socket:${clientId}`);
   }
 }

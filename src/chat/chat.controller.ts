@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Inject,
   Param,
   Post,
   Res,
@@ -26,6 +27,7 @@ import { multerOptions } from '../utils/multerStorage';
 import { ParticipantService } from './participant.service';
 import { MessageService } from './message.service';
 import { MessageType } from './type/message.type';
+import { ChatGateway } from './chat.gateway';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Chats')
@@ -38,6 +40,7 @@ export class ChatController {
     private readonly roomService: RoomService,
     private readonly participantService: ParticipantService,
     private readonly messageService: MessageService,
+    @Inject(ChatGateway) private readonly chatGateway: ChatGateway,
   ) {}
 
   @Post(':id')
@@ -55,13 +58,7 @@ export class ChatController {
     }
     const type = MessageType.File;
     const path = file.filename;
-    const room = await this.roomService.findOne(id);
-    const users = room.participants.map(({ id, createdAt, room, user }) => user);
-    let readers: Array<User['id']> = [];
-    for (const user of users) {
-      readers.push(user.id);
-    }
-
+    const { readers, room } = await this.chatGateway.createReaders(userId, id);
     const message = await this.messageService.create({
       sender: userId,
       type,
@@ -69,6 +66,33 @@ export class ChatController {
       room: id,
       read: readers,
     });
+
+    const foundSender = await this.roomService.findUser(userId);
+    const sendMessage = {
+      id: message.id,
+      sender: foundSender.nickname,
+      type: message.type,
+      content: message.content,
+      timestamp: message.timestamp,
+      read: message.read.length,
+    };
+    await this.chatGateway.sendMessage(room, sendMessage);
+
+    for (const reader of message.read) {
+      const notice = await this.chatGateway.createNotification({
+        receiver: reader,
+        sender: message.sender,
+        content: message.content,
+        room: message.room,
+        isRead: false,
+      });
+      const clientId = await this.chatGateway.getUserIdSocket(reader);
+      if (!clientId) {
+        // socket 이 연결되어 있을 경우에만 알람 전송
+        continue;
+      }
+      await this.chatGateway.notify(clientId, notice);
+    }
 
     return res.status(HttpStatus.CREATED).json({
       success: true,

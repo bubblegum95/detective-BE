@@ -14,28 +14,28 @@ export class NotificationService {
   ) {}
 
   async findManyNotRead(receiver: User['id']) {
-    return await this.notificationModel
+    const notifications = await this.notificationModel
       .find({ receiver, isRead: false })
       .sort({ timestamp: -1 })
       .limit(30)
       .exec();
+    return notifications.map(({ _id, receiver, sender, room, content, isRead, timestamp }) => {
+      return { id: _id, receiver, sender, room, content, isRead, timestamp };
+    });
   }
 
   async create(dto: CreateNotificationDto) {
     const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-    return await this.notificationModel.create({
+    const notification = await this.notificationModel.create({
       ...dto,
       timestamp,
     });
-  }
-
-  async createAndReturn(dto: CreateNotificationDto) {
-    const notification = await this.create(dto);
     return {
       id: notification._id,
       receiver: notification.receiver,
       sender: notification.sender,
       room: notification.room,
+      content: notification.content,
       isRead: notification.isRead,
       timestamp: notification.timestamp,
     };

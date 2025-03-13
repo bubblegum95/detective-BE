@@ -17,9 +17,7 @@ import { RedisService } from './redis.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        store: await redisStore({ url: `redis://${configService.get<string>('REDIS_HOST')}:6379` }),
-        host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<string>('REDIS_PORT'),
+        store: await redisStore({ socket: { host: 'redis', port: 6379 } }),
       }),
       isGlobal: true,
     }),

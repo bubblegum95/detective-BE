@@ -6,6 +6,7 @@ import { User } from '../user/entities/user.entity';
 import moment from 'moment';
 import { MessageType } from './type/message.type';
 import { Room } from './entities/room.entity';
+import { CreateMessageDto } from './dto/message-body.dto';
 
 @Injectable()
 export class MessageService {
@@ -25,18 +26,21 @@ export class MessageService {
     return await this.messageModel.findOne({ room }).sort({ timestamp: -1 }).exec();
   }
 
-  async create(dto: {
-    sender: User['id'];
-    type: MessageType;
-    content: string | string[];
-    room: Room['id'];
-    read: Array<User['id']>;
-  }) {
+  async create(dto: CreateMessageDto) {
     const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-    return await this.messageModel.create({
+    const message = await this.messageModel.create({
       ...dto,
       timestamp,
     });
+    return {
+      id: message._id,
+      sender: message.sender,
+      type: message.type,
+      content: message.content,
+      room: message.room,
+      read: message.read,
+      timestamp: message.timestamp,
+    };
   }
 
   async updateRead(id: Message['_id'], userId: User['id']) {

@@ -1,9 +1,10 @@
 import { User } from '../../user/entities/user.entity';
-import { Room } from '../entities/room.entity';
+import { Message } from '../entities/message.entity';
 
 export class CreateNotificationDto {
   receiver: User['id'];
   sender: User['id'];
-  room: Room['id'];
+  content: Message['content'];
+  room: Message['room'];
   isRead: boolean;
 }
