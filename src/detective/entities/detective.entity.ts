@@ -15,9 +15,6 @@ import { User } from '../../user/entities/user.entity';
 import { WishList } from '../../wishlist/entities/wish-list.entity';
 import { License } from '../../license/entities/license.entity';
 import { Career } from '../../career/entities/career.entity';
-import { DetectiveCategory } from './detectiveCategory.entity';
-import { DetectiveEquipment } from './detectiveEquipment.entity';
-import { DetectiveRegion } from './detectiveRegion.entity';
 import { Review } from '../../review/entities/review.entity';
 import { File } from '../../s3/entities/s3.entity';
 import { Application } from '../../office/entities/application.entity';
@@ -59,15 +56,6 @@ export class Detective {
 
   @OneToMany(() => Review, (review) => review.detective)
   reviews: Review[];
-
-  @OneToMany(() => DetectiveEquipment, (detectiveEquipment) => detectiveEquipment.detective)
-  detectiveEquipments: DetectiveEquipment[];
-
-  @OneToMany(() => DetectiveRegion, (detectiveRegion) => detectiveRegion.detective)
-  detectiveRegions: DetectiveRegion[];
-
-  @OneToMany(() => DetectiveCategory, (detectiveCategory) => detectiveCategory.detective)
-  detectiveCategories: DetectiveCategory[];
 
   @OneToMany(() => Consultation, (consultation) => consultation.detective)
   consultations: Consultation[];

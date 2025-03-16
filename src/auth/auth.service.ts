@@ -15,7 +15,6 @@ import { Office } from '../office/entities/office.entity';
 import { Detective } from '../detective/entities/detective.entity';
 import { File } from '../s3/entities/s3.entity';
 import { CreateEmployeeDto } from './dto/create-employee.dto';
-import { CreateUserDto } from './dto/create-user.dto';
 import { CreateOfficeDto } from './dto/create-office.dto';
 import { CreateEmployerDto } from './dto/create-employer.dto';
 import { OfficeService } from '../office/office.service';
@@ -27,6 +26,7 @@ import { EmailService } from '../mail/email.service';
 import { RedisService } from '../redis/redis.service';
 import { Role } from '../role/entities/role.entity';
 import { CreateConsumerDto } from './dto/create-consumer.dto';
+import jwt from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -72,8 +72,16 @@ export class AuthService {
     return await this.officeService.findOneById(officeId);
   }
 
+  async createInvtieToken(requester: User['email'], officeId: Office['id']) {
+    const payload = { email: requester, officeId: officeId };
+    const INVITE_SECRET_KEY = process.env.INVITE_SECRET_KEY;
+    const inviteToken = jwt.sign(payload, INVITE_SECRET_KEY, { expiresIn: '24h' });
+
+    return inviteToken;
+  }
+
   async sendEmail(email: User['email'], subject: string, content: string) {
-    return this.emailService.sendEmail(email, subject, content);
+    return this.emailService.create(email, subject, content);
   }
 
   async sendNotice(requester: User, owner: User) {

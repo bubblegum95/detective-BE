@@ -7,6 +7,8 @@ import { User } from '../user/entities/user.entity';
 import { DetectiveService } from '../detective/detective.service';
 import { Detective } from '../detective/entities/detective.entity';
 import { UserService } from '../user/user.service';
+import jwt, { JwtPayload } from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OfficeService {
@@ -15,14 +17,15 @@ export class OfficeService {
     private readonly officeRepo: Repository<Office>,
     private readonly detectiveService: DetectiveService,
     private readonly userService: UserService,
+    private readonly configService: ConfigService,
   ) {}
-
-  async findUserByEmail(email: User['email']) {
-    return await this.userService.findOneByEmail(email);
-  }
 
   async create(owner: User, dto: CreateOfficeDto) {
     return await this.officeRepo.save({ ...dto, owner });
+  }
+
+  async findUserByEmail(email: User['email']) {
+    return await this.userService.findOneByEmail(email);
   }
 
   async findByName(name: string, take: number, skip: number) {
@@ -50,7 +53,13 @@ export class OfficeService {
     });
   }
 
+  async decodeInviteToken(token: string) {
+    const INVITE_SECRET_KEY = this.configService.get<string>('INVITE_SECRET_KEY');
+    const payload = jwt.verify(token, INVITE_SECRET_KEY) as JwtPayload;
+    return payload;
+  }
+
   async approve(detective: Detective, office: Office) {
-    await this.detectiveService.approve(detective, office);
+    return await this.detectiveService.approve(detective, office);
   }
 }

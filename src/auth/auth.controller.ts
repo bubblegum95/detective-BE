@@ -113,7 +113,10 @@ export class AuthController {
       // 신청서 생성 및 신청 알림 발송
       const office = await this.authService.findOfficeOwnerById(dto.officeId);
       const owner = office.owner;
-      this.authService.createApplicaiton(detective, office);
+      const token = await this.authService.createInvtieToken(user.email, office.id);
+      const subject = '[진실을 쫒는 사람들] 직원 등록 요청이 있습니다.';
+      const content = `요청인: ${user.name}(${user.email}) token: ${token}`;
+      await this.authService.sendEmail(owner.email, subject, content);
       await this.authService.sendNotice(user, owner);
       return res.status(HttpStatus.CREATED).json({
         success: true,

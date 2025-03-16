@@ -17,7 +17,7 @@ export class EmailService {
     });
   }
 
-  async sendEmail(to: User['email'], subject: string, text: string) {
+  async create(to: User['email'], subject: string, text: string) {
     const mailOptions = {
       from: this.configService.get<string>('GMAIL_USER'),
       to,
