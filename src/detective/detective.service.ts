@@ -9,6 +9,9 @@ import { S3Service } from '../s3/s3.service';
 import AWS from 'aws-sdk';
 import { File } from '../s3/entities/s3.entity';
 import { RedisService } from '../redis/redis.service';
+import { DetectiveEquipment } from './entities/detectiveEquipment.entity';
+import { DetectiveRegion } from './entities/detectiveRegion.entity';
+import { DetectiveCategory } from './entities/detectiveCategory.entity';
 
 @Injectable()
 export class DetectiveService {
@@ -115,42 +118,42 @@ export class DetectiveService {
     return detectives;
   }
 
-  // async findManyByEquipment(name: string, page: number, limit: number) {
-  //   const skip = (page - 1) * limit;
-  //   return await this.dataSource
-  //     .getRepository(DetectiveEquipment)
-  //     .createQueryBuilder('de')
-  //     .leftJoinAndSelect('de.detective', 'd')
-  //     .leftJoinAndSelect('de.equipment', 'e')
-  //     .where('e.name = :name', { name })
-  //     .skip(skip)
-  //     .take(limit)
-  //     .getMany();
-  // }
+  async findManyByEquipment(name: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return await this.dataSource
+      .getRepository(DetectiveEquipment)
+      .createQueryBuilder('de')
+      .leftJoinAndSelect('de.detective', 'd')
+      .leftJoinAndSelect('de.equipment', 'e')
+      .where('e.name = :name', { name })
+      .skip(skip)
+      .take(limit)
+      .getMany();
+  }
 
-  // async findManyByRegion(name: string, page: number, limit: number) {
-  //   const skip = (page - 1) * limit;
-  //   return await this.dataSource
-  //     .getRepository(DetectiveRegion)
-  //     .createQueryBuilder('dr')
-  //     .leftJoinAndSelect('dr.detective', 'd')
-  //     .leftJoinAndSelect('dr.region', 'r')
-  //     .where('r.name = :name', { name })
-  //     .skip(skip)
-  //     .take(limit)
-  //     .getMany();
-  // }
+  async findManyByRegion(name: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return await this.dataSource
+      .getRepository(DetectiveRegion)
+      .createQueryBuilder('dr')
+      .leftJoinAndSelect('dr.detective', 'd')
+      .leftJoinAndSelect('dr.region', 'r')
+      .where('r.name = :name', { name })
+      .skip(skip)
+      .take(limit)
+      .getMany();
+  }
 
-  // async findManyByCategory(name: string, page: number, limit: number) {
-  //   const skip = (page - 1) * limit;
-  //   return await this.dataSource
-  //     .getRepository(DetectiveCategory)
-  //     .createQueryBuilder('dc')
-  //     .leftJoinAndSelect('dc.detective', 'd')
-  //     .leftJoinAndSelect('dc.category', 'c')
-  //     .where('c.name = :name', { name })
-  //     .skip(skip)
-  //     .take(limit)
-  //     .getMany();
-  // }
+  async findManyByCategory(name: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return await this.dataSource
+      .getRepository(DetectiveCategory)
+      .createQueryBuilder('dc')
+      .leftJoinAndSelect('dc.detective', 'd')
+      .leftJoinAndSelect('dc.category', 'c')
+      .where('c.name = :name', { name })
+      .skip(skip)
+      .take(limit)
+      .getMany();
+  }
 }
