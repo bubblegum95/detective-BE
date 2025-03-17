@@ -3,6 +3,7 @@ import { Cache } from 'cache-manager';
 import { User } from '../user/entities/user.entity';
 import { Socket } from 'socket.io';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Detective } from '../detective/entities/detective.entity';
 
 @Injectable()
 export class RedisService {
@@ -42,5 +43,13 @@ export class RedisService {
 
   async clearSocketUserId(clientId: Socket['id']) {
     return await this.cacheManager.del(`socket:${clientId}`);
+  }
+
+  async setDetectives(take: number, skip: number, detectives: Array<Partial<Detective>>) {
+    return await this.cacheManager.set(`detectives:${take}:${skip}`, detectives);
+  }
+
+  async getDetectives(take: number, skip: number): Promise<Array<Partial<Detective>>> {
+    return await this.cacheManager.get(`detectives:${take}:${skip}`);
   }
 }

@@ -18,6 +18,9 @@ import { Career } from '../../career/entities/career.entity';
 import { Review } from '../../review/entities/review.entity';
 import { File } from '../../s3/entities/s3.entity';
 import { Application } from '../../office/entities/application.entity';
+import { Equipment } from '../../equipment/entities/equipment.entity';
+import { Region } from '../../region/entities/region.entity';
+import { Category } from '../../category/entities/category.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
@@ -29,6 +32,15 @@ export class Detective {
 
   @Column({ type: 'text', nullable: true })
   intro: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  equipments: Array<Equipment>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  regions: Array<Region>;
+
+  @Column({ type: 'jsonb', nullable: true })
+  categories: Array<Category>;
 
   @CreateDateColumn()
   createdAt: Date;

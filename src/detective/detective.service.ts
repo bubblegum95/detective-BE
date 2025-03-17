@@ -8,9 +8,7 @@ import { UserService } from '../user/user.service';
 import { S3Service } from '../s3/s3.service';
 import AWS from 'aws-sdk';
 import { File } from '../s3/entities/s3.entity';
-import { DetectiveEquipment } from './entities/detectiveEquipment.entity';
-import { DetectiveRegion } from './entities/detectiveRegion.entity';
-import { DetectiveCategory } from './entities/detectiveCategory.entity';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class DetectiveService {
@@ -20,6 +18,7 @@ export class DetectiveService {
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
+    private readonly redisService: RedisService,
   ) {
     this.lambda = new AWS.Lambda();
   }
@@ -32,7 +31,7 @@ export class DetectiveService {
     return await this.userService.findOneByEmail(email);
   }
 
-  async findAll(officeId: number) {
+  async findOfficeDetectives(officeId: number) {
     return await this.detectiveRepository
       .createQueryBuilder('detective')
       .leftJoinAndSelect('detective.office', 'office')
@@ -78,6 +77,19 @@ export class DetectiveService {
     return await this.s3Service.updateFile(id, dto);
   }
 
+  async findMany(page: number, limit: number) {
+    const take = limit;
+    const skip = (page - 1) * take;
+    return await this.detectiveRepository
+      .createQueryBuilder('detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.office', 'office')
+      .select(['detective.categoryId', 'detective.regionId', 'user.name', 'office.name'])
+      .skip(skip)
+      .take(take)
+      .getMany();
+  }
+
   async findManyOrderByReviewCount(page: number, limit: number) {
     const skip = (page - 1) * limit;
     return await this.detectiveRepository
@@ -90,77 +102,55 @@ export class DetectiveService {
       .getMany();
   }
 
-  async findManyByEquipment(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveEquipment)
-      .createQueryBuilder('de')
-      .leftJoinAndSelect('de.detective', 'd')
-      .leftJoinAndSelect('de.equipment', 'e')
-      .where('e.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
+  async cacheDetectives(page: number, limit: number): Promise<Array<Partial<Detective>>> {
+    const take = limit;
+    const skip = (page - 1) * take;
+    // 캐시에서 detective 목록 가져오기
+    const cached = await this.redisService.getDetectives(take, skip);
+    if (!cached) return cached;
+    // 캐시가 없으면 데이터베이스에서 가져오기
+    const detectives = await this.findMany(page, limit);
+    // 캐시에 데이터 저장
+    await this.redisService.setDetectives(take, skip, detectives);
+    return detectives;
   }
 
-  async findManyByRegion(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveRegion)
-      .createQueryBuilder('dr')
-      .leftJoinAndSelect('dr.detective', 'd')
-      .leftJoinAndSelect('dr.region', 'r')
-      .where('r.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
-  }
-
-  async findManyByCategory(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveCategory)
-      .createQueryBuilder('dc')
-      .leftJoinAndSelect('dc.detective', 'd')
-      .leftJoinAndSelect('dc.category', 'c')
-      .where('c.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
-  }
-
-  // async optimizedPosts(page: number): Promise<{ posts: Partial<Detective>[]; totalCount: number }> {
-  //   const pageSize = 20;
-  //   const skip = (page - 1) * pageSize;
-  //   const cacheKey = `posts_page_${page}`;
-
-  //   // 캐시에서 데이터 가져오기
-  //   const cachedData = await this.cacheManager.get<{
-  //     posts: Partial<Detective>[];
-  //     totalCount: number;
-  //   }>(cacheKey);
-  //   if (cachedData) {
-  //     return cachedData;
-  //   }
-
-  //   // 캐시가 없으면 데이터베이스에서 가져오기
-  //   const [detectives, totalCount] = await this.detectiveRepository
-  //     .createQueryBuilder('detective')
-  //     .leftJoinAndSelect('detective.user', 'user')
-  //     .leftJoinAndSelect('detective.office', 'office')
-  //     .select([
-  //       'detective.categoryId',
-  //       'detective.regionId',
-  //       'user.name',
-  //       'office.name',
-  //     ])
+  // async findManyByEquipment(name: string, page: number, limit: number) {
+  //   const skip = (page - 1) * limit;
+  //   return await this.dataSource
+  //     .getRepository(DetectiveEquipment)
+  //     .createQueryBuilder('de')
+  //     .leftJoinAndSelect('de.detective', 'd')
+  //     .leftJoinAndSelect('de.equipment', 'e')
+  //     .where('e.name = :name', { name })
   //     .skip(skip)
-  //     .take(pageSize)
-  //     .getManyAndCount();
+  //     .take(limit)
+  //     .getMany();
+  // }
 
-  //   // 캐시에 데이터 저장
-  //   const result = { posts, totalCount };
-  //   await this.cacheManager.set(cacheKey, result); // 1시간 동안 캐시 유지
-  //   return result;
+  // async findManyByRegion(name: string, page: number, limit: number) {
+  //   const skip = (page - 1) * limit;
+  //   return await this.dataSource
+  //     .getRepository(DetectiveRegion)
+  //     .createQueryBuilder('dr')
+  //     .leftJoinAndSelect('dr.detective', 'd')
+  //     .leftJoinAndSelect('dr.region', 'r')
+  //     .where('r.name = :name', { name })
+  //     .skip(skip)
+  //     .take(limit)
+  //     .getMany();
+  // }
+
+  // async findManyByCategory(name: string, page: number, limit: number) {
+  //   const skip = (page - 1) * limit;
+  //   return await this.dataSource
+  //     .getRepository(DetectiveCategory)
+  //     .createQueryBuilder('dc')
+  //     .leftJoinAndSelect('dc.detective', 'd')
+  //     .leftJoinAndSelect('dc.category', 'c')
+  //     .where('c.name = :name', { name })
+  //     .skip(skip)
+  //     .take(limit)
+  //     .getMany();
   // }
 }

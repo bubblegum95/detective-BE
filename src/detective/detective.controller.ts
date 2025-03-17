@@ -59,13 +59,6 @@ export class DetectiveController {
     try {
       let posts;
       switch (query.key) {
-        case findQueryKeyType.EQUIPMENT:
-          posts = await this.detectiveService.findManyByEquipment(
-            query.value,
-            query.page,
-            query.limit,
-          );
-          break;
         case findQueryKeyType.CATEGORY:
           posts = await this.detectiveService.findManyByCategory(
             query.value,
