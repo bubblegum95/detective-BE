@@ -52,9 +52,9 @@ export class DetectiveService {
         'licenses',
         'careers',
         'reviews',
-        'detectiveCategories',
-        'detectiveEquipments',
-        'detectiveRegions',
+        'detectiveCategories.category',
+        'detectiveEquipments.equipment',
+        'detectiveRegions.region',
       ],
     });
   }
