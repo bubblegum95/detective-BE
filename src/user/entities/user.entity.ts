@@ -37,7 +37,7 @@ export class User {
   @Column({ type: 'varchar', nullable: false, unique: true })
   phoneNumber: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', length: 255, nullable: false, select: false })
   password: string;
 
   @CreateDateColumn()

@@ -55,6 +55,10 @@ export class UserService {
     return await this.userRepository.findOne({ where: { id }, relations: ['role'] });
   }
 
+  async findOneByIdSelectPw(id: number) {
+    return await this.userRepository.findOne({ where: { id }, select: ['id', 'password'] });
+  }
+
   async verifyPassword(inputPw: string, comparedPw: string) {
     return bcrypt.compareSync(inputPw, comparedPw);
   }

@@ -45,6 +45,7 @@ export class DetectiveService {
   async findOne(id: number) {
     return await this.detectiveRepository.findOne({
       where: { id },
+      select: ['user'],
       relations: [
         'user',
         'office', // 소속사

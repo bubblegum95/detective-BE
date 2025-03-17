@@ -76,7 +76,7 @@ export class UserController {
           if (!dto.password || !dto.newPassword || !dto.passwordConfirm) {
             throw new BadRequestException('기존의 비밀번호와 변경하실 비밀번호를 입력해주세요.');
           }
-          const userInfo = await this.userService.findOneById(userId);
+          const userInfo = await this.userService.findOneByIdSelectPw(userId);
           const compared = await this.userService.verifyPassword(dto.password, userInfo.password);
           if (!compared) {
             throw new BadRequestException(
