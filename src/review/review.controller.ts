@@ -24,6 +24,7 @@ import { FindReviewsQueryDto } from './dto/find-reviews-query.dto';
 import { Response } from 'express';
 import { HttpExceptionFilter } from '../utils/filter/http-exception.filter';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { Detective } from '../detective/entities/detective.entity';
 
 @ApiTags('Reviews')
 @Controller('reviews')
@@ -62,7 +63,7 @@ export class ReviewController {
   @Get(':detectiveId')
   @ApiOperation({ summary: '리뷰 조회', description: '리뷰 조회' })
   async findAll(
-    @Param('detectiveId') detectiveId: number,
+    @Param('detectiveId') detectiveId: Detective['id'],
     @Query() query: FindReviewsQueryDto,
     @Res() res: Response,
   ) {

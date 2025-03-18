@@ -43,21 +43,21 @@ export class DetectiveService {
   }
 
   async findOne(id: number) {
-    return await this.detectiveRepository.findOne({
-      where: { id },
-      select: ['user'],
-      relations: [
-        'user',
-        'office', // 소속사
-        'profile',
-        'licenses',
-        'careers',
-        'reviews',
-        'detectiveCategories.category',
-        'detectiveEquipments.equipment',
-        'detectiveRegions.region',
-      ],
-    });
+    return await this.detectiveRepository
+      .createQueryBuilder('detective')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.office', 'office')
+      .leftJoinAndSelect('detective.profile', 'profile')
+      .leftJoinAndSelect('detective.licenses', 'licenses')
+      .leftJoinAndSelect('detective.careers', 'careers')
+      .leftJoinAndSelect('detective.detectiveCategories', 'detectiveCategories')
+      .leftJoinAndSelect('detectiveCategories.category', 'category')
+      .leftJoinAndSelect('detective.detectiveEquipments', 'detectiveEquipments')
+      .leftJoinAndSelect('detectiveEquipments.equipment', 'equipment')
+      .leftJoinAndSelect('detective.detectiveRegions', 'detectiveRegions')
+      .leftJoinAndSelect('detectiveRegions.region', 'region')
+      .where('detective.id = :id', { id })
+      .getOne();
   }
 
   async update(id: number, dto: UpdateDetectiveDto) {
@@ -71,6 +71,10 @@ export class DetectiveService {
   async approve(detective: Detective, office: Office) {
     detective.office = office;
     return await this.detectiveRepository.save(detective);
+  }
+
+  async findFile(id: File['id']) {
+    return await this.s3Service.findOneWithDetectiveUser(id);
   }
 
   async saveFile(path: string): Promise<File> {

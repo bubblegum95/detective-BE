@@ -27,6 +27,10 @@ export class S3Service {
     this.bucketName = this.configService.get<string>('S3_BUCKET_NAME');
   }
 
+  async findOneWithDetectiveUser(id: File['id']) {
+    return await this.fileRepository.findOne({ where: { id }, relations: ['detective.user'] });
+  }
+
   async savePath(path: string): Promise<File> {
     return await this.fileRepository.save({ path });
   }

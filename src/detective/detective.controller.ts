@@ -25,6 +25,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { multerOptions } from '../utils/multerStorage';
 import { FindQueryDto } from './dto/find-query.dto';
 import { findQueryKeyType } from './type/find-query-key.type';
+import { Detective } from './entities/detective.entity';
+import { File } from '../s3/entities/s3.entity';
 
 @ApiTags('Detectives')
 @Controller('detectives')
@@ -100,7 +102,7 @@ export class DetectiveController {
   async updateProfile(
     @UserInfo('id') userId: User['id'],
     @Body() dto: UpdateDetectiveDto,
-    @Param('id') id: number,
+    @Param('id') id: Detective['id'],
     @Res() res: Response,
   ) {
     try {
@@ -134,9 +136,9 @@ export class DetectiveController {
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 이미지 생성', description: '탐정 프로필 이미지 생성' })
   async createProfileImage(
-    @UserInfo('id') userId: number,
+    @UserInfo('id') userId: User['id'],
     @Res() res: Response,
-    @Param('id') id: number,
+    @Param('id') id: Detective['id'],
     @UploadedFile() file?: Express.Multer.File,
   ) {
     try {
@@ -166,33 +168,32 @@ export class DetectiveController {
   }
 
   // 탐정 프로필 사진 업데이트
-  @Patch(':id/image')
+  @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', multerOptions))
   @ApiBearerAuth('authorization')
   @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: '탐정 프로필 이미지 수정', description: '탐정 프로필 이미지 생성 수정' })
   async updateProfileImage(
-    @UserInfo('id') userId: number,
+    @UserInfo('id') userId: User['id'],
     @Res() res: Response,
-    @Param('id') id: number,
+    @Param('id') id: File['id'],
     @UploadedFile() file?: Express.Multer.File,
   ) {
     try {
-      const detective = await this.detectiveService.findOne(id);
-      const postOwner = detective.user.id;
-      if (postOwner !== userId) {
+      const image = await this.detectiveService.findFile(id);
+      const owner = image.detective.user.id;
+      if (!image) {
+        throw new BadRequestException('수정할 프로필 이미지가 없습니다.');
+      }
+      if (owner !== userId) {
         throw new BadRequestException('작성자 본인이 아닙니다.');
       }
       if (!file) {
         throw new BadRequestException('파일을 업로드해주세요.');
       }
-      const profile = detective.profile;
-      if (!profile) {
-        throw new BadRequestException('수정할 프로필 이미지가 없습니다.');
-      }
       const path = file.filename;
-      const savedFile = await this.detectiveService.updateFile(profile.id, { path });
+      const savedFile = await this.detectiveService.updateFile(image.id, { path });
       if (savedFile.affected !== 1) {
         throw new ConflictException('파일 업데이트를 완료할 수 없습니다.');
       }

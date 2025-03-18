@@ -7,6 +7,7 @@ import { UserService } from '../user/user.service';
 import { User } from '../user/entities/user.entity';
 import { DetectiveService } from '../detective/detective.service';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { Detective } from '../detective/entities/detective.entity';
 
 @Injectable()
 export class ReviewService {
@@ -41,7 +42,7 @@ export class ReviewService {
     return await this.reviewRepo.findOne({ where: { id }, relations: ['consumer'] });
   }
 
-  async findAll(detectiveId: number, skip: number, take: number) {
+  async findAll(detectiveId: Detective['id'], skip: number, take: number) {
     return await this.reviewRepo
       .createQueryBuilder('review')
       .leftJoinAndSelect('review.detective', 'd')
