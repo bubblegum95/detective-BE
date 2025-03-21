@@ -4,7 +4,7 @@ import { Detective } from './detective.entity';
 
 @Entity({ name: 'detective_equipment' })
 export class DetectiveEquipment {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @ManyToOne(() => Detective, (detective) => detective.detectiveEquipments)

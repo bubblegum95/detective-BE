@@ -6,7 +6,7 @@ export class Equipment {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'char', nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   name: string;
 
   @OneToMany(() => DetectiveEquipment, (detectiveEquipments) => detectiveEquipments.equipment)

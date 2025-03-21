@@ -17,7 +17,6 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
-import { UserInfo } from '../utils/decorators/user-info.decorator';
 import { User } from '../user/entities/user.entity';
 import { RoomService } from './room.service';
 import { HttpExceptionFilter } from '../utils/filter/http-exception.filter';
@@ -28,6 +27,7 @@ import { ParticipantService } from './participant.service';
 import { MessageService } from './message.service';
 import { MessageType } from './type/message.type';
 import { ChatGateway } from './chat.gateway';
+import { UserInfo } from '../utils/decorators/decorator';
 
 @UseGuards(JwtAuthGuard)
 @ApiTags('Chats')

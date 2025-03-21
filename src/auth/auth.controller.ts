@@ -114,6 +114,7 @@ export class AuthController {
       const office = await this.authService.findOfficeOwnerById(dto.officeId);
       const owner = office.owner;
       const token = await this.authService.createInvtieToken(user.email, office.id);
+      console.log('token:', token);
       const subject = '[진실을 쫒는 사람들] 직원 등록 요청이 있습니다.';
       const content = `요청인: ${user.name}(${user.email}) token: ${token}`;
       await this.authService.sendEmail(owner.email, subject, content);
@@ -198,9 +199,10 @@ export class AuthController {
   @ApiOperation({ summary: '로그인', description: '로그인' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiBody({ type: SignInDto })
-  async signIn(@Res() res: Response, @Body() signInDto: SignInDto) {
+  async signIn(@Res() res: Response, @Body() dto: SignInDto) {
     try {
-      const token = await this.authService.signIn(signInDto);
+      console.log('sign in dto:', dto);
+      const token = await this.authService.signIn(dto);
       if (!token) {
         throw new Error('토큰을 발급할 수 없습니다.');
       }

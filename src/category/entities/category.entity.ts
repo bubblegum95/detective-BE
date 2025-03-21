@@ -8,8 +8,8 @@ export class Category {
   @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
   id: number;
 
-  @Column({ type: 'enum', enum: CategoryEnum, nullable: false })
-  name: CategoryEnum;
+  @Column({ type: 'varchar', nullable: false })
+  name: string;
 
   @OneToMany(() => DetectiveCategory, (detectiveCategories) => detectiveCategories.category)
   detectiveCategories: DetectiveCategory[];

@@ -30,11 +30,19 @@ export class UserService {
       .getOne();
   }
 
+  async findOneByEmailSeletPw(email: User['email']) {
+    return await this.userRepository.findOne({
+      where: { email },
+      select: ['id', 'email', 'password'],
+      relations: ['role'],
+    });
+  }
+
   async findOneByDigit(phoneNumber: User['phoneNumber']) {
     return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 
-  async findOneWithRelations(id: number) {
+  async findOneWithRelations(id: User['id']) {
     return await this.userRepository.findOne({
       where: { id },
       relations: [

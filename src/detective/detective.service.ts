@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { UpdateDetectiveDto } from './dto/update-detective.dto';
 import { Detective } from './entities/detective.entity';
 import { Office } from '../office/entities/office.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -12,29 +11,46 @@ import { RedisService } from '../redis/redis.service';
 import { DetectiveEquipment } from './entities/detectiveEquipment.entity';
 import { DetectiveRegion } from './entities/detectiveRegion.entity';
 import { DetectiveCategory } from './entities/detectiveCategory.entity';
+import { Category } from '../category/entities/category.entity';
+import { User } from '../user/entities/user.entity';
+import { CategoryService } from '../category/category.service';
+import { EquipmentService } from '../equipment/equipment.service';
+import { RegionService } from '../region/region.service';
+import { Equipment } from '../equipment/entities/equipment.entity';
+import { Region } from '../region/entities/region.entity';
+import { UpdateDetectiveDao } from './dao/update-detective.dao';
 
 @Injectable()
 export class DetectiveService {
   private lambda: AWS.Lambda;
   constructor(
     @InjectRepository(Detective) private readonly detectiveRepository: Repository<Detective>,
+    @InjectRepository(DetectiveCategory)
+    private readonly dCategoryRepository: Repository<DetectiveCategory>,
+    @InjectRepository(DetectiveEquipment)
+    private readonly dEquipmentRepository: Repository<DetectiveEquipment>,
+    @InjectRepository(DetectiveRegion)
+    private readonly dRegionRepository: Repository<DetectiveRegion>,
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
     private readonly s3Service: S3Service,
     private readonly redisService: RedisService,
+    private readonly categoryService: CategoryService,
+    private readonly equipmentService: EquipmentService,
+    private readonly regionService: RegionService,
   ) {
     this.lambda = new AWS.Lambda();
   }
 
-  async findUserById(id: number) {
+  async findUserById(id: User['id']) {
     return await this.userService.findOneById(id);
   }
 
-  async findUserByEmail(email: string) {
+  async findUserByEmail(email: User['email']) {
     return await this.userService.findOneByEmail(email);
   }
 
-  async findOfficeDetectives(officeId: number) {
+  async findOfficeDetectives(officeId: Office['id']) {
     return await this.detectiveRepository
       .createQueryBuilder('detective')
       .leftJoinAndSelect('detective.office', 'office')
@@ -42,7 +58,7 @@ export class DetectiveService {
       .getMany();
   }
 
-  async findOne(id: number) {
+  async findOne(id: Detective['id']) {
     return await this.detectiveRepository
       .createQueryBuilder('detective')
       .leftJoinAndSelect('detective.user', 'user')
@@ -60,12 +76,8 @@ export class DetectiveService {
       .getOne();
   }
 
-  async update(id: number, dto: UpdateDetectiveDto) {
+  async update(id: Detective['id'], dto: UpdateDetectiveDao) {
     return await this.detectiveRepository.update({ id }, { ...dto });
-  }
-
-  async remove(id: number) {
-    return `This action removes a #${id} detective`;
   }
 
   async approve(detective: Detective, office: Office) {
@@ -73,11 +85,21 @@ export class DetectiveService {
     return await this.detectiveRepository.save(detective);
   }
 
+  async findUserDFile(userId: User['id']) {
+    return await this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.detective', 'd')
+      .leftJoinAndSelect('d.profile', 'profile')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
   async findFile(id: File['id']) {
     return await this.s3Service.findOneWithDetectiveUser(id);
   }
 
-  async saveFile(path: string): Promise<File> {
+  async saveFile(path: File['path']): Promise<File> {
     return await this.s3Service.savePath(path);
   }
 
@@ -98,6 +120,7 @@ export class DetectiveService {
       .getMany();
   }
 
+  // 리뷰순 정렬
   async findManyOrderByReviewCount(page: number, limit: number) {
     const skip = (page - 1) * limit;
     return await this.detectiveRepository
@@ -160,5 +183,74 @@ export class DetectiveService {
       .skip(skip)
       .take(limit)
       .getMany();
+  }
+
+  async findCategory(id: Category['id']) {
+    return await this.categoryService.findOne(id);
+  }
+
+  async findUserDC(userId: User['id']) {
+    return await this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.detective', 'd')
+      .leftJoinAndSelect('d.detectiveCategories', 'dc')
+      .leftJoinAndSelect('dc.category', 'c')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
+  async createDC(detective: Detective, category: Category) {
+    return await this.dCategoryRepository.save({ detective, category });
+  }
+
+  async removeDC(id: DetectiveCategory['id']) {
+    return await this.dCategoryRepository.delete({ id });
+  }
+
+  async findUserDE(userId: User['id']) {
+    return await this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.detective', 'd')
+      .leftJoinAndSelect('d.detectiveEquipments', 'de')
+      .leftJoinAndSelect('de.equipment', 'e')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
+  async findEquipment(id: Equipment['id']) {
+    return await this.equipmentService.findOne(id);
+  }
+
+  async createDE(detective: Detective, equipment: Equipment) {
+    return await this.dEquipmentRepository.save({ detective, equipment });
+  }
+
+  async removeDE(id: DetectiveEquipment['id']) {
+    return this.dEquipmentRepository.delete({ id });
+  }
+
+  async findUserDR(userId: User['id']) {
+    return await this.dataSource
+      .getRepository(User)
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.detective', 'd')
+      .leftJoinAndSelect('d.detectiveRegions', 'dr')
+      .leftJoinAndSelect('dr.region', 'r')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
+  async findRegion(id: Region['id']) {
+    return await this.regionService.findOne(id);
+  }
+
+  async createDR(detective: Detective, region: Region) {
+    return await this.dRegionRepository.save({ detective, region });
+  }
+
+  async removeDR(id: DetectiveRegion['id']) {
+    return await this.dRegionRepository.delete({ id });
   }
 }

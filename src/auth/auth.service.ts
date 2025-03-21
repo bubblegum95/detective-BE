@@ -27,6 +27,7 @@ import { RedisService } from '../redis/redis.service';
 import { Role } from '../role/entities/role.entity';
 import { CreateConsumerDto } from './dto/create-consumer.dto';
 import jwt from 'jsonwebtoken';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -41,6 +42,7 @@ export class AuthService {
     private readonly chatGateway: ChatGateway,
     private readonly emailService: EmailService,
     private readonly redisService: RedisService,
+    private readonly configService: ConfigService,
   ) {}
 
   async findUserById(id: User['id']) {
@@ -49,6 +51,10 @@ export class AuthService {
 
   async findUserByEmail(email: User['email']) {
     return await this.userService.findOneByEmail(email);
+  }
+
+  async findUserByEmailSelectPw(email: User['email']) {
+    return await this.userService.findOneByEmailSeletPw(email);
   }
 
   async findUserByDigit(phone: User['phoneNumber']) {
@@ -63,8 +69,7 @@ export class AuthService {
     return await this.roleService.create(name);
   }
 
-  async hashPassword(password: string) {
-    const salt = 10;
+  async hashPassword(password: string, salt: number) {
     return await bcrypt.hash(password, salt);
   }
 
@@ -74,7 +79,7 @@ export class AuthService {
 
   async createInvtieToken(requester: User['email'], officeId: Office['id']) {
     const payload = { email: requester, officeId: officeId };
-    const INVITE_SECRET_KEY = process.env.INVITE_SECRET_KEY;
+    const INVITE_SECRET_KEY = this.configService.get<string>('INVITE_SECRET_KEY');
     const inviteToken = jwt.sign(payload, INVITE_SECRET_KEY, { expiresIn: '24h' });
 
     return inviteToken;
@@ -90,13 +95,19 @@ export class AuthService {
     await this.sendEmail(owner.email, subject, content);
   }
 
-  async validateUser(dto: SignInDto): Promise<User> {
+  async validateUser(dto: SignInDto): Promise<Partial<User>> {
     try {
-      const user = await this.findUserByEmail(dto.email);
+      if (!dto.password) {
+        throw new BadRequestException('비밀번호를 알 수 없습니다.');
+      }
+      const user = await this.findUserByEmailSelectPw(dto.email);
       if (!user) {
         throw new UnauthorizedException('일치하는 회원정보가 없습니다.');
       }
-      const isPasswordMatched = bcrypt.compareSync(dto.password, user.password ?? '');
+      if (!user.password) {
+        throw new ConflictException('사용자의 비밀번호를 조회할 수 없습니다.');
+      }
+      const isPasswordMatched = await bcrypt.compare(dto.password, user.password);
       if (!isPasswordMatched) {
         throw new BadRequestException('비밀번호가 일치하지 않습니다.');
       }
@@ -109,7 +120,7 @@ export class AuthService {
   async createUser(queryRunner: QueryRunner, dto: CreateConsumerDto) {
     try {
       const role = (await this.findRole(RoleType.USER)) || (await this.createRole(RoleType.USER));
-      const hashedPassword = await this.hashPassword(dto.password);
+      const hashedPassword = await this.hashPassword(dto.password, 10);
       return await queryRunner.manager.getRepository(User).save({
         ...dto,
         password: hashedPassword,
@@ -163,7 +174,6 @@ export class AuthService {
     try {
       const user = await this.createUser(queryRunner, dto.user);
       const detective = await this.createDetective(queryRunner, { user });
-      console.log(user, detective);
       await queryRunner.commitTransaction();
       return { user, detective };
     } catch (error) {

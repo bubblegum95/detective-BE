@@ -1,13 +1,24 @@
-import { PartialType } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import { CreateDetectiveDto } from './create-detective.dto';
-import { Office } from '../../office/entities/office.entity';
-import { User } from '../../user/entities/user.entity';
-import { File } from '../../s3/entities/s3.entity';
+import { IsOptional, IsString } from 'class-validator';
 
 export class UpdateDetectiveDto extends PartialType(CreateDetectiveDto) {
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    example: '내가 제일 잘 나가.',
+    description: '한 줄 소개',
+  })
   subject?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    type: 'string',
+    nullable: true,
+    example: '무슨 고민이든 척척 이 명탐정이 해결해드립니다.',
+  })
   intro?: string;
-  user?: User;
-  office?: Office;
-  profile?: File;
 }
