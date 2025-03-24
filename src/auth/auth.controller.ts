@@ -199,10 +199,9 @@ export class AuthController {
   @ApiOperation({ summary: '로그인', description: '로그인' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiBody({ type: SignInDto })
-  async signIn(@Res() res: Response, @Body() dto: SignInDto) {
+  async signIn(@Res() res: Response, @Body() signInDto: SignInDto) {
     try {
-      console.log('sign in dto:', dto);
-      const token = await this.authService.signIn(dto);
+      const token = await this.authService.signIn(signInDto);
       if (!token) {
         throw new Error('토큰을 발급할 수 없습니다.');
       }

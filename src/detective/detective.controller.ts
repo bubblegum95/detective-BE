@@ -17,7 +17,14 @@ import {
 } from '@nestjs/common';
 import { DetectiveService } from './detective.service';
 import { UpdateDetectiveDto } from './dto/update-detective.dto';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { User } from '../user/entities/user.entity';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { Response } from 'express';
@@ -30,11 +37,59 @@ import { Equipment } from '../equipment/entities/equipment.entity';
 import { Region } from '../region/entities/region.entity';
 import { UserInfo } from '../utils/decorators/decorator';
 import { DetectiveCategory } from './entities/detectiveCategory.entity';
+import { Detective } from './entities/detective.entity';
 
 @ApiTags('Detectives')
 @Controller('detectives')
 export class DetectiveController {
   constructor(private readonly detectiveService: DetectiveService) {}
+
+  @Get() // 탐정 목록 조회
+  @ApiOperation({ summary: '탐정 키워드 목록 조회', description: '탐정 키워드 목록 조회' })
+  async findMany(@Query() query: FindQueryDto, @Res() res: Response) {
+    try {
+      let detectives: Array<Detective>;
+      let total: number;
+      switch (query.key) {
+        case findQueryKeyType.CATEGORY:
+          const [dcs, dcTotal] = await this.detectiveService.findManyByCategory(
+            query.value,
+            query.page,
+            query.limit,
+          );
+          detectives = dcs.map(({ detective }) => detective);
+          total = dcTotal;
+          break;
+        case findQueryKeyType.REGION:
+          const [drs, drTotal] = await this.detectiveService.findManyByRegion(
+            query.value,
+            query.page,
+            query.limit,
+          );
+          detectives = drs.map(({ detective }) => detective);
+          total = drTotal;
+          break;
+        default:
+          [detectives, total] = await this.detectiveService.findManyOrderByReviewCount(
+            query.page,
+            query.limit,
+          );
+          break;
+      }
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: '탐정 키워드 목록 조회',
+        data: detectives,
+        total: total,
+      });
+    } catch (error) {
+      return res.status(HttpStatus.CONFLICT).json({
+        success: false,
+        message: '탐정조회를 완료할 수 없습니다.',
+        error: error.message,
+      });
+    }
+  }
 
   @Get(':id')
   @ApiOperation({ summary: '탐정 프로필 단일 조회', description: '탐정 프로필 단일 조회' })
@@ -61,44 +116,6 @@ export class DetectiveController {
       return res.status(HttpStatus.CONFLICT).json({
         success: false,
         message: '탐정프로필을 조회할 수 없습니다.',
-        error: error.message,
-      });
-    }
-  }
-
-  @Get() // 탐정 조회
-  @ApiOperation({ summary: '탐정 키워드 목록 조회', description: '탐정 키워드 목록 조회' })
-  async findMany(@Query() query: FindQueryDto, @Res() res: Response) {
-    try {
-      let posts;
-      switch (query.key) {
-        case findQueryKeyType.CATEGORY:
-          posts = await this.detectiveService.findManyByCategory(
-            query.value,
-            query.page,
-            query.limit,
-          );
-          break;
-        case findQueryKeyType.REGION:
-          posts = await this.detectiveService.findManyByRegion(
-            query.value,
-            query.page,
-            query.limit,
-          );
-          break;
-        default:
-          posts = await this.detectiveService.findManyOrderByReviewCount(query.page, query.limit);
-          break;
-      }
-      return res.status(HttpStatus.OK).json({
-        success: true,
-        message: '리뷰순 탐정 조회',
-        data: posts,
-      });
-    } catch (error) {
-      return res.status(HttpStatus.CONFLICT).json({
-        success: false,
-        message: '탐정조회를 완료할 수 없습니다.',
         error: error.message,
       });
     }

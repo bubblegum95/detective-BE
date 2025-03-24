@@ -272,10 +272,10 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('토큰을 발급할 수 없습니다.');
       }
-
+      const secret = this.configService.get<string>('ACCESS_SECRET');
       const payload = { id: user.id };
       const options = {
-        secret: process.env.ACCESS_SECRET,
+        secret,
         expiresIn: '7d',
       };
       const accessToken = this.jwtService.sign(payload, options);

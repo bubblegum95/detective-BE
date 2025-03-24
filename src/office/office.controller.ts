@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
   Query,
   Res,
   UnauthorizedException,
@@ -87,7 +88,7 @@ export class OfficeController {
   //   }
   // }
 
-  // @Patch('applications/:id')
+  // @Post('applications/:id')
   // @UseGuards(JwtAuthGuard)
   // @ApiBearerAuth('authorization')
   // @ApiOperation({ summary: '오피스 직원 등록 승인', description: '오피스 직원 등록 승인' })
@@ -126,7 +127,7 @@ export class OfficeController {
   //   }
   // }
 
-  @Patch('employee')
+  @Post('employee')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('authorization')
   @ApiOperation({ summary: '오피스 직원 등록 승인', description: '오피스 직원 등록 승인' })

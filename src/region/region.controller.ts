@@ -35,12 +35,16 @@ export class RegionController {
   @ApiBody({ type: CreateRegionDto })
   @ApiOperation({ description: '활동지역 생성', summary: '활동지역 생성' })
   @ApiConsumes('application/x-www-form-urlencoded')
-  create(@Body() createRegionDto: CreateRegionDto, @Res() res: Response, @UserInfo() user: User) {
+  async create(
+    @Body() createRegionDto: CreateRegionDto,
+    @Res() res: Response,
+    @UserInfo() user: User,
+  ) {
     try {
       if (user.role.name !== 'admin') {
         throw new UnauthorizedException('권한이 없습니다.');
       }
-      const region = this.regionService.create(createRegionDto);
+      const region = await this.regionService.create(createRegionDto);
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message: '활동지역을 성공적으로 생성완료하였습니다.',
@@ -57,9 +61,9 @@ export class RegionController {
 
   @Get()
   @ApiOperation({ description: '활동지역 조회', summary: '활동지역 조회' })
-  findAll(@Res() res: Response) {
+  async findAll(@Res() res: Response) {
     try {
-      const regions = this.regionService.findAll();
+      const regions = await this.regionService.findAll();
       return res
         .status(HttpStatus.OK)
         .json({ success: true, message: '활동지역을 조회합니다.', data: regions });
@@ -74,8 +78,8 @@ export class RegionController {
 
   @Get(':id')
   @ApiOperation({ description: '활동지역 조회', summary: '활동지역 조회' })
-  findOne(@Param('id') id: string) {
-    return this.regionService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.regionService.findOne(+id);
   }
 
   @Patch(':id')
@@ -83,11 +87,15 @@ export class RegionController {
   @ApiConsumes('application/x-www-form-urlencoded')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('authorization')
-  update(@Param('id') id: string, @UserInfo('role') role: Role, @Body() dto: UpdateRegionDto) {
+  async update(
+    @Param('id') id: string,
+    @UserInfo('role') role: Role,
+    @Body() dto: UpdateRegionDto,
+  ) {
     if (role.name !== 'admin') {
       throw new UnauthorizedException('수정 권한이 없습니다.');
     }
-    return this.regionService.update(+id, dto);
+    return await this.regionService.update(+id, dto);
   }
 
   @Delete(':id')
@@ -95,10 +103,10 @@ export class RegionController {
   @ApiOperation({ description: '활동지역 수정', summary: '활동지역 수정' })
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiBearerAuth('authorization')
-  remove(@Param('id') id: string, @UserInfo('role') role: Role) {
+  async remove(@Param('id') id: string, @UserInfo('role') role: Role) {
     if (role.name !== 'admin') {
       throw new UnauthorizedException('삭제 권한이 없습니다.');
     }
-    return this.regionService.remove(+id);
+    return await this.regionService.remove(+id);
   }
 }

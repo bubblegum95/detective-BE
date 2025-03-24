@@ -109,28 +109,89 @@ export class DetectiveService {
 
   async findMany(page: number, limit: number) {
     const take = limit;
-    const skip = (page - 1) * take;
+    const offset = (page - 1) * take;
     return await this.detectiveRepository
       .createQueryBuilder('detective')
       .leftJoinAndSelect('detective.user', 'user')
       .leftJoinAndSelect('detective.office', 'office')
-      .select(['detective.categoryId', 'detective.regionId', 'user.name', 'office.name'])
-      .skip(skip)
-      .take(take)
+      .select(['user.name', 'office.name'])
+      .offset(offset)
+      .limit(take)
       .getMany();
   }
 
   // 리뷰순 정렬
   async findManyOrderByReviewCount(page: number, limit: number) {
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
     return await this.detectiveRepository
       .createQueryBuilder('detective')
-      .leftJoinAndSelect('detective.reviews', 'review')
-      .loadRelationCountAndMap('detective.review_count', 'post.reviews')
+      .leftJoinAndSelect('detective.user', 'user')
+      .leftJoinAndSelect('detective.office', 'office')
+      .leftJoinAndSelect('detective.profile', 'profile')
+      .leftJoin('detective.reviews', 'review')
+      .select([
+        'detective.id',
+        'detective.subject',
+        'user.name',
+        'profile.path',
+        'office.name',
+        'office.address',
+      ])
+      .loadRelationCountAndMap('detective.review_count', 'detective.reviews')
       .orderBy('review_count', 'DESC')
-      .skip(skip)
-      .take(limit)
-      .getMany();
+      .offset(offset)
+      .limit(limit)
+      .getManyAndCount();
+  }
+
+  async findManyByRegion(regionId: Region['id'], page: number, limit: number) {
+    const offset = (page - 1) * limit;
+    return await this.dataSource
+      .getRepository(DetectiveRegion)
+      .createQueryBuilder('dr')
+      .leftJoinAndSelect('dr.detective', 'd')
+      .leftJoinAndSelect('dr.region', 'r')
+      .leftJoinAndSelect('d.user', 'user')
+      .leftJoinAndSelect('d.office', 'office')
+      .leftJoinAndSelect('d.profile', 'profile')
+      .where('r.id = :regionId', { regionId })
+      .select([
+        'dr.id',
+        'd.id',
+        'd.subject',
+        'user.name',
+        'profile.path',
+        'office.name',
+        'office.address',
+      ])
+      .offset(offset)
+      .limit(limit)
+      .getManyAndCount();
+  }
+
+  async findManyByCategory(categoryId: Category['id'], page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    return await this.dataSource
+      .getRepository(DetectiveCategory)
+      .createQueryBuilder('dc')
+      .leftJoinAndSelect('dc.detective', 'd')
+      .leftJoinAndSelect('dc.category', 'c')
+      .leftJoinAndSelect('d.user', 'user')
+      .leftJoinAndSelect('d.office', 'office')
+      .leftJoinAndSelect('d.profile', 'profile')
+      .where('c.id = :categoryId', { categoryId })
+      .select([
+        'dc.id',
+        'd.id',
+        'd.subject',
+        'user.name',
+        'profile.path',
+        'office.name',
+        'office.address',
+      ])
+      .offset(skip)
+      .limit(limit)
+      .getManyAndCount();
   }
 
   async cacheDetectives(page: number, limit: number): Promise<Array<Partial<Detective>>> {
@@ -144,45 +205,6 @@ export class DetectiveService {
     // 캐시에 데이터 저장
     await this.redisService.setDetectives(take, skip, detectives);
     return detectives;
-  }
-
-  async findManyByEquipment(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveEquipment)
-      .createQueryBuilder('de')
-      .leftJoinAndSelect('de.detective', 'd')
-      .leftJoinAndSelect('de.equipment', 'e')
-      .where('e.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
-  }
-
-  async findManyByRegion(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveRegion)
-      .createQueryBuilder('dr')
-      .leftJoinAndSelect('dr.detective', 'd')
-      .leftJoinAndSelect('dr.region', 'r')
-      .where('r.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
-  }
-
-  async findManyByCategory(name: string, page: number, limit: number) {
-    const skip = (page - 1) * limit;
-    return await this.dataSource
-      .getRepository(DetectiveCategory)
-      .createQueryBuilder('dc')
-      .leftJoinAndSelect('dc.detective', 'd')
-      .leftJoinAndSelect('dc.category', 'c')
-      .where('c.name = :name', { name })
-      .skip(skip)
-      .take(limit)
-      .getMany();
   }
 
   async findCategory(id: Category['id']) {

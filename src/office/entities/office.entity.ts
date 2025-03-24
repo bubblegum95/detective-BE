@@ -33,6 +33,9 @@ export class Office {
   @Column({ type: 'varchar', length: 100, nullable: false })
   addressDetail: string;
 
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  phone: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

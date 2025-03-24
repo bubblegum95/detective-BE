@@ -34,7 +34,6 @@ export class UserController {
   @Get()
   async getUserInfo(@UserInfo('id') userId: User['id'], @Res() res: Response) {
     try {
-      console.log('userId:', userId);
       const data = await this.userService.returnFoundUser(userId);
       return res.status(HttpStatus.OK).json({
         success: true,
@@ -53,7 +52,7 @@ export class UserController {
   @UseInterceptors(FileInterceptor('file', multerOptions))
   @ApiOperation({ summary: '사용자 정보 수정', description: '사용자 정보 수정' })
   @ApiConsumes('multipart/form-data')
-  @Patch('update')
+  @Patch()
   async updateUserInfo(
     @UserInfo('id') userId: number,
     @Query('type') type: 'nickname' | 'password' | 'file',
@@ -62,7 +61,6 @@ export class UserController {
     @UploadedFile() file?: Express.Multer.File | undefined,
   ) {
     try {
-      console.log('type:', type, 'dto:', dto, 'file:', file);
       let result = 0;
       switch (type) {
         case 'nickname':

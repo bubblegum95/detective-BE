@@ -9,23 +9,23 @@ import { Repository } from 'typeorm';
 export class RegionService {
   constructor(@InjectRepository(Region) private readonly regionRepository: Repository<Region>) {}
 
-  create(dto: CreateRegionDto) {
-    return this.regionRepository.save({ ...dto });
+  async create(dto: CreateRegionDto) {
+    return await this.regionRepository.save({ ...dto });
   }
 
-  findAll() {
-    return this.regionRepository.find();
+  async findAll() {
+    return await this.regionRepository.find();
   }
 
-  findOne(id: number) {
-    return this.regionRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    return await this.regionRepository.findOne({ where: { id } });
   }
 
-  update(id: number, dto: UpdateRegionDto) {
-    return this.regionRepository.update({ id }, { ...dto });
+  async update(id: number, dto: UpdateRegionDto) {
+    return await this.regionRepository.update({ id }, { ...dto });
   }
 
-  remove(id: number) {
-    return this.regionRepository.delete({ id });
+  async remove(id: number) {
+    return await this.regionRepository.delete({ id });
   }
 }

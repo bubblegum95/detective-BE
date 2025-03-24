@@ -115,7 +115,6 @@ export class UserService {
 
   async returnFoundUser(id: number) {
     const data = await this.findOneWithRelations(id);
-    console.log(data);
     const newCreated = data.createdAt.toString().split(' ', 4).reverse().join(' ');
     return {
       name: data.name,
