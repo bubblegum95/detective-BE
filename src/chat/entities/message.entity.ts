@@ -1,26 +1,42 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, SchemaTypes } from 'mongoose';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { MessageType } from '../type/message.type';
+import { Participant } from './participant.entity';
+import { Room } from './room.entity';
+import { Notice } from './notice.entity';
 
-@Schema()
-export class Message extends Document {
-  @Prop({ required: true, enum: MessageType })
+@Entity({ name: 'message' })
+export class Message {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ type: 'varchar', length: 225, nullable: false })
+  content: string;
+
+  @Column({ type: 'enum', enum: MessageType, nullable: false })
   type: MessageType;
 
-  @Prop({ required: true, type: SchemaTypes.Mixed })
-  content: string | string[];
+  @CreateDateColumn()
+  timestamp: Date;
 
-  @Prop({ required: true }) // User.id
-  sender: number;
+  @Column({ type: 'simple-array', nullable: true })
+  notRead: Array<Participant['id']>;
 
-  @Prop({ required: true }) // Room.id
-  room: number;
+  @JoinColumn({ name: 'sender_id' })
+  @ManyToOne(() => Participant, (participant) => participant.messages)
+  sender: Participant;
 
-  @Prop({ required: true })
-  read: number[];
+  @JoinColumn({ name: 'room_id' })
+  @ManyToOne(() => Room, (room) => room.messages)
+  room: Room;
 
-  @Prop({ default: Date.now() })
-  timestamp: string;
+  @OneToMany(() => Notice, (notice) => notice.message)
+  notices: Notice[];
 }
-
-export const MessageSchema = SchemaFactory.createForClass(Message);

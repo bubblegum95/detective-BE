@@ -1,49 +1,49 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import moment from 'moment';
-import { Notification } from './entities/notification.entity';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { User } from '../user/entities/user.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Notice } from './entities/notice.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class NotificationService {
   constructor(
-    @InjectModel('Notification')
-    private readonly notificationModel: Model<Notification>,
+    @InjectRepository(Notice)
+    private readonly noticeRepository: Repository<Notice>,
   ) {}
 
-  async findManyNotRead(receiver: User['id']) {
-    const notifications = await this.notificationModel
-      .find({ receiver, isRead: false })
-      .sort({ timestamp: -1 })
-      .limit(30)
-      .exec();
-    return notifications.map(({ _id, receiver, sender, room, content, isRead, timestamp }) => {
-      return { id: _id, receiver, sender, room, content, isRead, timestamp };
-    });
+  async findManyNotRead(receiverId: User['id']) {
+    return await this.noticeRepository
+      .createQueryBuilder('notice')
+      .leftJoin('notice.receiver', 'receiver')
+      .leftJoinAndSelect('notice.message', 'message')
+      .leftJoin('message.sender', 'sender')
+      .leftJoinAndSelect('sender.user', 'user')
+      .leftJoinAndSelect('message.room', 'room')
+      .where('receiver.id = :receiverId', { receiverId })
+      .select('user.nickname', 'room.id')
+      .getMany();
+  }
+
+  async findOne(id: Notice['id']) {
+    return await this.noticeRepository
+      .createQueryBuilder('notice')
+      .leftJoinAndSelect('notice.message', 'message')
+      .leftJoinAndSelect('message.room', 'room')
+      .leftJoin('message.sender', 'sender')
+      .leftJoinAndSelect('sender.user', 'user')
+      .where('notice.id = :id', { id })
+      .addSelect(['room.id', 'user.nickname'])
+      .getOne();
   }
 
   async create(dto: CreateNotificationDto) {
-    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
-    const notification = await this.notificationModel.create({
-      ...dto,
-      timestamp,
-    });
-    return {
-      id: notification._id,
-      receiver: notification.receiver,
-      sender: notification.sender,
-      room: notification.room,
-      content: notification.content,
-      isRead: notification.isRead,
-      timestamp: notification.timestamp,
-    };
+    return await this.noticeRepository.save({ ...dto });
   }
 
-  async isRead(id: Notification['_id']) {
-    await this.notificationModel.findByIdAndUpdate(id, {
-      isRead: true,
-    });
+  async update(id: Notice['id']) {
+    return await this.noticeRepository.update(id, { read: true });
   }
 }

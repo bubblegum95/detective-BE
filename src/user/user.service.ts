@@ -21,6 +21,10 @@ export class UserService {
     return await this.userRepository.save({ ...dto });
   }
 
+  async findOneById(id: number) {
+    return await this.userRepository.findOne({ where: { id }, relations: ['role', 'file'] });
+  }
+
   async findOneByEmail(email: User['email']) {
     return await this.userRepository
       .createQueryBuilder('user')
@@ -42,29 +46,24 @@ export class UserService {
     return await this.userRepository.findOne({ where: { phoneNumber } });
   }
 
-  async findOneWithRelations(id: User['id']) {
+  async findOneWithDetective(id: User['id']) {
     return await this.userRepository.findOne({
       where: { id },
-      relations: [
-        'role',
-        'detective',
-        'detective.office',
-        'office',
-        'office.businessFile',
-        'office.employees',
-        'file',
-        'participants',
-        'participants.room',
-      ],
+      relations: ['detective'],
     });
-  }
-
-  async findOneById(id: number) {
-    return await this.userRepository.findOne({ where: { id }, relations: ['role'] });
   }
 
   async findOneByIdSelectPw(id: number) {
     return await this.userRepository.findOne({ where: { id }, select: ['id', 'password'] });
+  }
+
+  async findOneByIdSelectNickname(id: number) {
+    return await this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .where('user.id = :id', { id })
+      .select(['user.id', 'user.nickname', 'role.id', 'role.name'])
+      .getOne();
   }
 
   async verifyPassword(inputPw: string, comparedPw: string) {
@@ -81,7 +80,7 @@ export class UserService {
 
   async updateUserPhoto(userId: number, path: string) {
     try {
-      const user = await this.findOneWithRelations(userId);
+      const user = await this.findOneById(userId);
 
       if (!user.file) {
         const savedFile = await this.saveFile(path);
@@ -113,26 +112,7 @@ export class UserService {
     }
   }
 
-  async returnFoundUser(id: number) {
-    const data = await this.findOneWithRelations(id);
-    const newCreated = data.createdAt.toString().split(' ', 4).reverse().join(' ');
-    return {
-      name: data.name,
-      email: data.email,
-      nickname: data.nickname,
-      phoneNumber: data.phoneNumber,
-      createdAt: newCreated,
-      detective: data.detective,
-      profile: data.file,
-      participants: data.participants,
-    };
-  }
-
-  async findUserNameById(id: number): Promise<string> {
-    const userName = await this.userRepository.findOne({
-      where: { id },
-      select: { nickname: true },
-    });
-    return userName.nickname;
+  createNewDate(date: Date) {
+    return date.toString().split(' ', 4).reverse().join(' ');
   }
 }

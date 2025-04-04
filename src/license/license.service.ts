@@ -16,7 +16,7 @@ export class LicenseService {
   ) {}
 
   async findUser(userId: User['id']) {
-    return await this.userService.findOneWithRelations(userId);
+    return await this.userService.findOneWithDetective(userId);
   }
 
   async create(dto: CreateLicenseDto, detective: Detective) {

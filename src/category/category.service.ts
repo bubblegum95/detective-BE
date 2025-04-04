@@ -11,23 +11,23 @@ export class CategoryService {
     @InjectRepository(Category) private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  create(dto: CreateCategoryDto) {
-    return this.categoryRepository.save({ ...dto });
+  async create(dto: CreateCategoryDto) {
+    return await this.categoryRepository.save({ ...dto });
   }
 
-  findAll() {
-    return this.categoryRepository.find();
+  async findAll() {
+    return await this.categoryRepository.find();
   }
 
-  findOne(id: number) {
-    return this.categoryRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    return await this.categoryRepository.findOne({ where: { id } });
   }
 
-  update(id: number, dto: UpdateCategoryDto) {
-    return this.categoryRepository.update({ id }, { ...dto });
+  async update(id: number, dto: UpdateCategoryDto) {
+    return await this.categoryRepository.update({ id }, { ...dto });
   }
 
-  remove(id: number) {
-    return this.categoryRepository.delete({ id });
+  async remove(id: number) {
+    return await this.categoryRepository.delete({ id });
   }
 }

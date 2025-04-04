@@ -30,18 +30,37 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({ summary: '사용자 정보 조회', description: '사용자 정보 조회' })
-  @ApiConsumes('application/x-www-form-urlencoded')
   @Get()
-  async getUserInfo(@UserInfo('id') userId: User['id'], @Res() res: Response) {
+  async getOne(@UserInfo('id') userId: User['id'], @Res() res: Response) {
     try {
-      const data = await this.userService.returnFoundUser(userId);
+      const data = await this.userService.findOneById(userId);
+      const newCreated = this.userService.createNewDate(data.createdAt);
+      const newUpdated = this.userService.createNewDate(data.updatedAt);
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '사용자 정보를 조회합니다.',
-        data,
+        data: { ...data, createdAt: newCreated, updatedAt: newUpdated },
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({
+        success: false,
+        message: '사용자 정보를 조회할 수 없습니다.',
+        error: error.message,
+      });
+    }
+  }
+
+  @ApiOperation({ summary: '사용자 정보 부분 조회', description: '사용자 정보 부분 조회' })
+  @Get('partial')
+  async getPartialOne(@UserInfo('id') userId: User['id'], @Res() res: Response) {
+    try {
+      const nickname = await this.userService.findOneByIdSelectNickname(userId);
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        data: nickname,
+      });
+    } catch (error) {
+      return res.status(error.status).json({
         success: false,
         message: '사용자 정보를 조회할 수 없습니다.',
         error: error.message,

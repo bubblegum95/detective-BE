@@ -4,6 +4,7 @@ import { User } from '../user/entities/user.entity';
 import { Socket } from 'socket.io';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Detective } from '../detective/entities/detective.entity';
+import { Participant } from '../chat/entities/participant.entity';
 
 @Injectable()
 export class RedisService {
@@ -33,15 +34,15 @@ export class RedisService {
     return await this.cacheManager.del(`id:${userId}`);
   }
 
-  async setSocketUserId(clientId: Socket['id'], userId: User['id']) {
-    return await this.cacheManager.set(`socket:${clientId}`, userId);
+  async setSocketParticipant(clientId: Socket['id'], participantId: Participant['id']) {
+    return await this.cacheManager.set(`socket:${clientId}`, participantId);
   }
 
-  async getSocketUserId(clientId: Socket['id']) {
+  async getSocketParticipant(clientId: Socket['id']) {
     return await this.cacheManager.get<string>(`socket:${clientId}`);
   }
 
-  async clearSocketUserId(clientId: Socket['id']) {
+  async clearSocketParticipant(clientId: Socket['id']) {
     return await this.cacheManager.del(`socket:${clientId}`);
   }
 

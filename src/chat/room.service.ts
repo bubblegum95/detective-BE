@@ -19,6 +19,11 @@ export class RoomService {
     return await this.userService.findOneById(userId);
   }
 
+  async findUserNickname(userId: User['id']) {
+    const user = await this.userService.findOneByIdSelectNickname(userId);
+    return user.nickname;
+  }
+
   async findUserByEmail(email: User['email']) {
     return await this.userService.findOneByEmail(email);
   }
@@ -38,10 +43,12 @@ export class RoomService {
   async findMany(userId: User['id']) {
     return await this.roomRepository
       .createQueryBuilder('room')
-      .leftJoin('room.participants', 'p')
-      .leftJoinAndSelect('p.user', 'u')
-      .addSelect(['u.nickname'])
-      .where('u.id = :userId', { userId })
+      .innerJoinAndSelect('room.participants', 'participants')
+      .innerJoinAndSelect('participants.user', 'user')
+      .leftJoinAndSelect('room.participants', 'allParticipants')
+      .leftJoinAndSelect('allParticipants.user', 'allUsers')
+      .where('user.id = :userId', { userId })
+      .addSelect(['allUsers.nickname'])
       .getMany();
   }
 

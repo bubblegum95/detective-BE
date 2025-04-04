@@ -1,6 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { Room } from '../../chat/entities/room.entity';
 import { User } from '../../user/entities/user.entity';
+import { Message } from './message.entity';
 
 @Entity({ name: 'participant' })
 export class Participant {
@@ -17,4 +25,7 @@ export class Participant {
   @ManyToOne(() => User, (user) => user.participants)
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @OneToMany(() => Message, (message) => message.sender)
+  messages: Message[];
 }

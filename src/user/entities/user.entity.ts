@@ -18,6 +18,7 @@ import { Office } from '../../office/entities/office.entity';
 import { Detective } from '../../detective/entities/detective.entity';
 import { Role } from '../../role/entities/role.entity';
 import { Participant } from '../../chat/entities/participant.entity';
+import { Notice } from '../../chat/entities/notice.entity';
 
 @Entity({ name: 'user' })
 export class User {
@@ -68,6 +69,9 @@ export class User {
 
   @OneToMany(() => Consultation, (consultation) => consultation.consumer)
   consultation: Consultation[];
+
+  @OneToMany(() => Notice, (notice) => notice.receiver)
+  notices: Notice[];
 
   @OneToOne(() => Office, (office) => office.owner)
   office: Office;

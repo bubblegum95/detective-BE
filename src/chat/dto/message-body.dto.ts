@@ -1,11 +1,11 @@
-import { User } from '../../user/entities/user.entity';
+import { Participant } from '../entities/participant.entity';
 import { Room } from '../entities/room.entity';
 import { MessageType } from '../type/message.type';
 
 export class CreateMessageDto {
-  sender: User['id'];
   type: MessageType;
-  content: string | string[];
-  room: Room['id'];
-  read: Array<User['id']>;
+  content: string;
+  sender: Participant;
+  room: Room;
+  notRead: Array<Participant['id']>;
 }

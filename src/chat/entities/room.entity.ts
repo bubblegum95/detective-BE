@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Participant } from './participant.entity';
-import { File } from '../../s3/entities/s3.entity';
+import { Message } from './message.entity';
 
 @Entity({ name: 'room' })
 export class Room {
@@ -15,4 +15,7 @@ export class Room {
 
   @OneToMany(() => Participant, (participant) => participant.room)
   participants: Participant[];
+
+  @OneToMany(() => Message, (message) => message.room)
+  messages: Message[];
 }

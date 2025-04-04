@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { Message, MessageSchema } from './entities/message.entity';
 import { ChatGateway } from './chat.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -13,10 +12,11 @@ import { S3Module } from '../s3/s3.module';
 import { ChatController } from './chat.controller';
 import { File } from '../s3/entities/s3.entity';
 import { NotificationService } from './notification.service';
-import { Notification, NotificationSchema } from './entities/notification.entity';
 import { ParticipantService } from './participant.service';
 import { Participant } from './entities/participant.entity';
 import { MessageService } from './message.service';
+import { Message } from './entities/message.entity';
+import { Notice } from './entities/notice.entity';
 
 @Module({
   controllers: [ChatController],
@@ -28,11 +28,7 @@ import { MessageService } from './message.service';
     RedisModule,
     JwtModule,
     UserModule,
-    MongooseModule.forFeature([
-      { name: Message.name, schema: MessageSchema },
-      { name: Notification.name, schema: NotificationSchema },
-    ]),
-    TypeOrmModule.forFeature([User, Room, Participant, File]),
+    TypeOrmModule.forFeature([User, Room, Participant, Message, Notice, File]),
   ],
 })
 export class ChatModule {}

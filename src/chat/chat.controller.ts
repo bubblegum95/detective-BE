@@ -15,7 +15,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { User } from '../user/entities/user.entity';
 import { RoomService } from './room.service';
@@ -52,46 +52,56 @@ export class ChatController {
     @UploadedFile() file: Express.Multer.File,
     @Res() res: Response,
   ) {
-    const roomUser = await this.participantService.findByRoomUser(id, userId);
-    if (!roomUser) {
+    const sender = await this.participantService.findByRoomUser(id, userId);
+    if (!sender) {
       throw new UnauthorizedException('해당 채팅방 참여자가 아닙니다.');
     }
     const type = MessageType.File;
     const path = file.filename;
-    const { readers, room } = await this.chatGateway.createReaders(userId, id);
+    const { room, readers } = await this.chatGateway.createReaders(sender.id, +id);
     const message = await this.messageService.create({
-      sender: userId,
+      sender,
       type,
       content: path,
-      room: id,
-      read: readers,
+      room,
+      notRead: readers,
     });
+    console.log('create message successfully: ', message);
 
-    const foundSender = await this.roomService.findUser(userId);
+    const foundSender = await this.chatGateway.findNickname(userId);
+    const koreaTime = await this.chatGateway.toKoreaTime(message.timestamp);
     const sendMessage = {
       id: message.id,
-      sender: foundSender.nickname,
+      sender: foundSender,
       type: message.type,
       content: message.content,
-      timestamp: message.timestamp,
-      read: message.read.length,
+      timestamp: koreaTime,
+      notRead: message.notRead,
     };
-    await this.chatGateway.sendMessage(room, sendMessage);
+    await this.chatGateway.sendMessage(room.name, sendMessage);
 
-    for (const reader of message.read) {
-      const notice = await this.chatGateway.createNotification({
-        receiver: reader,
-        sender: message.sender,
-        content: message.content,
-        room: message.room,
-        isRead: false,
+    for (const reader of message.notRead) {
+      const participant = await this.participantService.findOneByIdWithUser(reader);
+      const notice = await this.chatGateway.createNotice({
+        receiver: participant.user,
+        message: message,
+        read: false,
       });
-      const clientId = await this.chatGateway.getUserIdSocket(reader);
+      const clientId = await this.chatGateway.getUserIdSocket(participant.user.id);
       if (!clientId) {
         // socket 이 연결되어 있을 경우에만 알람 전송
         continue;
       }
-      await this.chatGateway.notify(clientId, notice);
+      const findNotice = await this.chatGateway.findNotice(notice.id);
+      const sendNotice = {
+        id: findNotice.id,
+        room: findNotice.message.room.id,
+        sender: findNotice.message.sender.user.nickname,
+        content: findNotice.message.content,
+        timestamp: findNotice.message.timestamp,
+        read: findNotice.read,
+      };
+      await this.chatGateway.sendNotice(clientId, sendNotice);
     }
 
     return res.status(HttpStatus.CREATED).json({
