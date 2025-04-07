@@ -164,7 +164,11 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     });
   }
 
-  async createReaders(
+  findJoinSocket(room: Room['name']): Set<Socket['id']> {
+    return this.server.sockets.adapter.rooms.get(room);
+  }
+
+  async createNotReaders(
     sender: Participant['id'],
     roomId: Room['id'],
   ): Promise<{ room: Room; readers: Array<Participant['id']> }> {
@@ -173,7 +177,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const room = await this.roomService.findOne(+roomId);
       room.participants.map(({ id }) => read.add(+id));
       read.delete(+sender); // 발신자는 제거
-      const sockets: Set<Socket['id']> = this.server.sockets.adapter.rooms.get(room.name); // join 되어 있는 소켓들
+      const sockets: Set<Socket['id']> = this.findJoinSocket(room.name); // join 되어 있는 소켓들
 
       if (!sockets) {
         return { room, readers: Array.from(read) };
@@ -204,12 +208,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     const roomInfos = await Promise.all(
       rooms.map(async (room) => {
         const me = room.participants.find(({ user }) => user.id === userId);
-        const participants = room.participants.map(({ user }) => user.nickname);
+        const participants = room.participants.filter(({ user }) => user.id !== userId);
+        const participantsName = participants.map(({ user }) => user.nickname);
         const latestMessage = await this.messageService.findLastOne(room.id);
         return {
           roomId: room.id,
           me: me.id,
-          participants,
+          participants: participantsName,
           latestMessage: latestMessage ? latestMessage : null,
         };
       }),
@@ -305,6 +310,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
             id,
             type,
             sender: sender.user.nickname,
+            senderId: sender.id,
             content,
             notRead,
             timestamp: koreaTime,
@@ -318,13 +324,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   @SubscribeMessage('readMessage')
-  async readMessage(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { id: Message['id']; reader: Participant['id'] },
-  ) {
-    await this.messageService.update(data.id, data.reader);
-    const result = await this.messageService.findOneById(data.id);
-    client.emit('updatedMessage', result);
+  async readMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { id: Message['id'] }) {
+    const participantId = await this.getSocketParticipant(client.id);
+    await this.messageService.update(data.id, +participantId);
+    const result = await this.messageService.findOneByIdWithRoom(data.id);
+    const room = result.room.name;
+    this.server.in(room).emit('updatedMessage', result);
   }
 
   @SubscribeMessage('sendMessage')
@@ -340,7 +345,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         throw new WsException('해당 채팅방의 초대자가 아닙니다.');
       }
 
-      const { room, readers } = await this.createReaders(sender.id, +roomId);
+      const { room, readers } = await this.createNotReaders(sender.id, +roomId);
       const type = MessageType.Text;
       const message = await this.messageService.create({
         sender,
@@ -356,6 +361,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const sendMessage = {
         id: message.id,
         sender: foundSender,
+        senderId: sender.id,
         type: message.type,
         content: message.content,
         timestamp: koreaTime,

@@ -58,7 +58,7 @@ export class ChatController {
     }
     const type = MessageType.File;
     const path = file.filename;
-    const { room, readers } = await this.chatGateway.createReaders(sender.id, +id);
+    const { room, readers } = await this.chatGateway.createNotReaders(sender.id, +id);
     const message = await this.messageService.create({
       sender,
       type,
@@ -73,6 +73,7 @@ export class ChatController {
     const sendMessage = {
       id: message.id,
       sender: foundSender,
+      senderId: sender.id,
       type: message.type,
       content: message.content,
       timestamp: koreaTime,

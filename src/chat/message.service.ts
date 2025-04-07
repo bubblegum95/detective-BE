@@ -16,10 +16,11 @@ export class MessageService {
     return await this.messageRepository
       .createQueryBuilder('message')
       .leftJoinAndSelect('message.sender', 'sender')
-      .leftJoinAndSelect('sender.user', 'user')
+      .leftJoinAndSelect('sender.user', 'user') // participant
       .leftJoin('message.room', 'room')
       .where('room.id = :roomId', { roomId })
-      .addSelect('user.nickname')
+      .addSelect(['sender.id', 'user.nickname'])
+      .orderBy('timestamp', 'DESC')
       .offset(offset)
       .limit(limit)
       .getMany();
@@ -27,6 +28,10 @@ export class MessageService {
 
   async findOneById(id: Message['id']) {
     return await this.messageRepository.findOne({ where: { id } });
+  }
+
+  async findOneByIdWithRoom(id: Message['id']) {
+    return await this.messageRepository.findOne({ where: { id }, relations: ['room'] });
   }
 
   async findLastOne(roomId: Room['id']): Promise<Message | null> {
