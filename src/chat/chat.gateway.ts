@@ -126,8 +126,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return this.redisService.clearUserIdSocket(userId);
   }
 
-  async setSocketParticipant(clientId: Socket['id'], userId: User['id']) {
-    return await this.redisService.setSocketParticipant(clientId, userId);
+  async setSocketParticipant(clientId: Socket['id'], participantId: Participant['id']) {
+    return await this.redisService.setSocketParticipant(clientId, participantId);
   }
 
   async getSocketParticipant(clientId: Socket['id']) {
@@ -203,25 +203,31 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('getMyRooms')
   async findMyRoom(@ConnectedSocket() client: Socket) {
-    const userId = client.data.user.id;
-    const rooms = await this.roomService.findMany(userId);
-    const roomInfos = await Promise.all(
-      rooms.map(async (room) => {
-        const me = room.participants.find(({ user }) => user.id === userId);
-        const participants = room.participants.filter(({ user }) => user.id !== userId);
-        const participantsName = participants.map(({ user }) => user.nickname);
-        const latestMessage = await this.messageService.findLastOne(room.id);
-        return {
-          roomId: room.id,
-          me: me.id,
-          participants: participantsName,
-          latestMessage: latestMessage ? latestMessage : null,
-        };
-      }),
-    );
-    console.log('rooms: ', rooms);
+    try {
+      const userId = client.data.user.id;
+      const rooms = await this.roomService.findMany(userId);
+      const roomInfos = await Promise.all(
+        rooms.map(async (room) => {
+          const participants = room.participants;
+          const me = participants.find(({ user }) => {
+            return user.id === userId;
+          });
+          const others: Array<Participant> = participants.filter(({ user }) => user.id !== userId);
+          const name: Array<User['nickname']> = others.map(({ user }) => user.nickname);
+          const latestMessage = await this.messageService.findLastOne(room.id);
+          return {
+            roomId: room.id,
+            me: me.id,
+            participants: name,
+            latestMessage: latestMessage ? latestMessage : null,
+          };
+        }),
+      );
 
-    client.emit('rooms', roomInfos);
+      client.emit('rooms', roomInfos);
+    } catch (error) {
+      client.emit('error', error.message);
+    }
   }
 
   // 초대하기. 만약에 room이 있으면 => 조인 => 메시지 가져오기 가 한번에 이루어져야 함.
@@ -255,14 +261,17 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   @SubscribeMessage('join')
   async join(@ConnectedSocket() client: Socket, @MessageBody() dto: { roomId: Room['id'] }) {
     try {
+      console.log('join with:', dto.roomId);
       const userId = client.data.user.id;
       const participant = await this.participantService.findByRoomUser(dto.roomId, userId);
       if (!participant) {
         throw new WsException('해당 채팅방의 참여자가 아닙니다.');
       }
+      console.log('set participant id with client in redis:', client.id, participant.id);
       await this.setSocketParticipant(client.id, participant.id);
       const room = participant.room.name;
       client.join(room);
+      client.emit('server_message:', 'join successfully!');
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -301,7 +310,12 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     @MessageBody() data: { roomId: Room['id']; page: number; limit: number },
   ): Promise<void> {
     try {
+      const userId = client.data.user.id;
       const { roomId, page, limit } = data;
+      const participant = await this.participantService.findByRoomUser(roomId, userId);
+      if (!participant) {
+        throw new WsException('해당 채팅방의 참여자가 아닙니다.');
+      }
       const messages = await this.messageService.findMany(roomId, page, limit);
       const result = await Promise.all(
         messages.map(async ({ id, type, sender, content, notRead, timestamp }) => {
@@ -325,11 +339,18 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
   @SubscribeMessage('readMessage')
   async readMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { id: Message['id'] }) {
-    const participantId = await this.getSocketParticipant(client.id);
-    await this.messageService.update(data.id, +participantId);
-    const result = await this.messageService.findOneByIdWithRoom(data.id);
-    const room = result.room.name;
-    this.server.in(room).emit('updatedMessage', result);
+    try {
+      const participantId = await this.getSocketParticipant(client.id);
+      if (!participantId) {
+        throw new WsException('redis: participant를 찾을 수 없습니다.');
+      }
+      await this.messageService.update(data.id, +participantId);
+      const result = await this.messageService.findOneByIdWithRoom(data.id);
+      const room = result.room.name;
+      this.server.in(room).emit('updatedMessage', result);
+    } catch (error) {
+      client.emit('error', error.message);
+    }
   }
 
   @SubscribeMessage('sendMessage')

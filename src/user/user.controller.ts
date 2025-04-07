@@ -21,6 +21,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { hash } from 'bcrypt';
 import { multerOptions } from '../utils/multerStorage';
 import { User } from './entities/user.entity';
+import { UpdateUserQueryType } from './type/update-user-query.type';
 
 @ApiTags('User')
 @UseGuards(JwtAuthGuard)
@@ -74,7 +75,7 @@ export class UserController {
   @Patch()
   async updateUserInfo(
     @UserInfo('id') userId: number,
-    @Query('type') type: 'nickname' | 'password' | 'file',
+    @Query('type') type: UpdateUserQueryType,
     @Body() dto: UpdateUserDto,
     @Res() res: Response,
     @UploadedFile() file?: Express.Multer.File | undefined,
@@ -82,14 +83,14 @@ export class UserController {
     try {
       let result = 0;
       switch (type) {
-        case 'nickname':
+        case UpdateUserQueryType.NICKNAME:
           if (!dto.nickname) {
             throw new BadRequestException('닉네임을 입력해주세요.');
           }
           result = await this.userService.update(userId, dto);
           break;
 
-        case 'password':
+        case UpdateUserQueryType.PASSWORD:
           if (!dto.password || !dto.newPassword || !dto.passwordConfirm) {
             throw new BadRequestException('기존의 비밀번호와 변경하실 비밀번호를 입력해주세요.');
           }
@@ -109,7 +110,7 @@ export class UserController {
           result = await this.userService.update(userId, { password: hashedPassword });
           break;
 
-        case 'file':
+        case UpdateUserQueryType.File:
           if (!file) {
             throw new BadRequestException('이미지를 업로드해주세요.');
           }

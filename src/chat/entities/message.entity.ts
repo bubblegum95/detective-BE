@@ -26,7 +26,7 @@ export class Message {
   @CreateDateColumn()
   timestamp: Date;
 
-  @Column({ type: 'simple-array', nullable: true })
+  @Column({ type: 'int', array: true, default: [] })
   notRead: Array<Participant['id']>;
 
   @JoinColumn({ name: 'sender_id' })

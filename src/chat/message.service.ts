@@ -56,7 +56,7 @@ export class MessageService {
   async update(id: Message['id'], readerId: Participant['id']) {
     return await this.messageRepository.update(
       { id },
-      { notRead: () => `array_remove("notRead", ${readerId})` },
+      { notRead: () => `array_remove("not_read", ${+readerId})` },
     );
   }
 }
