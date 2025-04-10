@@ -13,11 +13,21 @@ import {
   Query,
   UnauthorizedException,
   ConflictException,
+  BadRequestException,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { ConsultationService } from './consultation.service';
 import { CreateConsultationDto } from './dto/create-consultation.dto';
 import { UpdateConsultationDto } from './dto/update-consultation.dto';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../utils/guards/jwt-auth.guard';
 import { UserInfo } from '../utils/decorators/decorator';
 import { User } from '../user/entities/user.entity';
@@ -28,6 +38,7 @@ import { ConsumerConsultationsQueryDto } from './dto/consumer-consultations-quer
 import { DetectiveConsultationsQueryDto } from './dto/detective-consultations-query.dto';
 import { Consultation } from './entities/consultation.entity';
 import { ConsultationStatus } from './types/status.type';
+import { Category } from '../category/entities/category.entity';
 
 @Controller('consultations')
 @UseGuards(JwtAuthGuard)
@@ -41,15 +52,26 @@ export class ConsultationController {
   @ApiConsumes('application/x-www-form-urlencoded')
   @ApiOperation({ summary: '상담 신청', description: '상담 신청' })
   @ApiBody({ type: CreateConsultationDto })
+  @ApiParam({ name: 'detectiveId', type: 'number', example: 1, description: '탐정 id' })
+  @ApiQuery({ name: 'categoryId', type: 'number', example: 1, description: '카테고리 id' })
   async create(
-    @Param('detectiveId') detectiveId: Detective['id'],
+    @Param('detectiveId', ParseIntPipe) detectiveId: Detective['id'],
+    @Query('categoryId', ParseIntPipe) categoryId: Category['id'],
     @Body() dto: CreateConsultationDto,
     @UserInfo('id') userId: User['id'],
     @Res() res: Response,
   ) {
-    const consumer = await this.consultationService.findUser(userId);
-    const detective = await this.consultationService.findDetective(detectiveId);
-    const consultation = await this.consultationService.create(dto, consumer, detective);
+    console.log(detectiveId, typeof detectiveId, categoryId, typeof categoryId);
+    const consumer = await this.consultationService.findUser(+userId);
+    const detective = await this.consultationService.findDetectiveWithUser(+detectiveId);
+    const category = await this.consultationService.findCategory(categoryId);
+    if (!consumer || !detective || !category) {
+      throw new BadRequestException('사용자, 탐정, 또는 카테고리가 없습니다.');
+    }
+    if (detective.user.id === userId) {
+      throw new BadRequestException('자기 자신에게 상담 요청을 할 수 없습니다.');
+    }
+    const consultation = await this.consultationService.create(dto, consumer, detective, category);
     return res.status(HttpStatus.CREATED).json({
       success: true,
       message: '상담 신청을 성공적으로 완료하였습니다.',
@@ -64,12 +86,17 @@ export class ConsultationController {
     @Query() query: ConsumerConsultationsQueryDto,
     @Res() res: Response,
   ) {
-    const take = query.limit;
-    const skip = (query.page - 1) * take;
-    const consultations = await this.consultationService.findAllForConsumers(userId, skip, take);
+    const limit = query.limit;
+    const offset = (query.page - 1) * limit;
+    const [consultations, total] = await this.consultationService.findAllForConsumers(
+      userId,
+      offset,
+      limit,
+    );
     return res.status(HttpStatus.OK).json({
       success: true,
       message: '내 상담 신청 내역을 조회합니다.',
+      total,
       data: consultations,
     });
   }
@@ -83,7 +110,7 @@ export class ConsultationController {
   ) {
     const take = query.limit;
     const skip = (query.page - 1) * take;
-    const consultations = await this.consultationService.findAllForDetectives(
+    const [consultations, total] = await this.consultationService.findAllForDetectives(
       userId,
       skip,
       take,
@@ -92,18 +119,23 @@ export class ConsultationController {
     return res.status(HttpStatus.OK).json({
       success: true,
       message: '내 상담을 조회합니다.',
+      total,
       data: consultations,
     });
   }
 
   @Get(':id')
   @ApiOperation({ description: '상담 내역 단일 조회', summary: '상담 내역 단일 조회' })
-  async findOne(@Param('id') id: Consultation['id']) {
-    const consultation = this.consultationService.findOne(+id);
+  @ApiParam({ name: 'id', example: 1, type: 'number', description: '상담 id' })
+  async findOne(@Param('id') id: Consultation['id'], @UserInfo('id') userId: User['id']) {
+    const consulting = await this.consultationService.findOne(+id);
+    if (!consulting) {
+      throw new BadRequestException('상담 내역을 찾을 수 없습니다.');
+    }
     return {
       success: true,
       message: '상담 내역을 조회합니다.',
-      data: consultation,
+      data: consulting,
     };
   }
 
@@ -111,6 +143,7 @@ export class ConsultationController {
   @ApiOperation({ description: '상담 내용 수정', summary: '상담 내용 수정' })
   @ApiConsumes('applicaiton/x-www-form-urlencoded')
   @ApiBody({ type: UpdateConsultationDto })
+  @ApiParam({ name: 'id', type: 'number', example: 1, description: '상담 id' })
   async updateContent(
     @Param('id') id: Consultation['id'],
     @Body() updateConsultationDto: UpdateConsultationDto,
@@ -132,6 +165,13 @@ export class ConsultationController {
 
   @Patch(':id/status')
   @ApiOperation({ description: '상담 상태 수정', summary: '상담 상태 수정' })
+  @ApiParam({ name: 'id', type: 'number', example: 1, description: '상담 id' })
+  @ApiQuery({
+    name: 'status',
+    type: 'enum',
+    enum: ConsultationStatus,
+    example: ConsultationStatus.PENDING,
+  })
   async updateStatus(
     @Param('id') id: Consultation['id'],
     @Query('status') status: ConsultationStatus,
@@ -153,7 +193,16 @@ export class ConsultationController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string, @UserInfo() user: User) {
-    return this.consultationService.remove(+id);
+  @ApiOperation({ description: '상담 삭제', summary: '상담 삭제' })
+  @ApiParam({ name: 'id', type: 'number', example: 1, description: '상담 id' })
+  async remove(@Param('id') id: Consultation['id'], @UserInfo('id') userId: User['id']) {
+    const consulting = await this.consultationService.findOne(id);
+    if (!consulting) {
+      throw new BadRequestException('상담 내역이 없습니다.');
+    }
+    if (consulting.consumer.id !== userId) {
+      throw new BadRequestException('권한이 없습니다.');
+    }
+    return await this.consultationService.remove(+id);
   }
 }

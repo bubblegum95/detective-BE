@@ -1,6 +1,5 @@
-import { Column, Entity, JoinColumn, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { Consultation } from '../../consultation/entities/consultation.entity';
-import { CategoryEnum } from '../type/category.type';
 import { DetectiveCategory } from '../../detective/entities/detectiveCategory.entity';
 
 @Entity({ name: 'category' })
@@ -14,6 +13,6 @@ export class Category {
   @OneToMany(() => DetectiveCategory, (detectiveCategories) => detectiveCategories.category)
   detectiveCategories: DetectiveCategory[];
 
-  @OneToMany(() => Consultation, (consultation) => consultation.categories)
-  consultation: Consultation;
+  @OneToMany(() => Consultation, (consultation) => consultation.category)
+  consultations: Consultation[];
 }

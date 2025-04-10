@@ -9,6 +9,8 @@ import { User } from '../user/entities/user.entity';
 import { Detective } from '../detective/entities/detective.entity';
 import { UserService } from '../user/user.service';
 import { DetectiveService } from '../detective/detective.service';
+import { Category } from '../category/entities/category.entity';
+import { CategoryService } from '../category/category.service';
 
 @Injectable()
 export class ConsultationService {
@@ -17,6 +19,7 @@ export class ConsultationService {
     private readonly consultationRepository: Repository<Consultation>,
     private readonly userService: UserService,
     private readonly detectiveService: DetectiveService,
+    private readonly categoryService: CategoryService,
   ) {}
 
   async findUser(id: User['id']) {
@@ -27,52 +30,79 @@ export class ConsultationService {
     return await this.detectiveService.findOne(id);
   }
 
-  async create(dto: CreateConsultationDto, consumer: User, detective: Detective) {
-    return await this.consultationRepository.save({ ...dto, consumer, detective });
+  async findDetectiveWithUser(id: Detective['id']) {
+    return await this.detectiveService.findOneWithUser(id);
   }
 
-  async findAllForConsumers(userId: User['id'], skip: number, take: number) {
+  async findCategory(id: Category['id']) {
+    return await this.categoryService.findOne(id);
+  }
+
+  async create(
+    dto: CreateConsultationDto,
+    consumer: User,
+    detective: Detective,
+    category: Category,
+  ) {
+    return await this.consultationRepository.save({ ...dto, consumer, detective, category });
+  }
+
+  async findAllForConsumers(userId: User['id'], offset: number, limit: number) {
     return await this.consultationRepository
       .createQueryBuilder('consultation')
-      .leftJoin('consultation.user', 'u')
-      .where('u.id = :userId', { userId })
-      .skip(skip)
-      .take(take)
-      .getMany();
+      .leftJoin('consultation.category', 'category')
+      .leftJoin('consultation.consumer', 'c')
+      .leftJoin('consultation.detective', 'd')
+      .leftJoin('d.user', 'u')
+      .where('c.id = :userId', { userId })
+      .select([
+        'consultation.id',
+        'consultation.subject',
+        'consultation.state',
+        'consultation.createdAt',
+      ])
+      .addSelect(['category.id', 'category.name', 'd.id', 'u.name', 'u.email', 'c.nickname'])
+      .offset(offset)
+      .limit(limit)
+      .getManyAndCount();
   }
 
   async findAllForDetectives(
     userId: number,
-    skip: number,
-    take: number,
+    offset: number,
+    limit: number,
     status?: ConsultationStatus,
   ) {
     const query = this.consultationRepository
       .createQueryBuilder('consultation')
+      .leftJoin('consultation.category', 'category')
       .leftJoin('consultation.detective', 'd')
       .leftJoin('d.user', 'u')
-      .leftJoinAndSelect('consultation.consumer', 'c')
-      .addSelect(['c.email', 'c.nickname'])
+      .leftJoin('consultation.consumer', 'c')
       .where('u.id = :userId', { userId })
-      .skip(skip)
-      .take(take);
+      .select(['consultation.id', 'consultation.subject'])
+      .addSelect(['category.id', 'category.name', 'd.id', 'u.name', 'c.email', 'c.nickname'])
+      .offset(offset)
+      .limit(limit);
 
     if (status) {
       query.andWhere('consultation.status = :status', { status });
     }
 
-    return await query.getMany();
+    return await query.getManyAndCount();
   }
 
   async findOne(id: Consultation['id']) {
     return await this.consultationRepository
       .createQueryBuilder('consultation')
-      .leftJoinAndSelect('consultation.consumer', 'consumer')
-      .leftJoin('consultation.detective', 'd')
-      .leftJoinAndSelect('d.user', 'user')
+      .leftJoinAndSelect('consultation.category', 'category')
+      .leftJoin('consultation.consumer', 'consumer')
+      .leftJoin('consultation.detective', 'detective')
+      .leftJoin('detective.user', 'user')
       .addSelect([
         'consumer.email',
         'consumer.nickname',
+        'detective.id',
         'user.email',
         'user.nickname',
         'user.name',

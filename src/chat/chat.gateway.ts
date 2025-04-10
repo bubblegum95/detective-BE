@@ -158,12 +158,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     return await this.roomService.findUserNickname(userId);
   }
 
-  async toKoreaTime(timestamp: Date | string) {
-    return new Date(timestamp).toLocaleString('ko-KR', {
-      timeZone: 'Asia/Seoul',
-    });
-  }
-
   findJoinSocket(room: Room['name']): Set<Socket['id']> {
     return this.server.sockets.adapter.rooms.get(room);
   }
@@ -238,21 +232,23 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async invite(@ConnectedSocket() client: Socket, @MessageBody() data: CreateRoomDto) {
     try {
       let room: Room;
+      let me: Participant;
       const inviter = client.data.user;
       const invitee = await this.roomService.findUserByEmail(data.email);
       const alreadyHasRoom = await this.participantService.findExistingRoom(inviter.id, invitee.id);
       if (alreadyHasRoom) {
         // 룸이 이미 존재하는 경우
-        room = alreadyHasRoom.room;
+        me = alreadyHasRoom;
+        room = me.room;
         client.join(room.name);
       } else {
         // 존재하는 룸이 없는 경우
         room = await this.roomService.create();
-        await this.participantService.create(room, inviter);
+        me = await this.participantService.create(room, inviter);
         await this.participantService.create(room, invitee);
         client.join(room.name);
       }
-      client.emit('room', { roomId: room.id });
+      client.emit('room', { roomId: room.id, me: me.id });
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -319,7 +315,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       const messages = await this.messageService.findMany(roomId, page, limit);
       const result = await Promise.all(
         messages.map(async ({ id, type, sender, content, notRead, timestamp }) => {
-          const koreaTime = await this.toKoreaTime(timestamp);
           return {
             id,
             type,
@@ -327,7 +322,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
             senderId: sender.id,
             content,
             notRead,
-            timestamp: koreaTime,
+            timestamp,
           };
         }),
       );
@@ -378,14 +373,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       console.log('create message successfully: ', message);
 
       const foundSender = await this.findNickname(senderId);
-      const koreaTime = await this.toKoreaTime(message.timestamp);
       const sendMessage = {
         id: message.id,
         sender: foundSender,
         senderId: sender.id,
         type: message.type,
         content: message.content,
-        timestamp: koreaTime,
+        timestamp: message.timestamp,
         notRead: message.notRead,
       };
       await this.sendMessage(room.name, sendMessage);

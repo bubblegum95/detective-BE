@@ -35,12 +35,10 @@ export class UserController {
   async getOne(@UserInfo('id') userId: User['id'], @Res() res: Response) {
     try {
       const data = await this.userService.findOneById(userId);
-      const newCreated = this.userService.createNewDate(data.createdAt);
-      const newUpdated = this.userService.createNewDate(data.updatedAt);
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '사용자 정보를 조회합니다.',
-        data: { ...data, createdAt: newCreated, updatedAt: newUpdated },
+        data,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({

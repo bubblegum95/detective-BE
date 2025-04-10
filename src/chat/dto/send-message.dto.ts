@@ -9,6 +9,6 @@ export class SendMessageDto {
   senderId: Participant['id'];
   type: MessageType;
   content: Message['content'];
-  timestamp: string;
+  timestamp: Date;
   notRead: Message['notRead'];
 }

@@ -76,6 +76,10 @@ export class DetectiveService {
       .getOne();
   }
 
+  async findOneWithUser(id: Detective['id']) {
+    return await this.detectiveRepository.findOne({ where: { id }, relations: ['user'] });
+  }
+
   async update(id: Detective['id'], dto: UpdateDetectiveDao) {
     return await this.detectiveRepository.update({ id }, { ...dto });
   }
