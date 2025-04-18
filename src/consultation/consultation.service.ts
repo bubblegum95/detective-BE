@@ -58,7 +58,7 @@ export class ConsultationService {
       .select([
         'consultation.id',
         'consultation.subject',
-        'consultation.state',
+        'consultation.status',
         'consultation.createdAt',
       ])
       .addSelect(['category.id', 'category.name', 'd.id', 'u.name', 'u.email', 'c.nickname'])
@@ -80,7 +80,12 @@ export class ConsultationService {
       .leftJoin('d.user', 'u')
       .leftJoin('consultation.consumer', 'c')
       .where('u.id = :userId', { userId })
-      .select(['consultation.id', 'consultation.subject'])
+      .select([
+        'consultation.id',
+        'consultation.subject',
+        'consultation.status',
+        'consultation.createdAt',
+      ])
       .addSelect(['category.id', 'category.name', 'd.id', 'u.name', 'c.email', 'c.nickname'])
       .offset(offset)
       .limit(limit);

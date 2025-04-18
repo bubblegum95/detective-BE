@@ -13,7 +13,7 @@ import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'file' })
 export class File {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false })

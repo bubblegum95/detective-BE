@@ -4,7 +4,7 @@ import { Message } from './message.entity';
 
 @Entity({ name: 'room' })
 export class Room {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', nullable: false })

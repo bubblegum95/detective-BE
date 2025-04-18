@@ -4,7 +4,7 @@ import { DetectiveCategory } from '../../detective/entities/detectiveCategory.en
 
 @Entity({ name: 'category' })
 export class Category {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', nullable: false })

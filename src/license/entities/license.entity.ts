@@ -3,7 +3,7 @@ import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'license' })
 export class License {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 225, nullable: false })

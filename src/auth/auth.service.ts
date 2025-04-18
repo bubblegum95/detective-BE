@@ -77,6 +77,10 @@ export class AuthService {
     return await this.officeService.findOneById(officeId);
   }
 
+  async findOfficeByBn(bn: Office['businessNum']) {
+    return await this.officeService.findOneByBn(bn);
+  }
+
   async createInvtieToken(requester: User['email'], officeId: Office['id']) {
     const payload = { email: requester, officeId: officeId };
     const INVITE_SECRET_KEY = this.configService.get<string>('INVITE_SECRET_KEY');
@@ -117,9 +121,8 @@ export class AuthService {
     }
   }
 
-  async createUser(queryRunner: QueryRunner, dto: CreateConsumerDto) {
+  async createUser(queryRunner: QueryRunner, dto: CreateConsumerDto, role: Role) {
     try {
-      const role = (await this.findRole(RoleType.USER)) || (await this.createRole(RoleType.USER));
       const hashedPassword = await this.hashPassword(dto.password, 10);
       return await queryRunner.manager.getRepository(User).save({
         ...dto,
@@ -156,7 +159,9 @@ export class AuthService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const user = await this.createUser(queryRunner, dto);
+      const role =
+        (await this.findRole(RoleType.CLIENT)) || (await this.createRole(RoleType.CLIENT));
+      const user = await this.createUser(queryRunner, dto, role);
       await queryRunner.commitTransaction();
       return user;
     } catch (error) {
@@ -172,8 +177,19 @@ export class AuthService {
     await queryRunner.startTransaction();
 
     try {
-      const user = await this.createUser(queryRunner, dto.user);
+      const role =
+        (await this.findRole(RoleType.EMPLOYEE)) || (await this.createRole(RoleType.EMPLOYEE));
+      if (!role) {
+        throw new ConflictException('role이 없습니다.');
+      }
+      const user = await this.createUser(queryRunner, dto.user, role);
+      if (!user) {
+        throw new ConflictException('사용자 정보를 생성할 수 없습니다.');
+      }
       const detective = await this.createDetective(queryRunner, { user });
+      if (!detective) {
+        throw new ConflictException('탐정 정보를 생성할 수 없습니다.');
+      }
       await queryRunner.commitTransaction();
       return { user, detective };
     } catch (error) {
@@ -190,12 +206,27 @@ export class AuthService {
     await queryRunner.startTransaction();
 
     try {
+      // 역할
+      const role =
+        (await this.findRole(RoleType.EMPLOYER)) || (await this.createRole(RoleType.EMPLOYER));
+      if (!role) {
+        throw new ConflictException('role이 없습니다.');
+      }
       // 사용자
-      const owner = await this.createUser(queryRunner, dto.user);
+      const owner = await this.createUser(queryRunner, dto.user, role);
+      if (!owner) {
+        throw new ConflictException('사용자 정보를 생성할 수 없습니다.');
+      }
       // 파일
       const businessFile = await this.createFile(queryRunner, { path });
+      if (!businessFile) {
+        throw new ConflictException('사업자 등록증 이미지 파일을 저장할 수 없습니다.');
+      }
       // 오피스
       const office = await this.createOffice(queryRunner, { ...dto.office, owner, businessFile });
+      if (!office) {
+        throw new ConflictException('사업장 정보를 생성할 수 없습니다.');
+      }
       // 탐정
       const detective = await this.createDetective(queryRunner, { user: owner, office });
       if (!detective) {

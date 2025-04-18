@@ -24,7 +24,7 @@ import { Application } from '../../office/entities/application.entity';
 
 @Entity({ name: 'detective' })
 export class Detective {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', nullable: true })

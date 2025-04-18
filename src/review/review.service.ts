@@ -45,10 +45,12 @@ export class ReviewService {
   async findAll(detectiveId: Detective['id'], skip: number, take: number) {
     return await this.reviewRepo
       .createQueryBuilder('review')
-      .leftJoinAndSelect('review.detective', 'd')
+      .leftJoin('review.detective', 'd')
+      .leftJoin('review.consumer', 'c')
       .where('d.id = :detectiveId', { detectiveId })
+      .addSelect(['c.nickname'])
       .skip(skip)
       .take(take)
-      .getMany();
+      .getManyAndCount();
   }
 }

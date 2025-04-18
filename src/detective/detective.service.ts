@@ -76,6 +76,24 @@ export class DetectiveService {
       .getOne();
   }
 
+  async findOneByUser(userId: User['id']) {
+    return await this.detectiveRepository
+      .createQueryBuilder('detective')
+      .leftJoin('detective.user', 'user')
+      .leftJoinAndSelect('detective.office', 'office')
+      .leftJoinAndSelect('detective.profile', 'profile')
+      .leftJoinAndSelect('detective.licenses', 'licenses')
+      .leftJoinAndSelect('detective.careers', 'careers')
+      .leftJoinAndSelect('detective.detectiveCategories', 'detectiveCategories')
+      .leftJoinAndSelect('detectiveCategories.category', 'category')
+      .leftJoinAndSelect('detective.detectiveEquipments', 'detectiveEquipments')
+      .leftJoinAndSelect('detectiveEquipments.equipment', 'equipment')
+      .leftJoinAndSelect('detective.detectiveRegions', 'detectiveRegions')
+      .leftJoinAndSelect('detectiveRegions.region', 'region')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
   async findOneWithUser(id: Detective['id']) {
     return await this.detectiveRepository.findOne({ where: { id }, relations: ['user'] });
   }

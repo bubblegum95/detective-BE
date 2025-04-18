@@ -199,7 +199,8 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   async findMyRoom(@ConnectedSocket() client: Socket) {
     try {
       const userId = client.data.user.id;
-      const rooms = await this.roomService.findMany(userId);
+      const [rooms, total] = await this.roomService.findMany(userId);
+
       const roomInfos = await Promise.all(
         rooms.map(async (room) => {
           const participants = room.participants;
@@ -218,8 +219,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         }),
       );
 
-      client.emit('rooms', roomInfos);
+      client.emit('rooms', { rooms: roomInfos, total });
     } catch (error) {
+      console.log(error);
       client.emit('error', error.message);
     }
   }
@@ -313,20 +315,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
         throw new WsException('해당 채팅방의 참여자가 아닙니다.');
       }
       const messages = await this.messageService.findMany(roomId, page, limit);
-      const result = await Promise.all(
-        messages.map(async ({ id, type, sender, content, notRead, timestamp }) => {
-          return {
-            id,
-            type,
-            sender: sender.user.nickname,
-            senderId: sender.id,
-            content,
-            notRead,
-            timestamp,
-          };
-        }),
-      );
-      client.emit('messages', { messages: result }); // messages
+      client.emit('messages', { messages }); // messages
     } catch (error) {
       client.emit('error', error.message);
     }
@@ -372,11 +361,9 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       });
       console.log('create message successfully: ', message);
 
-      const foundSender = await this.findNickname(senderId);
       const sendMessage = {
         id: message.id,
-        sender: foundSender,
-        senderId: sender.id,
+        sender: { id: message.sender.id, user: { nickname: message.sender.user.nickname } },
         type: message.type,
         content: message.content,
         timestamp: message.timestamp,

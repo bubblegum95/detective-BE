@@ -38,6 +38,7 @@ import { Region } from '../region/entities/region.entity';
 import { UserInfo } from '../utils/decorators/decorator';
 import { DetectiveCategory } from './entities/detectiveCategory.entity';
 import { Detective } from './entities/detective.entity';
+import { CreateDetectiveProfileImageDto } from './dto/create-detective-profile-image.dto';
 
 @ApiTags('Detectives')
 @Controller('detectives')
@@ -91,7 +92,7 @@ export class DetectiveController {
     }
   }
 
-  @Get(':id')
+  @Get('detail/:id')
   @ApiOperation({ summary: '탐정 프로필 단일 조회', description: '탐정 프로필 단일 조회' })
   async findOne(@Param('id') id: number, @Res() res: Response) {
     try {
@@ -121,45 +122,36 @@ export class DetectiveController {
     }
   }
 
-  // 탐정 프로필 사진 업로드
-  @Post('profile')
+  // 내 탐정 프로필 조회
+  @Get('profile')
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(FileInterceptor('file', multerOptions))
   @ApiBearerAuth('authorization')
-  @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: '탐정 프로필 이미지 생성', description: '탐정 프로필 이미지 생성' })
-  async createProfileImage(
-    @UserInfo('id') userId: User['id'],
-    @Res() res: Response,
-    @UploadedFile() file?: Express.Multer.File,
-  ) {
+  @ApiOperation({ summary: '탐정 프로필 조회', description: '탐정 프로필 조회' })
+  async getProfile(@UserInfo() user: Partial<User>, @Res() res: Response) {
     try {
-      if (!file) {
-        throw new BadRequestException('파일을 업로드해주세요.');
+      const userId = user.id;
+      const role = user.role.name;
+      if (role === 'client') {
+        throw new BadRequestException('탐정 계정이 아닙니다.');
       }
-      const user = await this.detectiveService.findUserDFile(userId);
-      const detective = user.detective;
-      if (detective.profile) {
-        throw new BadRequestException('프로필 이미지가 이미 존재합니다.');
-      }
-      const path = file.filename;
-      const profile = await this.detectiveService.saveFile(path);
-      const updated = await this.detectiveService.update(detective.id, { profile });
+      const profile = await this.detectiveService.findOneByUser(userId);
+      console.log('profile:', profile);
+
       return res.status(HttpStatus.OK).json({
         success: true,
-        message: '탐정 프로필 사진을 수정완료하였습니다.',
-        data: updated,
+        message: '내 탐정 프로필을 조회합니다.',
+        data: profile,
       });
     } catch (error) {
-      return res.status(HttpStatus.BAD_REQUEST).json({
+      return res.status(error.status).json({
         success: false,
-        message: '탐정 프로필을 수정할 수 없습니다.',
+        message: '내 탐정 프로필을 조회할 수 없습니다.',
         error: error.message,
       });
     }
   }
 
-  // 탐정 프로필 사진 수정
+  // 탐정 프로필 수정
   @Patch('profile')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('authorization')
@@ -174,8 +166,8 @@ export class DetectiveController {
     try {
       const user = await this.detectiveService.findUserDFile(userId);
       const detective = user.detective;
-      if (!detective.profile) {
-        throw new BadRequestException('수정할 탐정 프로필 이미지가 없습니다.');
+      if (!detective) {
+        throw new BadRequestException('탐정 계정이 아닙니다.');
       }
       const updated = await this.detectiveService.update(detective.id, dto);
       if (updated.affected === 0) {
@@ -193,40 +185,43 @@ export class DetectiveController {
     }
   }
 
-  // 탐정 프로필 사진 업데이트
-  @Patch(':id')
+  // 탐정 프로필 사진 업로드
+  @Post('profile/image')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file', multerOptions))
   @ApiBearerAuth('authorization')
   @ApiConsumes('multipart/form-data')
-  @ApiOperation({ summary: '탐정 프로필 이미지 수정', description: '탐정 프로필 이미지 생성 수정' })
-  async updateProfileImage(
+  @ApiBody({ type: CreateDetectiveProfileImageDto })
+  @ApiOperation({
+    summary: '내 탐정 프로필 이미지 생성',
+    description: '내 탐정 프로필 이미지 생성',
+  })
+  async createProfileImage(
     @UserInfo('id') userId: User['id'],
     @Res() res: Response,
-    @Param('id') id: number,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     try {
-      const image = await this.detectiveService.findFile(id);
-      const owner = image.detective.user.id;
-      if (!image) {
-        throw new BadRequestException('수정할 프로필 이미지가 없습니다.');
-      }
-      if (owner !== userId) {
-        throw new BadRequestException('작성자 본인이 아닙니다.');
-      }
       if (!file) {
         throw new BadRequestException('파일을 업로드해주세요.');
       }
+      const user = await this.detectiveService.findUserDFile(userId);
+      const detective = user.detective;
       const path = file.filename;
-      const savedFile = await this.detectiveService.updateFile(image.id, { path });
-      if (savedFile.affected !== 1) {
-        throw new ConflictException('파일 업데이트를 완료할 수 없습니다.');
+
+      if (detective.profile) {
+        const imageId = detective.profile.id;
+        await this.detectiveService.updateFile(imageId, { path });
+      } else {
+        const profile = await this.detectiveService.saveFile(path);
+        if (!profile) {
+          throw new ConflictException('탐정 프로필 이미지를 생성할 수 없습니다.');
+        }
+        await this.detectiveService.update(detective.id, { profile });
       }
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '탐정 프로필 사진을 수정완료하였습니다.',
-        data: savedFile,
       });
     } catch (error) {
       return res.status(HttpStatus.BAD_REQUEST).json({

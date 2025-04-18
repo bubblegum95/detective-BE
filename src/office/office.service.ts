@@ -53,6 +53,12 @@ export class OfficeService {
     });
   }
 
+  async findOneByBn(businessNum: Office['businessNum']) {
+    return await this.officeRepo.findOne({
+      where: { businessNum },
+    });
+  }
+
   async decodeInviteToken(token: string) {
     const INVITE_SECRET_KEY = this.configService.get<string>('INVITE_SECRET_KEY');
     const payload = jwt.verify(token, INVITE_SECRET_KEY) as JwtPayload;

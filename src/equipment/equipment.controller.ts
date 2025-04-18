@@ -51,8 +51,13 @@ export class EquipmentController {
   }
 
   @Get()
-  async findAll() {
-    return await this.equipmentService.findAll();
+  async findAll(@Res() res: Response) {
+    const equipments = await this.equipmentService.findAll();
+    return res.status(HttpStatus.OK).json({
+      success: true,
+      message: '장비 조회',
+      data: equipments,
+    });
   }
 
   @Get(':id')

@@ -12,7 +12,7 @@ import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'review' })
 export class Review {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'text', nullable: false })

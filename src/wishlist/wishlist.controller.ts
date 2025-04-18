@@ -30,10 +30,10 @@ import { WishList } from './entities/wish-list.entity';
 export class WishlistController {
   constructor(private readonly wishlistService: WishlistService) {}
 
-  @Post()
+  @Post(':detectiveId')
   @ApiOperation({ summary: '위시리스트 생성', description: '위시리스트 조회' })
   async create(
-    @Query('detectiveId') detectiveId: Detective['id'],
+    @Param('detectiveId') detectiveId: number,
     @UserInfo('id') userId: User['id'],
     @Res() res: Response,
   ) {
@@ -43,6 +43,10 @@ export class WishlistController {
       throw new BadRequestException('사용자 또는 탐정이 존재하지 않습니다.');
     }
     const wishList = await this.wishlistService.create({ consumer, detective });
+
+    if (!wishList) {
+      throw new ConflictException('위시리스트 생성을 완료할 수 없습니다.');
+    }
     return res.status(HttpStatus.CREATED).json({
       success: true,
       message: '위시리스트를 성공적으로 생성완료하였습니다.',
@@ -53,20 +57,39 @@ export class WishlistController {
   @Get()
   @ApiOperation({ summary: '위시 리스트 조회', description: '위시 리스트 조회' })
   async findAll(@UserInfo('id') userId: User['id'], @Res() res: Response) {
-    const wishList = this.wishlistService.findAll(userId);
+    const [wishLists, total] = await this.wishlistService.findAll(userId);
     return res.status(HttpStatus.OK).json({
       success: true,
       message: '위시리스트 조회',
-      data: wishList,
+      total: total,
+      data: wishLists,
     });
   }
 
-  @Delete(':id')
-  async remove(
-    @Param('id') id: WishList['id'],
+  @Get('is-wish/:detectiveId')
+  @ApiOperation({ summary: '위시 검증', description: '위시 검증' })
+  async isWish(
     @UserInfo('id') userId: User['id'],
+    @Param('detectiveId') detectiveId: number,
     @Res() res: Response,
   ) {
+    const isWish = await this.wishlistService.isWish(userId, detectiveId);
+
+    if (isWish) {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        data: isWish,
+      });
+    } else {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        data: null,
+      });
+    }
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: number, @UserInfo('id') userId: User['id'], @Res() res: Response) {
     const wishlist = await this.wishlistService.findOne(id);
     if (userId !== wishlist.consumer.id) {
       throw new BadRequestException('권한이 없습니다.');

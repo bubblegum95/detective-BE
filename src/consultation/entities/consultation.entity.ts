@@ -14,7 +14,7 @@ import { ConsultationStatus } from '../types/status.type';
 
 @Entity({ name: 'consultation' })
 export class Consultation {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', name: 'subject', nullable: false })

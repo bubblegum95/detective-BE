@@ -24,16 +24,33 @@ export class WishlistService {
     return await this.detectiveService.findOne(detectiveId);
   }
 
-  create(dto: CreateWishlistDto) {
-    return this.wishlistRepository.save({ ...dto });
+  async create(dto: CreateWishlistDto) {
+    return await this.wishlistRepository.save({ ...dto });
   }
 
   async findAll(userId: User['id']) {
-    return await this.wishlistRepository.find({ where: { consumer: { id: userId } } });
+    return await this.wishlistRepository
+      .createQueryBuilder('wishlist')
+      .leftJoin('wishlist.consumer', 'consumer')
+      .leftJoin('wishlist.detective', 'detective')
+      .leftJoin('detective.user', 'user')
+      .where('consumer.id = :userId', { userId })
+      .addSelect(['detective.id', 'user.name', 'user.email', 'user.phoneNumber'])
+      .getManyAndCount();
   }
 
   async findOne(id: WishList['id']) {
     return await this.wishlistRepository.findOne({ where: { id }, relations: ['consumer'] });
+  }
+
+  async isWish(userId: User['id'], detectiveId: Detective['id']) {
+    return await this.wishlistRepository
+      .createQueryBuilder('wish')
+      .leftJoin('wish.detective', 'detective')
+      .leftJoin('wish.consumer', 'consumer')
+      .where('detective.id = :detectiveId', { detectiveId })
+      .andWhere('consumer.id = :userId', { userId })
+      .getOne();
   }
 
   async remove(id: WishList['id']) {

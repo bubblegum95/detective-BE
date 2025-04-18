@@ -15,8 +15,8 @@ export class MessageService {
     const offset = (page - 1) * limit;
     return await this.messageRepository
       .createQueryBuilder('message')
-      .leftJoinAndSelect('message.sender', 'sender')
-      .leftJoinAndSelect('sender.user', 'user') // participant
+      .leftJoin('message.sender', 'sender')
+      .leftJoin('sender.user', 'user') // participant
       .leftJoin('message.room', 'room')
       .where('room.id = :roomId', { roomId })
       .addSelect(['sender.id', 'user.nickname'])

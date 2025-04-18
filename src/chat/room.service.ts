@@ -46,19 +46,9 @@ export class RoomService {
       .innerJoinAndSelect('room.participants', 'participants')
       .innerJoinAndSelect('participants.user', 'user')
       .leftJoinAndSelect('room.participants', 'allParticipants')
-      .leftJoinAndSelect('allParticipants.user', 'allUsers')
+      .leftJoin('allParticipants.user', 'allUsers')
       .where('user.id = :userId', { userId })
-      .addSelect(['allUsers.nickname'])
-      .getMany();
-  }
-
-  async join(client: Socket, room: Room['name']) {
-    client.join(room);
-  }
-
-  async joinRooms(client: Socket): Promise<Array<Room['name']>> {
-    const user = client.data.user;
-    const rooms = await this.findMany(user.id);
-    return rooms.map(({ id, name, createdAt, participants }) => name);
+      .addSelect(['allUsers.id', 'allUsers.nickname'])
+      .getManyAndCount();
   }
 }

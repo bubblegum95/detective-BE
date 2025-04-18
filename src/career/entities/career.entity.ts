@@ -11,23 +11,23 @@ import { Detective } from '../../detective/entities/detective.entity';
 
 @Entity({ name: 'career' })
 export class Career {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', nullable: false })
-  startDate: string;
-
-  @Column({ type: 'varchar', nullable: false })
-  endDate: string;
-
-  @Column({ type: 'text', nullable: false })
-  businessDetails: string;
-
   @Column({ type: 'varchar', length: 255, nullable: false })
-  corporateName: string;
+  company: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   position: string;
+
+  @Column({ type: 'varchar', nullable: false })
+  job: string;
+
+  @Column({ type: 'varchar', nullable: false })
+  start: string;
+
+  @Column({ type: 'varchar', nullable: false })
+  end: string;
 
   @CreateDateColumn()
   createdAt: Date;

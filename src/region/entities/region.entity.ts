@@ -3,7 +3,7 @@ import { DetectiveRegion } from '../../detective/entities/detectiveRegion.entity
 
 @Entity({ name: 'region' })
 export class Region {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', nullable: false })

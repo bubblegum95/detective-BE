@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   ConflictException,
   Controller,
@@ -41,7 +42,11 @@ export class CareerController {
   ) {
     try {
       const user = await this.careerService.findUser(userId);
-      const career = await this.careerService.create(user, dto);
+      const detective = user.detective;
+      if (!detective) {
+        throw new BadRequestException('탐정 계정이 아닙니다.');
+      }
+      const career = await this.careerService.create(detective, dto);
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message: '커리어를 성공적으로 생성완료하였습니다.',

@@ -69,14 +69,12 @@ export class ChatController {
     console.log('create message successfully: ', message);
 
     const foundSender = await this.chatGateway.findNickname(userId);
-    const koreaTime = await this.chatGateway.toKoreaTime(message.timestamp);
     const sendMessage = {
       id: message.id,
-      sender: foundSender,
-      senderId: sender.id,
+      sender: { id: message.sender.id, user: { nickname: message.sender.user.nickname } },
       type: message.type,
       content: message.content,
-      timestamp: koreaTime,
+      timestamp: message.timestamp,
       notRead: message.notRead,
     };
     await this.chatGateway.sendMessage(room.name, sendMessage);

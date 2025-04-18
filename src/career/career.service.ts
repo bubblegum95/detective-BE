@@ -6,6 +6,7 @@ import { Career } from './entities/career.entity';
 import { User } from '../user/entities/user.entity';
 import { UpdateCareerDto } from './dto/update-career.dto';
 import { UserService } from '../user/user.service';
+import { Detective } from '../detective/entities/detective.entity';
 
 @Injectable()
 export class CareerService {
@@ -15,11 +16,10 @@ export class CareerService {
   ) {}
 
   async findUser(id: User['id']) {
-    return this.userService.findOneById(id);
+    return this.userService.findOneWithDetective(id);
   }
 
-  async create(user: User, dto: CreateCareerDto) {
-    const detective = user.detective;
+  async create(detective: Detective, dto: CreateCareerDto) {
     return await this.careerRepository.save({ ...dto, detective });
   }
 

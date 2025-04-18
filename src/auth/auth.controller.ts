@@ -165,6 +165,10 @@ export class AuthController {
       if (!file) {
         throw new BadRequestException('사업자등록증 이미지 파일을 업로드해주세요.');
       }
+      const existingOffice = await this.authService.findOfficeByBn(office.businessNum);
+      if (existingOffice) {
+        throw new BadRequestException('해당 기업은 이미 가입완료하였습니다.');
+      }
       // 사업자 등록 정보 검증
       // const validateBusiness = await this.authService.validationCheckBno(
       //   dto.office.businessNum,

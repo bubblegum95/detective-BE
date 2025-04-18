@@ -5,8 +5,7 @@ import { MessageType } from '../type/message.type';
 
 export class SendMessageDto {
   id: Message['id'];
-  sender: User['nickname'];
-  senderId: Participant['id'];
+  sender: { id: Participant['id']; user: Partial<User> };
   type: MessageType;
   content: Message['content'];
   timestamp: Date;

@@ -1,20 +1,19 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { CreateLicenseDto } from './create-license.dto';
 
-export class UpdateLicenseDto extends PartialType(CreateLicenseDto) {
+export class UpdateLicenseDto {
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true, type: 'string', description: '라이선스 발행일자' })
+  @ApiProperty({ description: '발행일자', required: false })
   issueAt?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true, type: 'string', description: '발행기관' })
+  @ApiProperty({ description: '발행기관', required: false })
   issueBy?: string;
 
   @IsString()
   @IsOptional()
-  @ApiProperty({ nullable: true, type: 'string', description: '라이선스 명' })
+  @ApiProperty({ description: '라이선스 명', required: false })
   title?: string;
 }

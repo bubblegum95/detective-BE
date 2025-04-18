@@ -2,10 +2,10 @@ import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity({ name: 'news' })
 export class News {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'bigint', name: 'rank', nullable: false })
+  @Column({ type: 'int', name: 'rank', nullable: false })
   rank: number;
 
   @Column({ type: 'text', name: 'screen_shot', nullable: true })

@@ -51,6 +51,7 @@ services:
       - ./public:/app/public
     networks:
       - nest
+    restart: always
 
   postgres_db:
     container_name: postgres_db
@@ -79,6 +80,7 @@ services:
       - ./data/mongo:/data/db # 데이터를 호스트의 볼륨에 저장
     networks:
       - nest
+    restart: always
 
   redis:
     image: 'bitnami/redis:latest'
@@ -89,11 +91,12 @@ services:
       - '${REDIS_PORT}:${REDIS_PORT}'
     volumes:
       - ./data/redis:/data/redis
-      - ./redis.conf:/opt/bitnami/redis/etc/redis.conf
+      - ./config/redis.conf:/opt/bitnami/redis/etc/redis.conf
     command: >
       sh -c "chown -R 1001:1001 /data/redis && chmod -R 775 /data/redis && redis-server /opt/bitnami/redis/etc/redis.conf"
     networks:
       - nest
+    restart: always
 
   promtail:
     container_name: promtail

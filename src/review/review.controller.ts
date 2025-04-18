@@ -63,25 +63,26 @@ export class ReviewController {
   @Get(':detectiveId')
   @ApiOperation({ summary: '리뷰 조회', description: '리뷰 조회' })
   async findAll(
-    @Param('detectiveId') detectiveId: Detective['id'],
+    @Param('detectiveId') detectiveId: number,
     @Query() query: FindReviewsQueryDto,
     @Res() res: Response,
   ) {
     try {
       const take = query.limit;
       const skip = (query.page - 1) * take;
-      const reviews = await this.reviewService.findAll(detectiveId, skip, take);
+      const [reviews, total] = await this.reviewService.findAll(detectiveId, skip, take);
 
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '리뷰를 조회합니다.',
         data: reviews,
+        total,
       });
     } catch (error) {
       return res.status(HttpStatus.CONFLICT).json({
         success: false,
         message: '리뷰를 조회할 수 없습니다.',
-        data: error.message,
+        error: error.message,
       });
     }
   }

@@ -22,7 +22,7 @@ import { Notice } from '../../chat/entities/notice.entity';
 
 @Entity({ name: 'user' })
 export class User {
-  @PrimaryGeneratedColumn('increment', { type: 'bigint', unsigned: true })
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({ type: 'varchar', length: 15, nullable: false })

@@ -1,4 +1,6 @@
 export enum RoleType {
-  USER = 'user',
+  CLIENT = 'client',
+  EMPLOYEE = 'employee',
+  EMPLOYER = 'employer',
   ADMIN = 'admin',
 }
