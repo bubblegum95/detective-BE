@@ -39,30 +39,68 @@ services:
       ADDRESS_SECRET: ${ADDRESS_SECRET}
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_PASSWORD: ${GMAIL_PASSWORD}
-    ports:
-      - '${SERVER_PORT}:${SERVER_PORT}'
-      - '${SOCKET_PORT}:${SOCKET_PORT}'
+    expose:
+      - '${SERVER_PORT}'
+      - '${SOCKET_PORT}'
     depends_on:
       - postgres_db
       - redis
       - mongo
-    # restart: always
     volumes:
       - ./public:/app/public
     networks:
       - nest
     restart: always
 
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    entrypoint:
+      [
+        'certbot',
+        'certonly',
+        '--webroot',
+        '--webroot-path=/var/www/certbot',
+        '--email',
+        'a82727282@gmail.com',
+        '--agree-tos',
+        '--no-eff-email',
+        '-d',
+        'bubblegum.kr',
+        '-d',
+        'www.bubblegum.kr',
+      ]
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+    depends_on:
+      - detective_office
+    networks:
+      - nest
+    environment:
+      NGINX_HOST: ${NGINX_HOST}
+      NGINX_PORT: ${NGINX_PORT}
+
   postgres_db:
     container_name: postgres_db
     image: bitnami/postgresql
     restart: always
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT}:${POSTGRES_PORT}'
     environment:
-      POSTGRESQL_USER: 'postgres'
-      POSTGRESQL_PASSWORD: 'postgres'
-      POSTGRESQL_DATABASE: 'detective'
+      POSTGRESQL_USER: ${POSTGRES_USER}
+      POSTGRESQL_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRESQL_DATABASE: ${POSTGRES_DB}
     volumes:
       - ./data/postgres:/bitnami/postgresql
     networks:
@@ -74,8 +112,8 @@ services:
     ports:
       - '${MONGO_PORT}:${MONGO_PORT}' # 호스트와 컨테이너 간 포트 매핑
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root # 초기 관리자 사용자 이름
-      MONGO_INITDB_ROOT_PASSWORD: example # 초기 관리자 비밀번호
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER} # 초기 관리자 사용자 이름
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS} # 초기 관리자 비밀번호
     volumes:
       - ./data/mongo:/data/db # 데이터를 호스트의 볼륨에 저장
     networks:
@@ -175,7 +213,7 @@ services:
     image: bitnami/postgres-exporter:latest
     container_name: postgres-exporter
     environment:
-      DATA_SOURCE_NAME: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres/${POSTGRES_DB}?sslmode=disable'
+      DATA_SOURCE_NAME: 'postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db/${POSTGRES_DB}?sslmode=disable'
     ports:
       - '9187:9187'
     networks:
