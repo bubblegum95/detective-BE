@@ -99,7 +99,7 @@ export class DetectiveService {
   }
 
   async update(id: Detective['id'], dto: UpdateDetectiveDao) {
-    return await this.detectiveRepository.update({ id }, { ...dto });
+    return await this.detectiveRepository.update(id, { ...dto });
   }
 
   async approve(detective: Detective, office: Office) {

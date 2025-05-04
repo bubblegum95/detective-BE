@@ -7,11 +7,13 @@ volumes:
   mongo-data:
 
 services:
-  detective_office:
+  app_server:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: app-server
+    container_name: app_server
+    platform: linux/amd64
+    image: semin123/detective_office_server:latest
     environment:
       SERVER_HOST: ${SERVER_HOST}
       SERVER_PORT: ${SERVER_PORT}
@@ -39,9 +41,12 @@ services:
       ADDRESS_SECRET: ${ADDRESS_SECRET}
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_PASSWORD: ${GMAIL_PASSWORD}
-    expose:
-      - '${SERVER_PORT}'
-      - '${SOCKET_PORT}'
+    # expose:
+    #   - '${SERVER_PORT}'
+    #   - '${SOCKET_PORT}'
+    ports:
+      - '3300:3300'
+      - '3400:3400'
     depends_on:
       - postgres_db
       - redis
@@ -69,9 +74,9 @@ services:
         '--agree-tos',
         '--no-eff-email',
         '-d',
-        'bubblegum.kr',
+        'bubblegum.xn--3e0b707e',
         '-d',
-        'www.bubblegum.kr',
+        'www.bubblegum.xn--3e0b707e',
       ]
 
   nginx:
@@ -81,10 +86,11 @@ services:
       - '443:443'
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./public:/app/public
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
-      - detective_office
+      - app_server
     networks:
       - nest
     environment:
@@ -128,10 +134,10 @@ services:
     ports:
       - '${REDIS_PORT}:${REDIS_PORT}'
     volumes:
-      - ./data/redis:/data/redis
+      - ./data/redis:/bitnami/redis/data
       - ./config/redis.conf:/opt/bitnami/redis/etc/redis.conf
     command: >
-      sh -c "chown -R 1001:1001 /data/redis && chmod -R 775 /data/redis && redis-server /opt/bitnami/redis/etc/redis.conf"
+      sh -c "redis-server /opt/bitnami/redis/etc/redis.conf"
     networks:
       - nest
     restart: always

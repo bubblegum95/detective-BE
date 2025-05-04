@@ -9,6 +9,7 @@ import { Detective } from '../detective/entities/detective.entity';
 import { UserService } from '../user/user.service';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
+import { UpdateOfficeDto } from './dto/update-office.dto';
 
 @Injectable()
 export class OfficeService {
@@ -26,6 +27,25 @@ export class OfficeService {
 
   async findUserByEmail(email: User['email']) {
     return await this.userService.findOneByEmail(email);
+  }
+
+  async findOneByUserId(userId: User['id']) {
+    return await this.officeRepo
+      .createQueryBuilder('office')
+      .innerJoin('office.owner', 'user')
+      .where('user.id = :userId', { userId })
+      .getOne();
+  }
+
+  async findOneByUserIdWithDetective(userId: User['id']) {
+    return await this.officeRepo
+      .createQueryBuilder('office')
+      .leftJoin('office.owner', 'owner')
+      .leftJoinAndSelect('office.businessFile', 'file')
+      .leftJoinAndSelect('office.employees', 'employees')
+      .leftJoinAndSelect('employees.user', 'user')
+      .where('owner.id = :userId', { userId })
+      .getOne();
   }
 
   async findByName(name: string, take: number, skip: number) {
@@ -67,5 +87,9 @@ export class OfficeService {
 
   async approve(detective: Detective, office: Office) {
     return await this.detectiveService.approve(detective, office);
+  }
+
+  async update(id: Office['id'], dto: UpdateOfficeDto) {
+    return await this.officeRepo.update(id, { ...dto });
   }
 }

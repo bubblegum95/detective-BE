@@ -208,17 +208,26 @@ export class DetectiveController {
       const user = await this.detectiveService.findUserDFile(userId);
       const detective = user.detective;
       const path = file.filename;
+      let result: number;
 
       if (detective.profile) {
         const imageId = detective.profile.id;
-        await this.detectiveService.updateFile(imageId, { path });
+        const updated = await this.detectiveService.updateFile(imageId, { path });
+        result = updated.affected;
       } else {
         const profile = await this.detectiveService.saveFile(path);
         if (!profile) {
           throw new ConflictException('탐정 프로필 이미지를 생성할 수 없습니다.');
         }
-        await this.detectiveService.update(detective.id, { profile });
+
+        const updated = await this.detectiveService.update(detective.id, { profile });
+        result = updated.affected;
       }
+
+      if (result !== 1) {
+        throw new ConflictException('탐정 프로필 이미지를 수정할 수 없습니다.');
+      }
+
       return res.status(HttpStatus.OK).json({
         success: true,
         message: '탐정 프로필 사진을 수정완료하였습니다.',

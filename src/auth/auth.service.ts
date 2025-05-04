@@ -81,7 +81,7 @@ export class AuthService {
     return await this.officeService.findOneByBn(bn);
   }
 
-  async createInvtieToken(requester: User['email'], officeId: Office['id']) {
+  async createRequestToken(requester: User['email'], officeId: Office['id']) {
     const payload = { email: requester, officeId: officeId };
     const INVITE_SECRET_KEY = this.configService.get<string>('INVITE_SECRET_KEY');
     const inviteToken = jwt.sign(payload, INVITE_SECRET_KEY, { expiresIn: '24h' });
@@ -94,7 +94,7 @@ export class AuthService {
   }
 
   async sendNotice(requester: User, owner: User) {
-    const subject = `[진실을찾는사람들] 오피스 직원 승인 요청`;
+    const subject = `[진실을 찾는 사람들] 오피스 직원 승인 요청`;
     const content = `${requester.name}(${requester.email})님께서 귀사의 직원 계정 등록을 요청하셨습니다. 페이지로 이동하여 알림을 확인해주세요.`;
     await this.sendEmail(owner.email, subject, content);
   }

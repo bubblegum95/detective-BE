@@ -60,13 +60,4 @@ export class ParticipantService {
       relations: ['user'],
     });
   }
-
-  async findExistingRoom(userId: User['id'], recipientId: User['id']) {
-    return await this.participantRepository
-      .createQueryBuilder('p')
-      .leftJoinAndSelect('p.user', 'user')
-      .leftJoinAndSelect('p.room', 'room')
-      .where('user.id IN (:...userIds)', { userIds: [userId, recipientId] })
-      .getOne();
-  }
 }

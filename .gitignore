@@ -62,3 +62,4 @@ grafana-data
 prometheus-data
 
 public
+certbot

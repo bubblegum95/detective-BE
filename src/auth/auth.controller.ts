@@ -58,6 +58,7 @@ export class AuthController {
       return {
         success: false,
         message: '이메일을 조회할 수 없습니다.',
+        error: error.message,
       };
     }
   }
@@ -113,12 +114,16 @@ export class AuthController {
       // 신청서 생성 및 신청 알림 발송
       const office = await this.authService.findOfficeOwnerById(dto.officeId);
       const owner = office.owner;
-      const token = await this.authService.createInvtieToken(user.email, office.id);
+      const token = await this.authService.createRequestToken(user.email, office.id);
       console.log('token:', token);
-      const subject = '[진실을 쫒는 사람들] 직원 등록 요청이 있습니다.';
-      const content = `요청인: ${user.name}(${user.email}) token: ${token}`;
+
+      const subject = '[진실을 찾는 사람들] 직원 등록 요청이 있습니다.';
+      const content = `요청인: ${user.name}(${user.email}) 
+      https://bubblegum.한국/dashboard/employees?token=${token}
+      http://127.0.0.1:4000/dashboard/employees?token=${token}`;
+
       await this.authService.sendEmail(owner.email, subject, content);
-      await this.authService.sendNotice(user, owner);
+
       return res.status(HttpStatus.CREATED).json({
         success: true,
         message:
@@ -181,7 +186,7 @@ export class AuthController {
       //   );
       // }
 
-      const path = file.originalname;
+      const path = file.filename;
       const owner = await this.authService.createEmployer(dto, path);
       return res.status(HttpStatus.CREATED).json({
         success: true,

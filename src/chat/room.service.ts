@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Socket } from 'socket.io';
 import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import { DataSource, Repository } from 'typeorm';
@@ -50,5 +49,19 @@ export class RoomService {
       .where('user.id = :userId', { userId })
       .addSelect(['allUsers.id', 'allUsers.nickname'])
       .getManyAndCount();
+  }
+
+  async findRoomWithBothUsers(userId1: number, userId2: number) {
+    return await this.roomRepository
+      .createQueryBuilder('room')
+      .innerJoinAndSelect('participant', 'p1', 'p1.room_id = room.id AND p1.user_id = :userId1', {
+        userId1,
+      })
+      .innerJoinAndSelect('participant', 'p2', 'p2.room_id = room.id AND p2.user_id = :userId2', {
+        userId2,
+      })
+      .leftJoinAndSelect('room.participants', 'participants')
+      .leftJoinAndSelect('participants.user', 'user')
+      .getOne();
   }
 }

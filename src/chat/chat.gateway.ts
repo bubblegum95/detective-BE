@@ -237,11 +237,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
       let me: Participant;
       const inviter = client.data.user;
       const invitee = await this.roomService.findUserByEmail(data.email);
-      const alreadyHasRoom = await this.participantService.findExistingRoom(inviter.id, invitee.id);
+      console.log('inviter, invitee: ', inviter.id, invitee.id);
+      const alreadyHasRoom = await this.roomService.findRoomWithBothUsers(inviter.id, invitee.id);
+      console.log('already has room: ', alreadyHasRoom);
       if (alreadyHasRoom) {
         // 룸이 이미 존재하는 경우
-        me = alreadyHasRoom;
-        room = me.room;
+        room = alreadyHasRoom;
+        me = room.participants.filter(({ user }) => user.id === inviter.id)[0];
         client.join(room.name);
       } else {
         // 존재하는 룸이 없는 경우

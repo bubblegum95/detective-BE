@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   HttpStatus,
@@ -22,6 +23,7 @@ import { Office } from './entities/office.entity';
 import { ApplicationService } from './application.service';
 import { Application } from './entities/application.entity';
 import { ApplicationQueryDto } from './dto/application-query.dto';
+import { UpdateOfficeDto } from './dto/update-office.dto';
 
 @ApiTags('offices')
 @Controller('offices')
@@ -47,6 +49,62 @@ export class OfficeController {
       return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: '오피스 조회를 요청할 수 없습니다.',
+        error: error.message,
+      });
+    }
+  }
+
+  @Get('my-office')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ description: '내 오피스 조회', summary: '내 오피스 조회' })
+  @ApiBearerAuth('authorization')
+  async findMyOffice(@UserInfo('id') userId: User['id'], @Res() res: Response) {
+    try {
+      const office = await this.officeService.findOneByUserIdWithDetective(userId);
+      if (!office) {
+        throw new BadRequestException('사업자 계정이 아닙니다.');
+      }
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: '내 사무소 정보를 조회합니다.',
+        data: office,
+      });
+    } catch (error) {
+      return res.status(error.status).json({
+        success: false,
+        message: '내 사무소 정보를 조회할 수 없습니다.',
+        error: error.message,
+      });
+    }
+  }
+
+  @Patch('my-office')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ description: '내 오피스 수정', summary: '내 오피스 수정' })
+  @ApiBearerAuth('authorization')
+  async updateMyOffice(
+    @UserInfo('id') userId: User['id'],
+    @Res() res: Response,
+    @Body() dto: UpdateOfficeDto,
+  ) {
+    try {
+      const office = await this.officeService.findOneByUserId(userId);
+      if (!office) {
+        throw new BadRequestException('해당 탐정사무소를 조회할 수 없습니다.');
+      }
+      const result = await this.officeService.update(office.id, dto);
+      if (result.affected !== 1) {
+        throw new BadRequestException('탐정사무소 정보 업데이트를 완료할 수 없습니다.');
+      }
+
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: '내 탐정사무소 정보 업데이트를 완료하였습니다.',
+      });
+    } catch (error) {
+      return res.status(error.status).json({
+        success: false,
+        message: '내 탐정사무소 정보를 업데이트 할 수 없습니다.',
         error: error.message,
       });
     }
