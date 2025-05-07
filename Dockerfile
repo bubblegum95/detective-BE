@@ -16,6 +16,8 @@ RUN npm i
 # NestJS CLI 전역 설치
 RUN npm install -g @nestjs/cli
 
+RUN apt update && apt install -y redis-tools
+
 # 애플리케이션 빌드
 RUN npm run build
 
