@@ -1,6 +1,6 @@
 ## Project name 
 
-진실을 찾는 사람들(도메인 https://bubblegum.한국)
+숨은 진실을 찾는 사람들(숨진사람 도메인 https://bubblegum.한국)
 
 ## Description
 
