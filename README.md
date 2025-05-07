@@ -12,7 +12,7 @@
 
 ## Service Architecture
 
-<img width="773" alt="Image" src="https://github.com/user-attachments/assets/56916bc2-a679-442e-a6ca-138dc0c673cf" />
+<img width="760" alt="Image" src="https://github.com/user-attachments/assets/ffd8de3f-64b7-499e-a5c8-917e9adba84d" />
 
 ## Skill Stack
 
