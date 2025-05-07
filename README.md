@@ -16,7 +16,7 @@
 
 ## Skill Stack
 
-- VM : GCP Computing Service
+- Deploy : GCP Computing Service, Docker
 
 - OS : Devian
 
