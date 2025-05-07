@@ -8,9 +8,9 @@
 
 ## Team
 
-황세민(BE)
-최하온(BE) https://github.com/HA0N1,
-우승원(BE) https://github.com/bobbodaddeuk
+- 황세민(BE) https://github.com/bubblegum95
+- 최하온(BE) https://github.com/HA0N1
+- 우승원(BE) https://github.com/bobbodaddeuk
 
 ## Service Architecture
 
