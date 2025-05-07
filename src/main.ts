@@ -54,7 +54,11 @@ async function bootstrap() {
     const CLIENT_PORT = configService.get<number>('CLIENT_PORT');
 
     app.enableCors({
-      origin: [`http://${CLIENT_HOST}:${CLIENT_PORT}`, `http://127.0.0.1:${CLIENT_PORT}`],
+      origin: [
+        `http://${CLIENT_HOST}:${CLIENT_PORT}`,
+        `http://127.0.0.1:${CLIENT_PORT}`,
+        'https://bubblegum.xn--3e0b707e',
+      ],
       credentials: true,
       methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
       allowedHeaders: ['Content-Type', 'authorization'],

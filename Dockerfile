@@ -10,13 +10,7 @@ ENV NODE_ENV=production
 # 소스 코드 복사
 COPY . .
 
-# 시스템 업데이트 및 PostgreSQL 클라이언트 설치
-# RUN apt-get update && apt-get install -y postgresql-client redis-tools
-
-# RUN redis-cli -h redis
-
 # 모든 종속성 설치 (개발 종속성 포함)
-ENV PUPPETEER_SKIP_DOWNLOAD=true
 RUN npm i
 
 # NestJS CLI 전역 설치
